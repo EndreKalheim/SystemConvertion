@@ -1,4 +1,12 @@
 {
+  "25HV0001_MassFlow": {
+    "ModelType": "Fallback",
+    "Reason": "No input signals in topology"
+  },
+  "25HV0002_MassFlow": {
+    "ModelType": "Fallback",
+    "Reason": "No input signals in topology"
+  },
   "25ESV0001_MassFlow": {
     "ModelType": "UnitIdentifier",
     "FitScore": 31.343,
@@ -33,8 +41,13 @@
     "TimeConstant_s": 61.849
   },
   "23VA0001_Temperature": {
-    "ModelType": "ThermalMixingModel",
-    "Formula": "dT ~ (m_in*(Tin-T) - m_out*T)/(M_eff*Cp) - k_loss*(T-Tamb); M_eff from water+total level"
+    "ModelType": "IdentifyLinear",
+    "FitScore": 86.875,
+    "Note": "ThermalMixingModel diverged (-1284,6%), replaced by linear fit"
+  },
+  "23ESV0002_MassFlow": {
+    "ModelType": "Fallback",
+    "Reason": "No input signals in topology"
   },
   "23KA0001_MassFlow": {
     "ModelType": "UnitIdentifier",
@@ -139,6 +152,15 @@
     ],
     "Formula": "Dynamic MISO: 2 inputs, Tc=0,00s"
   },
+  "23PA0001_MassFlow": {
+    "ModelType": "UnitIdentifier",
+    "FitScore": 97.522,
+    "TimeConstant_s": 0.0,
+    "LinearGains": [
+      1.0024
+    ],
+    "Formula": "Dynamic MISO: 1 inputs, Tc=0,00s"
+  },
   "23PA0001_Pressure": {
     "ModelType": "UnitIdentifier",
     "FitScore": 51.152,
@@ -161,12 +183,23 @@
   },
   "23LV0002_MassFlow": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 79.363,
+    "FitScore": 88.294,
     "TimeConstant_s": 0.0,
     "LinearGains": [
-      2.9132
+      0.86946,
+      2.4297
     ],
-    "Formula": "Dynamic MISO: 1 inputs, Tc=0,00s"
+    "Formula": "Dynamic MISO: 2 inputs, Tc=0,00s"
+  },
+  "23LV0002_Temperature": {
+    "ModelType": "UnitIdentifier",
+    "FitScore": 72.195,
+    "TimeConstant_s": 6.3577,
+    "LinearGains": [
+      0.73563,
+      0.13711
+    ],
+    "Formula": "Dynamic MISO: 2 inputs, Tc=6,36s"
   },
   "23LV0001_MassFlow": {
     "ModelType": "UnitIdentifier",
@@ -189,6 +222,7 @@
     "Formula": "Dynamic MISO: 2 inputs, Tc=159,83s"
   },
   "23LIC0001_Control": {
+    "ModelType": "PID",
     "Kp": 2.0,
     "Ti": 120.0,
     "Td": 0.0,
@@ -196,6 +230,7 @@
     "Formula": "Incremental PI: u(k) = u(k-1) + Kp * (e(k) - e(k-1) + dt/Ti * e(k))"
   },
   "23LIC0002_Control": {
+    "ModelType": "PID",
     "Kp": 1.0,
     "Ti": 300.0,
     "Td": 0.0,
@@ -203,6 +238,7 @@
     "Formula": "Incremental PI: u(k) = u(k-1) + Kp * (e(k) - e(k-1) + dt/Ti * e(k))"
   },
   "23PIC0001_Control": {
+    "ModelType": "PID",
     "Kp": 1.0,
     "Ti": 10.0,
     "Td": 0.0,
@@ -228,6 +264,15 @@
       0.0
     ],
     "Formula": "Dynamic MISO: 2 inputs, Tc=8,39s"
+  },
+  "23COLD0001_MassFlow": {
+    "ModelType": "Boundary"
+  },
+  "23COLD0001_Pressure": {
+    "ModelType": "Boundary"
+  },
+  "23COLD0001_Temperature": {
+    "ModelType": "Boundary"
   },
   "23HX0001s_MassFlow": {
     "ModelType": "UnitIdentifier",
@@ -260,6 +305,7 @@
     "Formula": "Dynamic MISO: 3 inputs, Tc=75,27s"
   },
   "23TIC0003_Control": {
+    "ModelType": "PID",
     "Kp": 0.5,
     "Ti": 60.0,
     "Td": 0.0,

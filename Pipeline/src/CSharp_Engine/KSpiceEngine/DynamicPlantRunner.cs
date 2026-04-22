@@ -87,6 +87,7 @@ namespace KSpiceEngine
                 {
                     Console.WriteLine($"[Model] {id}: Boundary node (input-only), copying true signal.");
                     predictions[id] = (double[])Y_true.Clone();
+                    identifiedParams[id] = new JObject { ["ModelType"] = "Boundary" };
                     continue;
                 }
 
@@ -157,6 +158,7 @@ namespace KSpiceEngine
                                 predictions[id] = Y_pred;
                                 
                                 var pidParams = new JObject();
+                                pidParams["ModelType"] = "PID";
                                 pidParams["Kp"] = kp;
                                 pidParams["Ti"] = ti;
                                 pidParams["Td"] = td;
@@ -168,18 +170,21 @@ namespace KSpiceEngine
                             {
                                 Console.WriteLine($"[WARNING] {id}: Could not find K-Spice model for PID params.");
                                 predictions[id] = (double[])Y_true.Clone();
+                                identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = "KSpice model not found for PID params" };
                             }
                         }
                         else
                         {
                             Console.WriteLine($"[WARNING] {id}: Measurement or Setpoint signal not in CSV.");
                             predictions[id] = Enumerable.Repeat(0.0, numRows).ToArray();
+                            identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = "Measurement or Setpoint not in CSV" };
                         }
                     }
                     else
                     {
                         Console.WriteLine($"[WARNING] {id}: No Measurement/Setpoint mapping for controller {comp}.");
                         predictions[id] = Enumerable.Repeat(0.0, numRows).ToArray();
+                        identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = "No Measurement/Setpoint signal mapping" };
                     }
                 }
                 
@@ -277,28 +282,42 @@ namespace KSpiceEngine
                     var inputCols = FindInputSignals(id, inputEdges, signalMap, dataset);
                     if (inputCols.Count > 0)
                     {
-                        Console.WriteLine($"[Model] {id}: UnitIdentifier.IdentifyLinearDiff (Integrator) with {inputCols.Count} inputs");
+                        // Separate inflows (m_in, mass_in) from outflows (m_out, mass_out_drain).
+                        // Negate outflow data so IdentifyLinearDiff can use all-positive gains:
+                        //   dL/dt = gain_in * F_in + gain * (-F_out)  →  correct mass-balance sign
+                        var signedInputs = inputCols.Select(x =>
+                        {
+                            bool isOutflow = x.Item1.Contains("(m_out)") || x.Item1.Contains("(m_sum)") || x.Item1.Contains("(mass_out");
+                            if (isOutflow)
+                            {
+                                double[] neg = x.Item2.Select(v => -v).ToArray();
+                                return ($"{x.Item1}_neg", neg);
+                            }
+                            return x;
+                        }).ToList();
+
+                        Console.WriteLine($"[Model] {id}: UnitIdentifier.IdentifyLinearDiff (Integrator) with {signedInputs.Count} inputs ({inputCols.Count(x => x.Item1.Contains("(m_out)") || x.Item1.Contains("(m_sum)") || x.Item1.Contains("(mass_out")) } outflows negated)");
                         try
                         {
-                            var unitDataSet = BuildUnitDataSet(inputCols, Y_true, timeBase_s);
-                            // Set false to allow negative weights for outflows
+                            var unitDataSet = BuildUnitDataSet(signedInputs, Y_true, timeBase_s);
                             var model = UnitIdentifier.IdentifyLinearDiff(ref unitDataSet, null, false);
 
                             if (!(model.modelParameters.Fitting.WasAbleToIdentify && unitDataSet.Y_sim != null))
                             {
                                 Console.WriteLine($"[WARNING] {id}: Integrator identification failed, copying actuals.");
                                 predictions[id] = (double[])Y_true.Clone();
+                                identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = "IdentifyLinearDiff failed" };
                                 continue;
                             }
 
-                            // Keep initial condition anchored to measured level
+                            // Anchor initial condition to measured value
                             double offset = Y_true[0] - unitDataSet.Y_sim[0];
                             double[] adjustedSim = new double[numRows];
                             for (int j = 0; j < numRows; j++)
                                 adjustedSim[j] = unitDataSet.Y_sim[j] + offset;
 
                             predictions[id] = adjustedSim;
-                            Console.WriteLine($"[SUCCESS] {id}: Integrator identified successfully. FitScore={model.modelParameters.Fitting.FitScorePrc:F1}%");
+                            Console.WriteLine($"[SUCCESS] {id}: Integrator identified. FitScore={model.modelParameters.Fitting.FitScorePrc:F1}%");
 
                             var mParams = new JObject();
                             mParams["ModelType"] = "IdentifyLinearDiff";
@@ -310,12 +329,14 @@ namespace KSpiceEngine
                         {
                             Console.WriteLine($"[WARNING] {id}: Integrator exception: {ex.Message}");
                             predictions[id] = (double[])Y_true.Clone();
+                            identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = ex.Message };
                         }
                     }
                     else
                     {
                         Console.WriteLine($"[WARNING] {id}: No inputs found for separator level.");
                         predictions[id] = Enumerable.Repeat(0.0, numRows).ToArray();
+                        identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = "No input signals found in topology" };
                     }
                 }
                 
@@ -382,17 +403,103 @@ namespace KSpiceEngine
                             y_sim[i] = thermalModel.Iterate(inputs, timeBase_s)[0];
                         }
 
-                        predictions[id] = y_sim;
-                        Console.WriteLine($"[SUCCESS] {id}: ThermalMixingModel simulation complete.");
-                        var mParams = new JObject();
-                        mParams["ModelType"] = "ThermalMixingModel";
-                        mParams["Formula"] = "dT ~ (m_in*(Tin-T) - m_out*T)/(M_eff*Cp) - k_loss*(T-Tamb); M_eff from water+total level";
-                        identifiedParams[id] = mParams;
+                        // Calculate actual fit score for the physics model
+                        double ssRes = 0, ssTot = 0;
+                        double mean = Y_true.Average();
+                        for (int i = 0; i < numRows; i++) {
+                            ssRes += Math.Pow(y_sim[i] - Y_true[i], 2);
+                            ssTot += Math.Pow(Y_true[i] - mean, 2);
+                        }
+                        double fitScore = ssTot > 1e-12 ? (1.0 - ssRes / ssTot) * 100.0 : 0.0;
+
+                        if (fitScore < 0)
+                        {
+                            // Physics model diverged — try linear identification as a fallback
+                            Console.WriteLine($"[WARNING] {id}: ThermalMixingModel diverged (FitScore={fitScore:F1}%). Trying IdentifyLinear...");
+                            bool linearSucceeded = false;
+                            try
+                            {
+                                var unitDataSetFb = BuildUnitDataSet(inputCols, Y_true, timeBase_s);
+                                var modelFb = UnitIdentifier.IdentifyLinear(ref unitDataSetFb, null, false);
+                                if (modelFb.modelParameters.Fitting.WasAbleToIdentify && unitDataSetFb.Y_sim != null)
+                                {
+                                    double fsFb = modelFb.modelParameters.Fitting.FitScorePrc;
+                                    Console.WriteLine($"[SUCCESS] {id}: IdentifyLinear fallback. FitScore={fsFb:F1}%");
+                                    predictions[id] = unitDataSetFb.Y_sim;
+                                    identifiedParams[id] = new JObject {
+                                        ["ModelType"] = "IdentifyLinear",
+                                        ["FitScore"]  = fsFb,
+                                        ["Note"]      = $"ThermalMixingModel diverged ({fitScore:F1}%), replaced by linear fit"
+                                    };
+                                    linearSucceeded = true;
+                                }
+                            }
+                            catch (Exception) { }
+
+                            if (!linearSucceeded)
+                            {
+                                // Nothing worked — store ThermalMixingModel output so the user can see it diverged
+                                predictions[id] = y_sim;
+                                identifiedParams[id] = new JObject {
+                                    ["ModelType"] = "ThermalMixingModel",
+                                    ["FitScore"]  = fitScore,
+                                    ["Formula"]   = "dT ~ (m_in*(Tin-T) - m_out*T)/(M_eff*Cp) - k_loss*(T-Tamb)",
+                                    ["Note"]      = "Diverged — physics parameters need tuning"
+                                };
+                            }
+                        }
+                        else
+                        {
+                            predictions[id] = y_sim;
+                            Console.WriteLine($"[SUCCESS] {id}: ThermalMixingModel simulation complete. FitScore={fitScore:F1}%");
+                            var mParams = new JObject();
+                            mParams["ModelType"] = "ThermalMixingModel";
+                            mParams["FitScore"] = fitScore;
+                            mParams["Formula"] = "dT ~ (m_in*(Tin-T) - m_out*T)/(M_eff*Cp) - k_loss*(T-Tamb)";
+                            identifiedParams[id] = mParams;
+                        }
                     }
                     else
                     {
-                        Console.WriteLine($"[WARNING] {id}: Could not find paired m_in / T_in streams for thermal mixing.");
-                        predictions[id] = (double[])Y_true.Clone();
+                        // No paired streams found for thermal mixing — fall back to linear identification
+                        // using whatever temperature/flow inputs the topology provides
+                        Console.WriteLine($"[WARNING] {id}: No paired m_in/T_in streams. Falling back to IdentifyLinear.");
+                        var inputCols2 = FindInputSignals(id, inputEdges, signalMap, dataset);
+                        if (inputCols2.Count > 0)
+                        {
+                            try
+                            {
+                                var unitDataSet2 = BuildUnitDataSet(inputCols2, Y_true, timeBase_s);
+                                var model2 = UnitIdentifier.IdentifyLinear(ref unitDataSet2, null, false);
+                                if (model2.modelParameters.Fitting.WasAbleToIdentify && unitDataSet2.Y_sim != null)
+                                {
+                                    predictions[id] = unitDataSet2.Y_sim;
+                                    double fs2 = model2.modelParameters.Fitting.FitScorePrc;
+                                    Console.WriteLine($"[SUCCESS] {id}: IdentifyLinear fallback. FitScore={fs2:F1}%");
+                                    identifiedParams[id] = new JObject {
+                                        ["ModelType"] = "IdentifyLinear",
+                                        ["FitScore"]  = fs2,
+                                        ["Note"]      = "ThermalMixingModel skipped (no paired inflow streams)"
+                                    };
+                                }
+                                else
+                                {
+                                    Console.WriteLine($"[WARNING] {id}: IdentifyLinear also failed.");
+                                    predictions[id] = (double[])Y_true.Clone();
+                                    identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = "Both ThermalMixingModel and IdentifyLinear failed" };
+                                }
+                            }
+                            catch (Exception ex2)
+                            {
+                                predictions[id] = (double[])Y_true.Clone();
+                                identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = ex2.Message };
+                            }
+                        }
+                        else
+                        {
+                            predictions[id] = (double[])Y_true.Clone();
+                            identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = "No input signals in topology for temperature" };
+                        }
                     }
                 }
 
@@ -409,6 +516,7 @@ namespace KSpiceEngine
                     {
                         Console.WriteLine($"[WARNING] {id}: No input signals found in topology. Copying true signal.");
                         predictions[id] = (double[])Y_true.Clone();
+                        identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = "No input signals in topology" };
                         continue;
                     }
                     
@@ -434,7 +542,7 @@ namespace KSpiceEngine
                             predictions[id] = unitDataSet.Y_sim;
                             double fitScore = model.modelParameters.Fitting.FitScorePrc;
                             Console.WriteLine($"[SUCCESS] {id}: Identified. FitScore={fitScore:F1}%, Tc={model.modelParameters.TimeConstant_s:F2}s");
-                            
+
                             var modelParams = new JObject();
                             modelParams["ModelType"] = "UnitIdentifier";
                             modelParams["FitScore"] = fitScore;
@@ -448,12 +556,14 @@ namespace KSpiceEngine
                         {
                             Console.WriteLine($"[WARNING] {id}: Identification failed, copying true signal.");
                             predictions[id] = (double[])Y_true.Clone();
+                            identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = "UnitIdentifier could not identify" };
                         }
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine($"[WARNING] {id}: Identification exception: {ex.Message}");
                         predictions[id] = (double[])Y_true.Clone();
+                        identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = ex.Message };
                     }
                 }
             }

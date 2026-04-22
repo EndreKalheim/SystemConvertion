@@ -1,144 +1,165 @@
 import os
+import glob
 import json
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
 
 def plot_validation():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     predictions_csv = os.path.join(base_dir, "output", "CS_Predictions.csv")
-    kspice_csv = os.path.join(base_dir, "data", "raw", "KspiceSim.csv")
-    mapping_json = os.path.join(base_dir, "output", "diagrams", "SignalMapping.json")
-    params_json = os.path.join(base_dir, "output", "CS_Identified_Parameters.json")
-    topology_json = os.path.join(base_dir, "output", "diagrams", "TSA_Explicit_Topology.json")
-    out_dir = os.path.join(base_dir, "output", "validation_plots")
+    kspice_csv      = os.path.join(base_dir, "data", "raw", "KspiceSim.csv")
+    mapping_json    = os.path.join(base_dir, "output", "diagrams", "SignalMapping.json")
+    params_json     = os.path.join(base_dir, "output", "CS_Identified_Parameters.json")
+    topology_json   = os.path.join(base_dir, "output", "diagrams", "TSA_Explicit_Topology.json")
+    out_dir         = os.path.join(base_dir, "output", "validation_plots")
 
+    # ── Clean up old plots so stale files never accumulate ───────────────────
+    if os.path.exists(out_dir):
+        for old_file in glob.glob(os.path.join(out_dir, "*.png")):
+            os.remove(old_file)
     os.makedirs(out_dir, exist_ok=True)
 
-    # Load Data
+    # ── Load data ─────────────────────────────────────────────────────────────
     try:
         df_pred = pd.read_csv(predictions_csv)
-        df_raw = pd.read_csv(kspice_csv)
+        df_raw  = pd.read_csv(kspice_csv)
         df_raw.columns = [c.strip() for c in df_raw.columns]
-        
+
         with open(mapping_json, 'r') as f:
             signal_map = json.load(f)
-            
+
         params = {}
         if os.path.exists(params_json):
             with open(params_json, 'r') as f:
                 params = json.load(f)
-                
-        # Load topology for input edge lookup
+
         topology = {}
         if os.path.exists(topology_json):
             with open(topology_json, 'r') as f:
                 topology = json.load(f)
-                
     except Exception as e:
-        print(f"Error loading files: {e}")
+        print(f"[ERROR] Loading files: {e}")
         return
 
-    # Build input edge map from topology
+    # ── Build input-edge map from topology ───────────────────────────────────
     input_edges = {}
     for edge in topology.get('edges', []):
-        to_node = edge['to']
+        to_node   = edge['to']
         from_node = edge['from']
-        label = edge.get('label', '')
-        if to_node not in input_edges:
-            input_edges[to_node] = []
-        input_edges[to_node].append({'from': from_node, 'label': label})
+        label     = edge.get('label', '')
+        input_edges.setdefault(to_node, []).append({'from': from_node, 'label': label})
 
-    plot_count = 0
+    # ── Plot each modelled state ──────────────────────────────────────────────
+    plotted = skipped_boundary = skipped_fallback = 0
 
-    # Create plots for each modeled component
     for col in df_pred.columns:
-        if col.endswith("_Predicted"):
-            model_id = col.replace("_Predicted", "")
-            true_col = f"{model_id}_True"
-            
-            if true_col not in df_pred.columns:
-                continue
+        if not col.endswith("_Predicted"):
+            continue
 
-            # Component tags like 23VA001; state may contain underscores (e.g. TotalLevel)
-            if '_' in model_id:
-                comp, state = model_id.split('_', 1)
-            else:
-                comp, state = model_id, ''
-            
-            # One subplot per raw CSV column (dedupe); label shows first topology edge for that column.
-            inputs_by_csv = {}
+        model_id = col.replace("_Predicted", "")
+        true_col = f"{model_id}_True"
+        if true_col not in df_pred.columns:
+            continue
 
-            if model_id in input_edges:
-                for edge_info in input_edges[model_id]:
-                    src_node = edge_info['from']
-                    edge_label = edge_info['label']
-                    if src_node in signal_map:
-                        csv_col = signal_map[src_node]
-                        if csv_col in df_raw.columns:
-                            display_name = f"{edge_label}: {src_node}"
-                            if csv_col not in inputs_by_csv:
-                                inputs_by_csv[csv_col] = display_name
-                            elif edge_label not in inputs_by_csv[csv_col]:
-                                inputs_by_csv[csv_col] = inputs_by_csv[csv_col] + f" | {edge_label}: {src_node}"
+        # Component / state split on the first underscore (names like 23VA0001_TotalLevel)
+        first_under = model_id.find('_')
+        comp  = model_id[:first_under] if first_under > 0 else model_id
+        state = model_id[first_under+1:] if first_under > 0 else ''
 
-            input_signals_to_plot = {label: csv for csv, label in inputs_by_csv.items()}
+        # ── Model quality gate ────────────────────────────────────────────────
+        p          = params.get(model_id, {})
+        model_type = p.get('ModelType', 'Unknown')
 
-            # Build title
-            title_str = f"Model: {model_id}\n"
-            if model_id in params:
-                p = params[model_id]
-                if "Formula" in p:
-                    title_str += f"Eq: {p['Formula']}"
-                if "FitScore" in p:
-                    title_str += f" | Fit: {p['FitScore']:.1f}%"
-                if "Kp" in p:
-                    title_str += f" | Kp={p['Kp']:.3f}, Ti={p['Ti']:.3f}"
-                if "Cv" in p:
-                    title_str += f" | Cv={p['Cv']:.4f}"
-                if "TimeConstant_s" in p:
-                    title_str += f" | Tc={p['TimeConstant_s']:.2f}s"
+        if model_type == 'Boundary':
+            skipped_boundary += 1
+            continue   # Boundary sources are inputs, not model outputs to validate
 
-            num_inputs = len(input_signals_to_plot)
-            num_plots = 1 + num_inputs
-            
-            fig, axes = plt.subplots(num_plots, 1, figsize=(10, 3 + 2 * num_plots), sharex=True)
-            if num_plots == 1:
-                axes = [axes]
-            
-            # Top plot: Output comparison
-            ax1 = axes[0]
-            ax1.plot(df_pred['Time'], df_pred[true_col], label="K-Spice (Solution)", color='black', linestyle='--', linewidth=2)
-            ax1.plot(df_pred['Time'], df_pred[col], label="TSA Model", color='blue', alpha=0.7)
-            ax1.set_title(title_str, fontweight='bold', fontsize=9)
-            ax1.set_ylabel("Output")
-            ax1.legend(loc='upper right', fontsize=8)
-            ax1.grid(True)
-            
-            # Input subplots
-            min_len = min(len(df_pred), len(df_raw))
-            for i, (label_name, raw_col_name) in enumerate(input_signals_to_plot.items(), 1):
-                if i < len(axes):
-                    ax = axes[i]
-                    ax.plot(df_pred['Time'][:min_len], df_raw[raw_col_name][:min_len], label=raw_col_name, color='tab:blue')
-                    ax.set_ylabel(label_name, fontsize=8)
-                    ax.legend(loc='upper right', fontsize=7)
-                    ax.grid(True)
-            
-            axes[-1].set_xlabel("Time (s)")
-            
-            plt.tight_layout()
-            
-            # Use a cleaner filename: CompName_State_Validation.png
-            safe_id = model_id.replace('/', '_').replace('\\', '_')
-            plot_file = os.path.join(out_dir, f"{safe_id}_Validation.png")
-            plt.savefig(plot_file, dpi=120)
-            plt.close()
-            
-            plot_count += 1
-            print(f"Generated plot: {safe_id}")
+        is_fallback = (model_type == 'Fallback')
+        if is_fallback:
+            skipped_fallback += 1
+            continue   # Nothing was fitted — skip rather than show a misleading plot
 
-    print(f"\n[SUMMARY] Generated {plot_count} validation plots in {out_dir}")
+        # ── Gather input signals from topology ────────────────────────────────
+        inputs_by_csv = {}
+        for edge_info in input_edges.get(model_id, []):
+            src_node   = edge_info['from']
+            edge_label = edge_info['label']
+            csv_col    = signal_map.get(src_node) or signal_map.get(src_node.replace('_pf', ''))
+            if csv_col and csv_col in df_raw.columns:
+                display = f"{edge_label}: {src_node}"
+                if csv_col not in inputs_by_csv:
+                    inputs_by_csv[csv_col] = display
+                else:
+                    inputs_by_csv[csv_col] += f" | {edge_label}"
+
+        # csv_col → display_label mapping for subplot rows
+        input_signals = {lbl: csv for csv, lbl in inputs_by_csv.items()}
+
+        # ── Build title ───────────────────────────────────────────────────────
+        fit_score = p.get('FitScore')
+        fit_str   = f"  |  Fit: {fit_score:.1f}%" if fit_score is not None else ""
+        tc        = p.get('TimeConstant_s')
+        tc_str    = f"  Tc={tc:.2f}s" if tc is not None else ""
+        formula   = p.get('Formula', '')
+        title_str = f"{model_id}  [{model_type}{fit_str}{tc_str}]\n{formula}"
+
+        # ── Layout ────────────────────────────────────────────────────────────
+        n_inputs  = len(input_signals)
+        n_subplots = 1 + n_inputs
+        fig, axes = plt.subplots(n_subplots, 1,
+                                 figsize=(11, 3 + 2.2 * n_subplots),
+                                 sharex=True)
+        if n_subplots == 1:
+            axes = [axes]
+
+        # Top plot: prediction vs measurement
+        ax0 = axes[0]
+        y_true = df_pred[true_col].values
+        y_pred = df_pred[col].values
+
+        ax0.plot(df_pred['Time'], y_true,
+                 label="K-Spice (measurement)", color='black', linestyle='--', linewidth=1.8)
+        ax0.plot(df_pred['Time'], y_pred,
+                 label="TSA model", color='steelblue', alpha=0.85, linewidth=1.4)
+
+        # Shade residual area to make fit quality immediately visible
+        ax0.fill_between(df_pred['Time'], y_true, y_pred,
+                         alpha=0.15, color='red', label='residual')
+
+        ax0.set_title(title_str, fontweight='bold', fontsize=9)
+        ax0.set_ylabel(state or "Output")
+        ax0.legend(loc='upper right', fontsize=8)
+        ax0.grid(True, alpha=0.4)
+
+        # Input subplots — one row per unique CSV column
+        min_len = min(len(df_pred), len(df_raw))
+        for i, (display_lbl, csv_col) in enumerate(input_signals.items(), start=1):
+            if i >= len(axes):
+                break
+            ax = axes[i]
+            ax.plot(df_pred['Time'].values[:min_len],
+                    df_raw[csv_col].values[:min_len],
+                    color='darkorange', linewidth=1.2)
+            ax.set_ylabel(display_lbl, fontsize=7.5)
+            ax.set_title(f"Input: {csv_col}", fontsize=8)
+            ax.grid(True, alpha=0.4)
+
+        axes[-1].set_xlabel("Time (s)")
+        plt.tight_layout()
+
+        safe_id   = model_id.replace('/', '_').replace('\\', '_')
+        plot_file = os.path.join(out_dir, f"{safe_id}_Validation.png")
+        plt.savefig(plot_file, dpi=120)
+        plt.close()
+        plotted += 1
+        print(f"  Plotted: {safe_id}  [{model_type}{fit_str}]")
+
+    print(f"\n[SUMMARY] {plotted} validation plots written to {out_dir}")
+    print(f"          Skipped: {skipped_boundary} boundary sources, {skipped_fallback} failed fits")
+
 
 if __name__ == "__main__":
     plot_validation()

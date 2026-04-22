@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("KSpiceEngine")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+44ba1abf2392de65909531c017d9946519f7a1d7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6b7474874346158b3060b34ff081efdd2b59eaff")]
 [assembly: System.Reflection.AssemblyProductAttribute("KSpiceEngine")]
 [assembly: System.Reflection.AssemblyTitleAttribute("KSpiceEngine")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
