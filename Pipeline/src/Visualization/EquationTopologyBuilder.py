@@ -1,139 +1,122 @@
 import json
 import os
-from collections import deque
 
 def build_eq_topology():
-    eq_path = os.path.join(os.path.dirname(__file__), '../../output/diagrams/TSA_Equations.json')
-    map_path = os.path.join(os.path.dirname(__file__), '../../data/extracted/KSpiceSystemMap.json')
-    out_html = os.path.join(os.path.dirname(__file__), '../../output/diagrams/System_TSA_State_Topology.html')
-    
-    with open(eq_path, 'r', encoding='utf-8') as f:
+    base = os.path.join(os.path.dirname(__file__), '..', '..')
+    eq_path   = os.path.normpath(os.path.join(base, 'output', 'diagrams', 'TSA_Equations.json'))
+    map_path  = os.path.normpath(os.path.join(base, 'data',   'extracted', 'KSpiceSystemMap.json'))
+    out_html  = os.path.normpath(os.path.join(base, 'output', 'diagrams', 'System_TSA_State_Topology.html'))
+    out_json  = os.path.normpath(os.path.join(base, 'output', 'diagrams', 'TSA_Explicit_Topology.json'))
+
+    with open(eq_path,  'r', encoding='utf-8') as f:
         equations = json.load(f)
-        
     with open(map_path, 'r', encoding='utf-8') as f:
         kspice_data = json.load(f)
-        
-    # Build raw connection map (bypassing noise)
-    ignore_types = ['Alarm', 'Transmitter', 'Indicator', 'SignalSwitch']
-    def is_noise(n, t):
-        l = n.lower()
-        if any(i in t for i in ignore_types) or l.endswith('_m') or l.endswith('_view'): return True
-        if l.startswith('pv_') or l.startswith('network-') or 'fe0' in l or 'fit0' in l or 'tit0' in l or 'pit0' in l: return True
+
+    # ── Build raw connection graph (traverse through noise) ──────────────────
+
+    ignore_types = ['Alarm', 'Transmitter', 'Indicator', 'SignalSwitch', 'ProfileViewer']
+
+    def is_noise(name, ktype):
+        n = name.lower()
+        if any(t in ktype for t in ignore_types): return True
+        if n.endswith('_m') or n.endswith('_view'): return True
+        if n.startswith('pv') or n.startswith('network-'): return True
+        if 'fe0' in n or 'fit0' in n or 'tit0' in n or 'pit0' in n: return True
         return False
-        
-    # Build complete raw_ins and raw_outs across ALL nodes to allow tracing through noise
-    raw_ins = {}
-    raw_outs = {}
-    base_types = {}
-    is_noise_map = {}
-    
+
+    raw_ins   = {}   # node -> [(src, port)]
+    raw_outs  = {}   # node -> [(dst, port)]
+    base_types = {}  # clean component name -> KSpiceType
+
     for m in kspice_data.get('Models', []):
-        bn = m['Name'].replace('_pf', '')
+        bn    = m['Name'].replace('_pf', '')
         ktype = m['KSpiceType']
-        is_n = is_noise(bn, ktype) and not 'ControlValve' in ktype
-        is_noise_map[bn] = is_n
-        
-        if not is_n:
+        noise = is_noise(bn, ktype) and 'ControlValve' not in ktype
+
+        if not noise:
             base_types[bn] = ktype
-            
-        if bn not in raw_ins: raw_ins[bn] = []
-        if bn not in raw_outs: raw_outs[bn] = []
-        
-        for i in m.get('Inputs', []):
-            if i['Source']: 
-                parts = i['Source'].split(':')
-                src = parts[0].replace('_pf', '')
-                port = parts[1] if len(parts) > 1 else ''
-                raw_ins[bn].append((src, port))
-                if src not in raw_outs: raw_outs[src] = []
-                raw_outs[src].append((bn, port))
 
-    # Undirected adjacency for tracing measurements through PipeVolume / transmitters / _pf aliases
-    adj = {}
-    def link(a, b):
-        a = a.replace('_pf', '')
-        b = b.replace('_pf', '')
-        if not a or not b:
-            return
-        adj.setdefault(a, set()).add(b)
-        adj.setdefault(b, set()).add(a)
-    for a, pairs in raw_ins.items():
-        a = a.replace('_pf', '')
-        for src, _ in pairs:
-            link(a, src)
-    for src, pairs in raw_outs.items():
-        src = src.replace('_pf', '')
-        for dst, _ in pairs:
-            link(src, dst)
+        raw_ins.setdefault(bn, [])
+        raw_outs.setdefault(bn, [])
 
-    kspice_type_by_name = {}
-    for m in kspice_data.get('Models', []):
-        kspice_type_by_name[m['Name'].replace('_pf', '')] = m.get('KSpiceType', '')
+        for inp in m.get('Inputs', []):
+            if not inp.get('Source'):
+                continue
+            parts = inp['Source'].split(':')
+            src   = parts[0].replace('_pf', '')
+            port  = parts[1] if len(parts) > 1 else ''
+            raw_ins[bn].append((src, port))
+            raw_outs.setdefault(src, []).append((bn, port))
+
+    # ── Upstream / downstream traversal (skips noise blocks) ────────────────
 
     def get_upstream(node, flow_only=False):
+        """Return list of (comp, port) pairs that feed into node, skipping noise."""
         res = []
         vis = set()
-        def t(curr, best_port=''):
+        def _trace(curr, best_port=''):
             if curr in vis: return
             vis.add(curr)
             for u, port in raw_ins.get(curr, []):
-                # Do not jump thermal boundaries / profile bounds if we just want fluid flow
-                if flow_only and ('Profile' in port or 'Factor' in port or 'Conductance' in port or 'Temperature' in port or 'Control' in port or 'Measured' in port or 'Speed' in port):
+                if flow_only and any(tok in port for tok in
+                        ('Profile', 'Factor', 'Conductance', 'Temperature',
+                         'Control', 'Measured', 'Speed')):
                     continue
-                # Block upstream traversal into Controllers across signals if flow_only is active
-                if flow_only and ('ASC' in base_types.get(u, '') or 'Controller' in base_types.get(u, '')):
+                if flow_only and any(t in base_types.get(u, '') for t in ('ASC', 'Controller')):
                     continue
-                    
-                # Save the specific measurement port (like LevelHeavyPhaseFeedSideWeir) instead of generic Value/Output
-                cur_port = port if port and 'Value' not in port and 'Output' not in port and 'Out' not in port else best_port
-                if u in base_types: res.append((u, cur_port))
-                else: t(u, cur_port)
-        t(node)
+                # Prefer a descriptive port name over generic Output/Value/Out
+                cur_port = port if (port and not any(g in port for g in ('Value', 'Output', 'Out'))) else best_port
+                if u in base_types:
+                    res.append((u, cur_port))
+                else:
+                    _trace(u, cur_port)
+        _trace(node)
         return res
 
     def get_downstream(node, flow_only=False):
+        """Return list of component names that node feeds into, skipping noise."""
         res = []
         vis = set()
-        def t(curr):
+        def _trace(curr):
             if curr in vis: return
             vis.add(curr)
             for d, port in raw_outs.get(curr, []):
-                # Do not jump thermal boundaries / profile bounds if we just want fluid flow
-                if flow_only and ('Profile' in port or 'Factor' in port or 'Conductance' in port or 'Temperature' in port or 'Control' in port or 'Measured' in port or 'Speed' in port):
+                if flow_only and any(tok in port for tok in
+                        ('Profile', 'Factor', 'Conductance', 'Temperature',
+                         'Control', 'Measured', 'Speed')):
                     continue
-                if flow_only and ('ASC' in base_types.get(d, '') or 'Controller' in base_types.get(d, '')):
+                if flow_only and any(t in base_types.get(d, '') for t in ('ASC', 'Controller')):
                     continue
-                if d in base_types: res.append(d)
-                else: t(d)
-        t(node)
+                if d in base_types:
+                    res.append(d)
+                else:
+                    _trace(d)
+        _trace(node)
         return res
 
-    tsa_states = []
-    edges = []
-    
-    # Pass-Through Pruning: Remove models for purely internal passive blocks (ESV, MA, HV) to avoid adding zero-value math overhead
-    filtered_equations = []
+    # ── Pass-through pruning ─────────────────────────────────────────────────
+    # Passive valves that are simple 1-to-1 conduits (ESV, HV, MA, PSV, CV)
+    # are dropped from the equation graph — the topology jumps over them.
+
+    filtered = []
     for eq in equations:
         comp = eq['Component']
-        is_passive_type = any(t in comp.upper() for t in ['ESV', 'MA', 'HV', 'PSV', 'CV'])
-        
-        # Determine if endpoint structurally (has nothing upstream or nothing downstream flow-wise)
-        ups = [u for u in get_upstream(comp, flow_only=True) if (u[0] if isinstance(u, tuple) else u) != comp]
+        is_passive = any(t in comp.upper() for t in ('ESV', 'MA', 'HV', 'PSV', 'CV'))
+
+        ups   = [u for u in get_upstream(comp, flow_only=True)   if (u[0] if isinstance(u, tuple) else u) != comp]
         downs = [d for d in get_downstream(comp, flow_only=True) if d != comp]
-        is_endpoint = (len(ups) == 0 or len(downs) == 0)
-        
-        # Determine if it's a direct 1-to-1 pass-through (if it combines feeds, it's a manifold and must be kept)
-        is_true_pass_through = (len(ups) == 1 and len(downs) == 1)
-        
-        # Keep if it has controllers tied to it, too (like a ControlValve)
-        is_control_valve = 'ControlValve' in base_types.get(comp, '') and not is_passive_type
-        
-        if is_passive_type and is_true_pass_through and not is_control_valve:
-            # Drop it physically from equations list => equations will jump over it
+
+        is_pass_through  = (len(ups) == 1 and len(downs) == 1)
+        is_control_valve = 'ControlValve' in base_types.get(comp, '') and not is_passive
+
+        if is_passive and is_pass_through and not is_control_valve:
             continue
-        filtered_equations.append(eq)
-        
-    equations = filtered_equations
+        filtered.append(eq)
+
+    equations = filtered
+
+    # ── Build node list (one vis-network node per equation state) ────────────
 
     C_FLOW = "#a3d2ca"
     C_PRES = "#f5d787"
@@ -141,271 +124,231 @@ def build_eq_topology():
     C_LVL  = "#81ecec"
     C_CTRL = "#ff7675"
 
+    tsa_states = []
     for eq in equations:
-        cid = eq['ID']
+        cid  = eq['ID']
         comp = eq['Component']
-        st = eq['State']
+        st   = eq['State']
         role = eq['Role']
-        
-        color = C_FLOW
-        if st == 'Pressure': color = C_PRES
-        if st == 'Temperature': color = C_TEMP
-        if 'Level' in st: color = C_LVL
-        if role == 'Controller': color = C_CTRL
-        
-        lbl = f"{comp}\n({st})\n\nEq: {eq['Formula']}"
-        if 'Param' in eq: lbl += f"\n[{eq['Param']}]"
-        
-        tsa_states.append({"id": cid, "label": lbl, "color": color, "shape": "box", "font": {"multi": "html", "size": 11}})
 
-    # Helpers to dynamically find the nearest valid component that provides a modeled state
-    def find_nearest_state(start_node, target_state, traverse_upstream):
-        res = []
-        vis = set()
-        queue = [start_node]
-        while queue:
-            curr = queue.pop(0)
-            if curr in vis: continue
-            vis.add(curr)
-            
-            if curr != start_node:
-                has_state = any(e['Component'] == curr and e['State'] == target_state for e in equations)
-                if has_state:
-                    res.append(curr)
-                    continue # Stop traversing this specific flow branch further
-                    
-            next_comps = get_upstream(curr, flow_only=True) if traverse_upstream else get_downstream(curr, flow_only=True)
-            for n in next_comps:
-                comp_name = n[0] if isinstance(n, tuple) else n
-                queue.append(comp_name)
-                
-        # Deduplicate while preserving BFS order (closest first)
-        seen = set()
-        return [x for x in res if not (x in seen or seen.add(x))]
+        color = C_FLOW
+        if st == 'Pressure':      color = C_PRES
+        if st == 'Temperature':   color = C_TEMP
+        if 'Level' in st:         color = C_LVL
+        if role == 'Controller':  color = C_CTRL
+
+        label = f"{comp}\n({st})\n\nEq: {eq['Formula']}"
+        if 'Param' in eq:
+            label += f"\n[{eq['Param']}]"
+
+        tsa_states.append({
+            "id":    cid,
+            "label": label,
+            "color": color,
+            "shape": "box",
+            "group": comp,   # same-component nodes share a group for clustering
+            "font":  {"multi": "html", "size": 11}
+        })
+
+    # ── BFS: find nearest component with a given modelled state ─────────────
 
     equation_ids = {e['ID'] for e in equations}
 
-    def split_comp_state(sid):
-        if '_' not in sid:
-            return sid, ''
-        return sid.rsplit('_', 1)
+    def find_nearest_state(start_comp, target_state, traverse_upstream):
+        """BFS over the component graph; returns component names that model target_state."""
+        found = []
+        visited = set()
+        queue   = [start_comp]
+        while queue:
+            curr = queue.pop(0)
+            if curr in visited:
+                continue
+            visited.add(curr)
+            if curr != start_comp and f"{curr}_{target_state}" in equation_ids:
+                found.append(curr)
+                continue   # stop going further along this branch
+            if traverse_upstream:
+                nexts = [u for u, _ in get_upstream(curr, flow_only=True)]
+            else:
+                nexts = get_downstream(curr, flow_only=True)
+            queue.extend(n for n in nexts if n not in visited)
+        # deduplicate preserving BFS order
+        seen = set()
+        return [x for x in found if not (x in seen or seen.add(x))]
 
-    # Interpret the abstract equation requirements into literal model wiring!
-    added_edges_map = {}
-    asc_wired_cids = set()
+    # ── Build edge list ──────────────────────────────────────────────────────
+
+    edges = []
+    added = set()
 
     def add_edge(frm, to, lbl):
         if frm == to:
             return
-        fc, fs = split_comp_state(frm)
-        tc, ts = split_comp_state(to)
+        # Prevent self-loops on the exact same state node
+        fc, _, fs = frm.rpartition('_')
+        tc, _, ts = to.rpartition('_')
         if fc == tc and fs == ts:
             return
-        
-        pair_id = f"{frm}->{to}"
-        if pair_id in added_edges_map:
-            edge = added_edges_map[pair_id]
-            if lbl not in edge["label"]:
-                edge["label"] += f" & {lbl}"
-        else:
-            e = {"from": frm, "to": to, "label": lbl, "arrows": "to", "font": {"size": 8}}
-            edges.append(e)
-            added_edges_map[pair_id] = e
-
-    def _type_rank_for_flow(comp_name):
-        kt = (base_types.get(comp_name, '') or '').lower()
-        if 'compressor' in kt or 'pump' in kt:
-            return 100
-        if 'valve' in kt:
-            return 20
-        if 'pipe' in kt or 'flow' in kt:
-            return 10
-        return 0
-
-    def _type_rank_for_pressure(comp_name, dest=''):
-        kt = (base_types.get(comp_name, '') or '').lower()
-        dl = (dest or '').lower()
-        
-        is_sep = 'separator' in kt or 'tank' in kt or 'volume' in kt
-        is_comp = 'compressor' in kt or 'pump' in kt
-        
-        if 'inlet' in dl:
-            if is_sep: return 200
-            if is_comp: return -100
-        elif 'outlet' in dl:
-            if is_comp: return 200
-            if is_sep: return -100
-            
-        # Default behavior if not explicitly inlet/outlet
-        if is_sep: return 50
-        return 0
-
-    def bfs_best_modeled_state(start_block, state_suffix, rank_fn=None):
-        """Shortest-path BFS to a modeled {comp}_{state_suffix}; tie-break with rank_fn(comp)."""
-        rank_fn = rank_fn or (lambda c: 0)
-        start = start_block.replace('_pf', '')
-        q = deque([start])
-        dist = {start: 0}
-        hits = []
-        while q:
-            cur = q.popleft()
-            d = dist[cur]
-            tid = f"{cur}_{state_suffix}"
-            if tid in equation_ids:
-                hits.append((d - rank_fn(cur), tid))
-            for nb in adj.get(cur, ()):
-                if nb not in dist:
-                    dist[nb] = d + 1
-                    q.append(nb)
-        if not hits:
-            return None
-        hits.sort()
-        return hits[0][1]
-
-    def map_asc_measurement_suffix(dest, src_port):
-        dl = (dest or '').lower()
-        pl = (src_port or '').lower()
-        if 'compressor' in dl or 'performancedata' in dl:
-            return 'MassFlow'
-        if 'flow' in dl or 'dp' in dl or 'deltap' in pl:
-            return 'MassFlow'
-        if 'pressure' in dl or 'measuredvalue' in dl or pl.endswith('pressure') or '.p' in pl or 'inlet' in dl or 'outlet' in dl:
-            return 'Pressure'
-        return None
-
-    def wire_asc_from_declared_sources(cid, comp):
-        if cid in asc_wired_cids:
-            return
-        if 'GenericASC' not in kspice_type_by_name.get(comp, ''):
-            return
-        asc_mdl = None
-        for m in kspice_data.get('Models', []):
-            if m.get('Name', '').replace('_pf', '') == comp:
-                asc_mdl = m
-                break
-        if not asc_mdl:
-            asc_wired_cids.add(cid)
-            return
-        for kin in asc_mdl.get('Inputs', []) or []:
-            src_full = kin.get('Source') or ''
-            dest = kin.get('Destination') or ''
-            if not src_full or ':' not in src_full:
-                continue
-            blk, sport = src_full.split(':', 1)
-            sfx = map_asc_measurement_suffix(dest, sport)
-            if not sfx:
-                continue
-            rank_fn = (lambda c, _sfx=sfx, _dst=dest: _type_rank_for_flow(c) if _sfx == 'MassFlow' else _type_rank_for_pressure(c, _dst))
-            tid = bfs_best_modeled_state(blk, sfx, rank_fn=rank_fn)
-            if tid:
-                add_edge(tid, cid, f"KSpice:{dest}")
-        asc_wired_cids.add(cid)
+        eid = f"{frm}->{to}"
+        if eid not in added:
+            edges.append({"from": frm, "to": to, "label": lbl,
+                          "arrows": "to", "font": {"size": 8}})
+            added.add(eid)
 
     for eq in equations:
-        cid = eq['ID']
+        cid  = eq['ID']
         comp = eq['Component']
-        up_comps = get_upstream(comp)
+        up_comps      = get_upstream(comp)
         up_flow_comps = get_upstream(comp, flow_only=True)
-        
-        # Auto-Wire abstract inputs based on formula demands!
+
         for inp in eq['Inputs']:
+
+            # ── Abstract placeholders resolved via BFS ───────────────────────
             if inp == "UPSTREAM_FLOW":
-                for f_node in find_nearest_state(comp, 'MassFlow', True): add_edge(f"{f_node}_MassFlow", cid, "m_in")
+                for n in find_nearest_state(comp, 'MassFlow', True):
+                    add_edge(f"{n}_MassFlow", cid, "m_in")
+
             elif inp == "DOWNSTREAM_FLOW":
-                for f_node in find_nearest_state(comp, 'MassFlow', False): add_edge(f"{f_node}_MassFlow", cid, "m_out")
+                for n in find_nearest_state(comp, 'MassFlow', False):
+                    add_edge(f"{n}_MassFlow", cid, "m_out")
+
             elif inp == "DOWNSTREAM_FLOW_SUM":
-                for f_node in find_nearest_state(comp, 'MassFlow', False): add_edge(f"{f_node}_MassFlow", cid, "m_sum")
+                for n in find_nearest_state(comp, 'MassFlow', False):
+                    add_edge(f"{n}_MassFlow", cid, "m_sum")
+
             elif inp == "MACRO_MASS_FLOW_TRUNK":
-                # Connect the flow of the upstream component directly to this flow to show the trunk line
-                for (u, port) in up_flow_comps:
+                for u, _ in up_flow_comps:
                     if 'Separator' not in base_types.get(u, '') and 'Tank' not in base_types.get(u, ''):
-                        add_edge(f"{u}_MassFlow", cid, "MACRO_TRUNK")
+                        add_edge(f"{u}_MassFlow", cid, "trunk")
+
             elif inp == "UPSTREAM_PRESSURE":
-                for p_node in find_nearest_state(comp, 'Pressure', True): add_edge(f"{p_node}_Pressure", cid, "P_in")
+                for n in find_nearest_state(comp, 'Pressure', True):
+                    add_edge(f"{n}_Pressure", cid, "P_in")
+
             elif inp == "DOWNSTREAM_PRESSURE":
-                for p_node in find_nearest_state(comp, 'Pressure', False): add_edge(f"{p_node}_Pressure", cid, "P_out")
+                for n in find_nearest_state(comp, 'Pressure', False):
+                    add_edge(f"{n}_Pressure", cid, "P_out")
+
             elif inp == "UPSTREAM_TEMP":
-                for t_node in find_nearest_state(comp, 'Temperature', True): add_edge(f"{t_node}_Temperature", cid, "T_in")
+                for n in find_nearest_state(comp, 'Temperature', True):
+                    add_edge(f"{n}_Temperature", cid, "T_in")
+
             elif inp == "COOLING_TEMP":
-                for (u, port) in get_upstream(comp, flow_only=False):
+                for u, port in get_upstream(comp, flow_only=False):
                     if 'Temperature' in port:
                         add_edge(f"{u}_Temperature", cid, "T_cool")
+
             elif inp == "LOCAL_CONTROL":
-                for (u, port) in up_comps:
-                    if 'Control' in base_types.get(u, ''): add_edge(f"{u}_Control", cid, "U(t)")
-                    elif 'ASC' in base_types.get(u, ''): add_edge(f"{u}_Control", cid, "U(t)")
+                for u, _ in up_comps:
+                    kt = base_types.get(u, '')
+                    if 'Control' in kt or 'ASC' in kt:
+                        add_edge(f"{u}_Control", cid, "U(t)")
+
             elif inp == "MEASURED_FLOW":
-                if 'GenericASC' in kspice_type_by_name.get(comp, ''):
-                    wire_asc_from_declared_sources(cid, comp)
-                else:
-                    for f_node in find_nearest_state(comp, 'MassFlow', True)[:1]: add_edge(f"{f_node}_MassFlow", cid, "y_flow")
+                for n in find_nearest_state(comp, 'MassFlow', True)[:1]:
+                    add_edge(f"{n}_MassFlow", cid, "y_flow")
+
             elif inp == "MEASURED_PRESSURE":
-                if 'GenericASC' in kspice_type_by_name.get(comp, ''):
-                    wire_asc_from_declared_sources(cid, comp)
-                else:
-                    for p_node in find_nearest_state(comp, 'Pressure', True): add_edge(f"{p_node}_Pressure", cid, "y_pres")
-                    for p_node in find_nearest_state(comp, 'Pressure', False): add_edge(f"{p_node}_Pressure", cid, "y_pres")
+                for n in find_nearest_state(comp, 'Pressure', True):
+                    add_edge(f"{n}_Pressure", cid, "y_pres")
+                for n in find_nearest_state(comp, 'Pressure', False):
+                    add_edge(f"{n}_Pressure", cid, "y_pres")
+
             elif inp == "MEASURED_STATE":
-                for (u, port) in up_comps:
-                    ut = base_types.get(u, '')
-                    vol = 'Separator' in ut or 'Tank' in ut
+                for u, port in up_comps:
+                    kt      = base_types.get(u, '')
+                    is_vol  = 'Separator' in kt or 'Tank' in kt
                     p_lower = (port or '').lower()
-                    if vol:
+
+                    if is_vol:
+                        # Level controllers: pick the right level state
                         if 'LIC' in comp:
                             if 'water' in p_lower or 'heavy' in p_lower:
                                 add_edge(f"{u}_WaterLevel", cid, "y_meas")
                             elif 'oil' in p_lower or 'light' in p_lower or 'overflow' in p_lower:
-                                add_edge(f"{u}_OilLevel", cid, "y_meas")
+                                add_edge(f"{u}_OilLevel",   cid, "y_meas")
                             else:
                                 add_edge(f"{u}_TotalLevel", cid, "y_meas")
                         if 'PIC' in comp:
-                            add_edge(f"{u}_Pressure", cid, "y_meas")
+                            add_edge(f"{u}_Pressure",    cid, "y_meas")
                         if 'TIC' in comp:
                             add_edge(f"{u}_Temperature", cid, "y_meas")
                     else:
-                        if 'PIC' in comp:
-                            add_edge(f"{u}_Pressure", cid, "y_meas")
-                        elif 'TIC' in comp:
-                            add_edge(f"{u}_Temperature", cid, "y_meas")
-                        elif 'LIC' in comp:
-                            add_edge(f"{u}_TotalLevel", cid, "y_meas")
-                        elif 'F' in comp or 'ASC' in comp:
-                            add_edge(f"{u}_MassFlow", cid, "y_meas")
-                        else:
-                            add_edge(f"{u}_MassFlow", cid, "y_meas")
-            else:
-                add_edge(inp, cid, "local_var")
+                        if   'PIC' in comp: add_edge(f"{u}_Pressure",    cid, "y_meas")
+                        elif 'TIC' in comp: add_edge(f"{u}_Temperature", cid, "y_meas")
+                        elif 'LIC' in comp: add_edge(f"{u}_TotalLevel",  cid, "y_meas")
+                        elif 'ASC' in comp: add_edge(f"{u}_MassFlow",    cid, "y_meas")
+                        else:               add_edge(f"{u}_MassFlow",    cid, "y_meas")
 
-    html_content = f"""
-    <!DOCTYPE html>
-    <html>
-    <head><title>Equation-Driven MISO Topology</title>
-    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-    <style>
-        #mynetwork {{ width: 100vw; height: 100vh; border: 1px solid lightgray; background:#fafafa; }}
-        body {{ margin: 0; padding: 0; overflow: hidden; font-family: monospace; }}
-    </style>
-    </head>
-    <body>
-    <div id="mynetwork"></div>
-    <script type="text/javascript">
-        var nodes = new vis.DataSet({json.dumps(tsa_states)});
-        var edges = new vis.DataSet({json.dumps(edges)});
-        var network = new vis.Network(document.getElementById('mynetwork'), {{nodes: nodes, edges: edges}}, {{
-            physics: {{ stabilization: true, barnesHut: {{ springLength: 260, springConstant: 0.03 }} }},
-            layout: {{ hierarchical: false }}
-        }});
-    </script>
-    </body></html>
-    """
-    with open(out_html, 'w') as f:
-        f.write(html_content)
-        
-    explicit_out = os.path.join(os.path.dirname(__file__), '../../output/diagrams/TSA_Explicit_Topology.json')
-    with open(explicit_out, 'w') as f:
+            else:
+                # Literal state ID passed directly (e.g. "23KA0001_MassFlow" -> intra-component edge)
+                if inp in equation_ids:
+                    add_edge(inp, cid, "local_var")
+
+    # ── Render HTML with vis-network ─────────────────────────────────────────
+
+    html = f"""<!DOCTYPE html>
+<html>
+<head>
+  <title>K-Spice Equation Topology</title>
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  <style>
+    body  {{ margin: 0; padding: 0; overflow: hidden; font-family: monospace; background: #fafafa; }}
+    #net  {{ width: 100vw; height: 100vh; border: 1px solid #ccc; }}
+    #info {{ position: fixed; top: 8px; left: 8px; background: rgba(255,255,255,0.85);
+             padding: 6px 10px; border-radius: 4px; font-size: 12px; z-index: 99; }}
+  </style>
+</head>
+<body>
+<div id="info">
+  <b>K-Spice Equation Topology</b><br>
+  {len(tsa_states)} states &nbsp;|&nbsp; {len(edges)} edges<br>
+  <span style="color:#a3d2ca">&#9632;</span> MassFlow &nbsp;
+  <span style="color:#f5d787">&#9632;</span> Pressure &nbsp;
+  <span style="color:#f3a683">&#9632;</span> Temperature &nbsp;
+  <span style="color:#81ecec">&#9632;</span> Level &nbsp;
+  <span style="color:#ff7675">&#9632;</span> Controller
+</div>
+<div id="net"></div>
+<script>
+  var nodes = new vis.DataSet({json.dumps(tsa_states, indent=None)});
+  var edges = new vis.DataSet({json.dumps(edges,      indent=None)});
+  var net   = new vis.Network(document.getElementById('net'),
+    {{nodes: nodes, edges: edges}},
+    {{
+      physics: {{
+        stabilization: {{iterations: 300}},
+        barnesHut: {{springLength: 220, springConstant: 0.04, damping: 0.12}}
+      }},
+      edges: {{
+        smooth: {{type: 'curvedCW', roundness: 0.2}},
+        font:   {{size: 9, align: 'middle'}}
+      }},
+      nodes: {{font: {{size: 11}}}},
+      interaction: {{hover: true, tooltipDelay: 100}}
+    }}
+  );
+  net.on('click', function(p) {{
+    if (p.nodes.length) {{
+      var n = nodes.get(p.nodes[0]);
+      document.getElementById('info').innerHTML =
+        '<b>' + n.id + '</b><br>' + (n.label || '').replace(/\\n/g,'<br>');
+    }}
+  }});
+</script>
+</body>
+</html>"""
+
+    os.makedirs(os.path.dirname(out_html), exist_ok=True)
+    with open(out_html, 'w', encoding='utf-8') as f:
+        f.write(html)
+
+    with open(out_json, 'w', encoding='utf-8') as f:
         json.dump({"nodes": tsa_states, "edges": edges}, f, indent=2)
-        
-    print(f"Topology successfully derived from Mathematical Equations at {out_html}")
+
+    print(f"[SUCCESS] Topology: {out_html}")
+    print(f"          States: {len(tsa_states)},  Edges: {len(edges)}")
+
 
 if __name__ == '__main__':
     build_eq_topology()

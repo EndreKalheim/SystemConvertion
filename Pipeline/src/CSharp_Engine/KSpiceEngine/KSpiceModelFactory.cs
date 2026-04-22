@@ -24,7 +24,7 @@ namespace KSpiceEngine
             var modelDefinitions = new List<JObject>();
 
             // Exclude pure K-Spice noise blocks
-            string[] ignoreTypes = { "Alarm", "Transmitter", "Indicator", "SignalSwitch" };
+            string[] ignoreTypes = { "Alarm", "Transmitter", "Indicator", "SignalSwitch", "ProfileViewer" };
 
             // First Pass: Index valid bases
             var validComponents = new List<dynamic>();
@@ -34,7 +34,7 @@ namespace KSpiceEngine
                 string n = node["Name"];
                 string nLower = n.ToLower();
                 
-                if (t == "Network" || ignoreTypes.Any(it => t.Contains(it)) || nLower.EndsWith("_m") || nLower.EndsWith("_view") || nLower.StartsWith("pv_") || nLower.StartsWith("network-") || nLower.Contains("fe0"))
+                if (t == "Network" || ignoreTypes.Any(it => t.Contains(it)) || nLower.EndsWith("_m") || nLower.EndsWith("_view") || nLower.StartsWith("pv") || nLower.StartsWith("network-") || nLower.Contains("fe0"))
                     continue;
                 
                 // Pass-through pruning (Dynamically skipping ESV, MA, HV)

@@ -16,7 +16,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyDescriptionAttribute(("Time-series modeling and simulation, based on system identification. Supports tra" +
     "nsients/dynamic and static models, filters and PID-control. "))]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.4.9.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.4.9+6594f93ef77656d76effe0308a6f17ced454ec0c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.4.9+44ba1abf2392de65909531c017d9946519f7a1d7")]
 [assembly: System.Reflection.AssemblyProductAttribute("TimeSeriesAnalysis")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TimeSeriesAnalysis")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.4.9.0")]

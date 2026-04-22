@@ -13,13 +13,13 @@ def build_state_topology(input_json, output_json, output_html):
     
     # 1. Component Filtering & Base Names
     # We strip out noise like pv_, FE, network-, etc.
-    ignore_types = ['Alarm', 'Transmitter', 'Indicator', 'SignalSwitch']
+    ignore_types = ['Alarm', 'Transmitter', 'Indicator', 'SignalSwitch', 'ProfileViewer']
     
     def is_noise_block(name, btype):
         nl = name.lower()
         if any(itype in btype for itype in ignore_types): return True
         if nl.endswith('_m') or nl.endswith('_view'): return True
-        if nl.startswith('network-') or nl.startswith('pv_'): return True
+        if nl.startswith('network-') or nl.startswith('pv'): return True
         if 'fe0' in nl or 'fit0' in nl or 'tit0' in nl or 'pit0' in nl: return True 
         return False
         

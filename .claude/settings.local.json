@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(grep \"\\\\.cs$\")"
+      "Bash(grep \"\\\\.cs$\")",
+      "Bash(dotnet --version)",
+      "Bash(python *)",
+      "Bash(dotnet build *)",
+      "Bash(dotnet run *)"
     ]
   }
 }
