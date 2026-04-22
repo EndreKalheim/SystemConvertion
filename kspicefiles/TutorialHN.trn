@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<KSpiceData>
+  <FileInfo>
+    <Description></Description>
+    <Comment></Comment>
+    <ModelTime></ModelTime>
+    <SaveTime>2025-02-05T12:46:49.842Z</SaveTime>
+    <ModelFile></ModelFile>
+    <ParameterFile></ParameterFile>
+    <ValueFile></ValueFile>
+    <KernelInfo>K-Spice ModelServer Release 25.1.1.6 (Jan  6 2025 09:24:01)</KernelInfo>
+    <KernelVersion>25.1.1.6</KernelVersion>
+    <IsFileExported>false</IsFileExported>
+  </FileInfo>
+  <TrendDefinitions>
+    <TrendDefinition>
+      <TrendSet sample="1" numberOfPoints="600" writeToFile="true" />
+      <TrendSet sample="3" numberOfPoints="600" writeToFile="true" />
+      <TrendSet sample="12" numberOfPoints="600" writeToFile="true" />
+      <TrendSet sample="36" numberOfPoints="600" writeToFile="true" />
+      <TrendSet sample="72" numberOfPoints="600" writeToFile="true" />
+      <TrendSet sample="144" numberOfPoints="600" writeToFile="true" />
+    </TrendDefinition>
+    <TrendItemDefinition name="23ASC0001:NormalizedAsymmetricLimit" highScale="0.01" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23ASC0001:NormalizedFlow" highScale="0.01" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23ASC0001:NormalizedFlowSetpoint" highScale="0.01" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23ASC0001:NormalizedSurgeLimit" highScale="0.01" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23ASC0001:Output" highScale="0.01" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23LIC0001:ControllerOutput" highScale="2" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23LIC0001:InternalSetpoint" highScale="1" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23LIC0001:Measurement" highScale="2" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23LIC0002:ControllerOutput" highScale="2" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23LIC0002:InternalSetpoint" highScale="3" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23LIC0002:Measurement" highScale="4" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23PIC0001:ControllerOutput" highScale="0.01" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23PIC0001:InternalSetpoint" highScale="5101324.9999999991" lowScale="101324.99999999999" zero="0" description="" />
+    <TrendItemDefinition name="23PIC0001:Measurement" highScale="101324.99999999999" lowScale="-98675" zero="101324.99999999999" description="" />
+    <TrendItemDefinition name="23TIC0003:ControllerOutput" highScale="0.01" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23TIC0003:InternalSetpoint" highScale="273.14999999999998" lowScale="-226.85000000000002" zero="273.14999999999998" description="" />
+    <TrendItemDefinition name="23TIC0003:Measurement" highScale="273.14999999999998" lowScale="-226.85000000000002" zero="273.14999999999998" description="" />
+  </TrendDefinitions>
+</KSpiceData>

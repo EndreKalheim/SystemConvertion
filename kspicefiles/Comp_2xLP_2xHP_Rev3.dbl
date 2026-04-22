@@ -1,0 +1,15 @@
+$dig "23ASC0001:NormalizedSurgeMargin"
+	synonym = ""
+	desc = ""
+	group = ""
+	set = 0
+	vtype = "fraction"
+	sample = 1
+	start = 0
+	alarm = 0
+	direct = 0
+	enum = ""
+	set_ack = ""
+	ack = ""
+	enable = "";
+

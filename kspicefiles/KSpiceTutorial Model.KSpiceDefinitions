@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<KSpiceData>
+  <FileInfo>
+    <Description></Description>
+    <Comment></Comment>
+    <ModelTime></ModelTime>
+    <SaveTime>2025-02-05T12:45:02.510Z</SaveTime>
+    <ModelFile></ModelFile>
+    <ParameterFile></ParameterFile>
+    <ValueFile></ValueFile>
+    <KernelInfo>K-Spice ModelServer Release 25.1.1.6 (Jan  6 2025 09:24:01)</KernelInfo>
+    <KernelVersion>25.1.1.6</KernelVersion>
+    <IsFileExported>false</IsFileExported>
+  </FileInfo>
+  <definitions>
+<AlarmSetUp priority="0" filter="0" stateSet="0" activeFilter="0" historyFilter="0" maxDatabaseTime="2500000" maxDatabaseCount="1000" maxDatabaseSize="2000000" cacheSize="100" >
+</AlarmSetUp>
+<EnumeratedTypeList>
+</EnumeratedTypeList>
+<Sounds resetAction="action=StopSound;" setAction="action=PlaySound,%_SET_SOUND" setTrailer=",repeat;" />
+  </definitions>
+</KSpiceData>

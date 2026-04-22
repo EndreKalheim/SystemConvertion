@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<KSpiceData>
+  <FileInfo>
+    <Description></Description>
+    <Comment></Comment>
+    <ModelTime></ModelTime>
+    <SaveTime>2024-11-19T14:19:01.591Z</SaveTime>
+    <ModelFile></ModelFile>
+    <ParameterFile></ParameterFile>
+    <ValueFile></ValueFile>
+    <KernelInfo>K-Spice ModelServer Release 23.12.1.4 (Dec  2 2023 11:28:41)</KernelInfo>
+    <KernelVersion>23.12.1.4</KernelVersion>
+    <IsFileExported>false</IsFileExported>
+  </FileInfo>
+  <TrendDefinitions>
+    <TrendDefinition>
+      <TrendSet sample="1" numberOfPoints="600" writeToFile="true" />
+      <TrendSet sample="3" numberOfPoints="600" writeToFile="true" />
+      <TrendSet sample="12" numberOfPoints="600" writeToFile="true" />
+      <TrendSet sample="36" numberOfPoints="600" writeToFile="true" />
+      <TrendSet sample="72" numberOfPoints="600" writeToFile="true" />
+      <TrendSet sample="144" numberOfPoints="600" writeToFile="true" />
+    </TrendDefinition>
+    <TrendItemDefinition name="23ASC0001:NormalizedAsymmetricLimit" highScale="0.01" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23ASC0001:NormalizedFlow" highScale="0.01" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23ASC0001:NormalizedFlowSetpoint" highScale="0.01" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23ASC0001:NormalizedSurgeLimit" highScale="0.01" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23ASC0001:NormalizedSurgeMargin" highScale="0.14999999999999999" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23ASC0001:Output" highScale="0.01" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23ASC1001:NormalizedAsymmetricLimit" highScale="0.80000000000000004" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23ASC1001:NormalizedFlow" highScale="0.90000000000000002" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23ASC1001:NormalizedFlowSetpoint" highScale="0.90000000000000002" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23ASC1001:NormalizedSurgeLimit" highScale="0.69999999999999996" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23ASC1001:NormalizedSurgeMargin" highScale="0.14999999999999999" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23ASC1001:Output" highScale="0.070000000000000007" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23ASC2001:NormalizedAsymmetricLimit" highScale="0.29999999999999999" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23ASC2001:NormalizedFlow" highScale="0.20000000000000001" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23ASC2001:NormalizedFlowSetpoint" highScale="0.40000000000000002" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23ASC2001:NormalizedSurgeLimit" highScale="0.29999999999999999" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23ASC2001:NormalizedSurgeMargin" highScale="0.070000000000000007" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23ASC2001:Output" highScale="0.80000000000000004" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23ASC3001:NormalizedSurgeMargin" highScale="0.070000000000000007" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA0001:InletPressure" highScale="5000000" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA0001:MassFlow" highScale="100" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA0001:OutletPressure" highScale="10000000" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA0001:PolytropicEfficiency" highScale="2" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA0001:PolytropicHead" highScale="196132.99999395441" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA0001:Power" highScale="0" lowScale="-14000000" zero="0" description="" />
+    <TrendItemDefinition name="23KA0001:Speed" highScale="10.471975511965978" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA0001:VolumeFlow" highScale="5.5555555555555554" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA0001_m:ActivePower" highScale="16000000" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA0001_m:MachinePower" highScale="15000000" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA0001_m:MachineTorque" highScale="20000" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA1001:InletPressure" highScale="5000000" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA1001:MassFlow" highScale="100" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA1001:OutletPressure" highScale="10000000" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA1001:PolytropicEfficiency" highScale="2" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA1001:PolytropicHead" highScale="196132.99999395441" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA1001:Power" highScale="0" lowScale="-16000000" zero="0" description="" />
+    <TrendItemDefinition name="23KA1001:Speed" highScale="10.471975511965978" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA1001:VolumeFlow" highScale="5.5555555555555554" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA1001_m:ActivePower" highScale="20000000" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA1001_m:MachinePower" highScale="20000000" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA1001_m:MachineTorque" highScale="20000" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA2001:InletPressure" highScale="10000000" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA2001:MassFlow" highScale="100" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA2001:OutletPressure" highScale="29999999.999999996" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA2001:PolytropicEfficiency" highScale="2" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA2001:PolytropicHead" highScale="196132.99999395441" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA2001:Power" highScale="180000" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA2001:Speed" highScale="10.471975511965978" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA2001:VolumeFlow" highScale="1.6666666666666667" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA2001_m:ActivePower" highScale="15000000" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA2001_m:MachinePower" highScale="14000000" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA2001_m:MachineTorque" highScale="20000" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA3001:InletPressure" highScale="10000000" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA3001:MassFlow" highScale="100" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA3001:OutletPressure" highScale="29999999.999999996" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA3001:PolytropicEfficiency" highScale="2" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA3001:PolytropicHead" highScale="196132.99999395441" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA3001:Power" highScale="0" lowScale="-14000000" zero="0" description="" />
+    <TrendItemDefinition name="23KA3001:Speed" highScale="10.471975511965978" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA3001:VolumeFlow" highScale="1.6666666666666667" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA3001_m:ActivePower" highScale="15000000" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA3001_m:MachinePower" highScale="14000000" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23KA3001_m:MachineTorque" highScale="20000" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23LIC0001:ControllerOutput" highScale="2" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23LIC0001:InternalSetpoint" highScale="1" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23LIC0001:Measurement" highScale="2" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23LIC0002:ControllerOutput" highScale="2" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23LIC0002:InternalSetpoint" highScale="3" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23LIC0002:Measurement" highScale="4" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23PIC0001:ControllerOutput" highScale="10.471975511965978" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23PIC0001:InternalSetpoint" highScale="10000000" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23PIC0001:Measurement" highScale="10000000" lowScale="0" zero="101324.99999999999" description="" />
+    <TrendItemDefinition name="23PIC2001:ControllerOutput" highScale="10.471975511965978" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23PIC2001:InternalSetpoint" highScale="10000000" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23PIC2001:Measurement" highScale="10000000" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23PV_0001_pf:MassFlow" highScale="200" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23PV_1002_pf:MassFlow" highScale="200" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23PV_1002_pf:OutletPressure" highScale="29999999.999999996" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23SIC0001:ControllerOutput" highScale="1" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23SIC0001:InternalSetpoint" highScale="10.471975511965978" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23SIC0001:Measurement" highScale="10.471975511965978" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23SIC1001:ControllerOutput" highScale="1" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23SIC1001:InternalSetpoint" highScale="10.471975511965978" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23SIC1001:Measurement" highScale="10.471975511965978" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23SIC2001:ControllerOutput" highScale="1" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23SIC2001:InternalSetpoint" highScale="10.471975511965978" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23SIC2001:Measurement" highScale="10.471975511965978" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23SIC3001:ControllerOutput" highScale="1" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23SIC3001:InternalSetpoint" highScale="10.471975511965978" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23SIC3001:Measurement" highScale="10.471975511965978" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23TIC0003:ControllerOutput" highScale="0.01" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23TIC0003:InternalSetpoint" highScale="273.14999999999998" lowScale="-226.85000000000002" zero="273.14999999999998" description="" />
+    <TrendItemDefinition name="23TIC0003:Measurement" highScale="273.14999999999998" lowScale="-226.85000000000002" zero="273.14999999999998" description="" />
+    <TrendItemDefinition name="23TIC1003:ControllerOutput" highScale="0.5" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23TIC1003:InternalSetpoint" highScale="363.14999999999998" lowScale="273.14999999999998" zero="0" description="" />
+    <TrendItemDefinition name="23TIC1003:Measurement" highScale="363.14999999999998" lowScale="273.14999999999998" zero="0" description="" />
+    <TrendItemDefinition name="23UV0001:TargetPosition" highScale="0.01" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23UV0001:ValveStemPosition" highScale="0.01" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23UV0001_pf:MassFlow" highScale="100" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23UV1001:TargetPosition" highScale="0.01" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23UV1001:ValveStemPosition" highScale="1" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23UV1001_pf:MassFlow" highScale="100" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23UV2001:LocalControlSignalIn" highScale="0.01" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23UV2001:TargetPosition" highScale="0.01" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23UV2001:ValveStemPosition" highScale="0.01" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23UV2001_pf:MassFlow" highScale="100" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23UV3001:TargetPosition" highScale="0.01" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23UV3001:ValveStemPosition" highScale="0.01" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="23UV3001_pf:MassFlow" highScale="100" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="25HV0003:TargetPosition" highScale="2" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="25HV0003_pf:MassFlow" highScale="100" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="pf_Pipe0003A:MassFlow" highScale="100" lowScale="0" zero="0" description="" />
+    <TrendItemDefinition name="SumCompPower:Output" highScale="60000000" lowScale="0" zero="0" description="" />
+  </TrendDefinitions>
+</KSpiceData>

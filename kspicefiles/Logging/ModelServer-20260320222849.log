@@ -1,0 +1,474 @@
+0000000:00:00  INFO: Working Directory: C:\K-Spice-Projects\CompDemo_Rev4_V04\Timelines\Tutorial\Applications\ProcessModel.
+0000000:00:00  TRACE: Starting with command line arguments: "C:\Program Files (x86)\Kongsberg\K-Spice\bin64\ModelServer.exe" -instance 0 -project C:\K-Spice-Projects\CompDemo_Rev4_V04 -PartnerName CompDemo_Rev4_V04/Tutorial/ProcessModel -PartnerBackground
+0000000:00:00  INFO: Loading components from C:\Program Files (x86)\Kongsberg\K-Spice\bin64\Components.
+0000000:00:00  INFO: Loading component: C:\Program Files (x86)\Kongsberg\K-Spice\bin64\ModelServer.exe. Product version: 25.11.2.2
+0000000:00:00  INFO: Processing module definitions...
+0000000:00:00  INFO: Loading definition for module Adsorber.
+0000000:00:00  INFO: Loading definition for module ArithmeticOperator.
+0000000:00:00  INFO: Loading definition for module ArrayCollector.
+0000000:00:00  INFO: Loading definition for module ArrayInterface.
+0000000:00:00  INFO: Loading definition for module CustomCalculator.
+0000000:00:00  INFO: Loading definition for module MultiArithmeticOperator.
+0000000:00:00  INFO: Loading definition for module ProfileAnalyser.
+0000000:00:00  INFO: Loading definition for module ProfileArithmeticOperator.
+0000000:00:00  INFO: Loading definition for module ValueCollector.
+0000000:00:00  INFO: Loading definition for module DcsTorqueConverter.
+0000000:00:00  INFO: Loading definition for module ControlledAsynchronousMachine.
+0000000:00:00  INFO: Loading definition for module ControlledSynchronousMachine.
+0000000:00:00  INFO: Loading definition for module LatchedAsynchronousMachine.
+0000000:00:00  INFO: Loading definition for module LatchedSynchronousMachine.
+0000000:00:00  INFO: Loading definition for module PulsedAsynchronousMachine.
+0000000:00:00  INFO: Loading definition for module PulsedSynchronousMachine.
+0000000:00:00  INFO: Loading definition for module Shaft.
+0000000:00:00  INFO: Loading definition for module TorqueConverter.
+0000000:00:00  INFO: Loading definition for module BitMaskPacker.
+0000000:00:00  INFO: Loading definition for module BitMaskUnpacker.
+0000000:00:00  INFO: Loading definition for module ConvertIntToTwoInt.
+0000000:00:00  INFO: Loading definition for module ConvertIntToTwoReal.
+0000000:00:00  INFO: Loading definition for module ConvertRealToTwoInt.
+0000000:00:00  INFO: Loading definition for module ConvertTwoIntToInt.
+0000000:00:00  INFO: Loading definition for module ConvertTwoIntToReal.
+0000000:00:00  INFO: Loading definition for module ConvertTwoRealToInt.
+0000000:00:00  INFO: Loading definition for module Burner.
+0000000:00:00  INFO: Loading definition for module CauseAndEffectChart.
+0000000:00:00  INFO: Loading definition for module CentrifugalPump.
+0000000:00:00  INFO: Loading definition for module ReversedCentrifugalPump.
+0000000:00:00  INFO: Loading definition for module SingleChemAbsorption.
+0000000:00:00  INFO: Loading definition for module SingleChemAbsorptionIP.
+0000000:00:00  INFO: Loading definition for module ChemAbsorptionSet.
+0000000:00:00  INFO: Loading definition for module ColumnPackedStage.
+0000000:00:00  INFO: Loading definition for module ColumnPackedSection.
+0000000:00:00  INFO: Loading definition for module ColumnTray.
+0000000:00:00  INFO: Loading definition for module ColumnTraySection.
+0000000:00:00  INFO: Loading definition for module ComponentExtractor.
+0000000:00:00  INFO: Loading definition for module Centrifuge.
+0000000:00:00  INFO: Loading definition for module ContinuousFlowCompressor.
+0000000:00:00  INFO: Loading definition for module CurveFit.
+0000000:00:00  INFO: Loading definition for module DisplacementPump.
+0000000:00:00  INFO: Loading definition for module Drum.
+0000000:00:00  INFO: Loading definition for module ExpansionTank.
+0000000:00:00  INFO: Loading definition for module LNG_Tank.
+0000000:00:00  INFO: Loading definition for module ReactionBlock.
+0000000:00:00  INFO: Loading definition for module ControlledElectricHeater.
+0000000:00:00  INFO: Loading definition for module DcsElectricHeater.
+0000000:00:00  INFO: Loading definition for module ElectricHeater.
+0000000:00:00  INFO: Loading definition for module LatchControlledElectricHeater.
+0000000:00:00  INFO: Loading definition for module ExergyEfficiencyCalculator.
+0000000:00:00  INFO: Loading definition for module AlarmAnalog.
+0000000:00:00  INFO: Loading definition for module AlarmTransmitter.
+0000000:00:00  INFO: Loading definition for module KeyPerformanceIndicator.
+0000000:00:00  INFO: Loading definition for module FieldTransmitter.
+0000000:00:00  INFO: Loading definition for module TransmitterOverview.
+0000000:00:00  INFO: Loading definition for module Filter.
+0000000:00:00  INFO: Loading definition for module BaseFixedCatalystBedReactor.
+0000000:00:00  INFO: Loading definition for module FixedCatalystBedReactor.
+0000000:00:00  INFO: Loading definition for module FixedCatalystBedReactorIP.
+0000000:00:00  INFO: Loading definition for module FlashCalculator.
+0000000:00:00  INFO: Loading definition for module AsphalteneAdvisor.
+0000000:00:00  INFO: Loading definition for module AsphalteneCurve.
+0000000:00:00  INFO: Loading definition for module AsphalteneMargin.
+0000000:00:00  INFO: Loading definition for module HydrateMargin.
+0000000:00:00  INFO: Loading definition for module LedaFlowErosionMonitor.
+0000000:00:00  INFO: Loading definition for module LedaFlowSlugMonitor.
+0000000:00:00  INFO: Loading definition for module PipeCorrosionMonitor.
+0000000:00:00  INFO: Loading definition for module WaxMargin.
+0000000:00:00  INFO: Loading definition for module FlowElement.
+0000000:00:00  INFO: Loading definition for module Flowline.
+0000000:00:00  INFO: Loading definition for module SolidMarginCalculator.
+0000000:00:00  INFO: Loading definition for module GasTurbine.
+0000000:00:00  INFO: Loading definition for module GenericASC.
+0000000:00:00  INFO: Loading definition for module AutoTransformer.
+0000000:00:00  INFO: Loading definition for module AVR.
+0000000:00:00  INFO: Loading definition for module Branch.
+0000000:00:00  INFO: Loading definition for module Breaker.
+0000000:00:00  INFO: Loading definition for module Bus.
+0000000:00:00  INFO: Loading definition for module CapacitorBank.
+0000000:00:00  INFO: Loading definition for module ControlledBreaker.
+0000000:00:00  INFO: Loading definition for module ControlledBreakerThreePositions.
+0000000:00:00  INFO: Loading definition for module DClink.
+0000000:00:00  INFO: Loading definition for module DynamicSynchronousGenerator.
+0000000:00:00  INFO: Loading definition for module ElectroConnector.
+0000000:00:00  INFO: Loading definition for module Generator.
+0000000:00:00  INFO: Loading definition for module GridManager.
+0000000:00:00  INFO: Loading definition for module GroundDisconnector.
+0000000:00:00  INFO: Loading definition for module LatchControlledBreaker.
+0000000:00:00  INFO: Loading definition for module LoadSheddingController.
+0000000:00:00  INFO: Loading definition for module MotorBus.
+0000000:00:00  INFO: Loading definition for module PulseControlledBreaker.
+0000000:00:00  INFO: Loading definition for module PSS.
+0000000:00:00  INFO: Loading definition for module ShuntReactor.
+0000000:00:00  INFO: Loading definition for module ThreeWindingTransformer.
+0000000:00:00  INFO: Loading definition for module TwoWindingTransformer.
+0000000:00:00  INFO: Loading definition for module VoltageCurrentNetwork.
+0000000:00:00  INFO: Loading definition for module AirCooler.
+0000000:00:00  INFO: Loading definition for module HeatExchangerStream.
+0000000:00:00  INFO: Loading definition for module HeatExchangerStreamNet.
+0000000:00:00  INFO: Loading definition for module HydroCyclone.
+0000000:00:00  INFO: Loading definition for module Integrator.
+0000000:00:00  INFO: Loading definition for module TimeAverager.
+0000000:00:00  INFO: Loading definition for module Ejector.
+0000000:00:00  INFO: Loading definition for module EjectorLegacy.
+0000000:00:00  INFO: Loading definition for module Eductor.
+0000000:00:00  INFO: Loading definition for module LedaAmbientTemperature.
+0000000:00:00  INFO: Loading definition for module LedaBoundary.
+0000000:00:00  INFO: Loading definition for module LedaCorrosionMonitor.
+0000000:00:00  INFO: Loading definition for module LedaHeatSource.
+0000000:00:00  INFO: Loading definition for module LedaInterface.
+0000000:00:00  INFO: Loading definition for module LedaLeak.
+0000000:00:00  INFO: Loading definition for module LedaManifoldNode.
+0000000:00:00  INFO: Loading definition for module LedaMassNode.
+0000000:00:00  INFO: Loading definition for module LedaModelConnector.
+0000000:00:00  INFO: Loading definition for module LedaModelJoint.
+0000000:00:00  INFO: Loading definition for module LedaPig.
+0000000:00:00  INFO: Loading definition for module LedaPigTracker.
+0000000:00:00  INFO: Loading definition for module LedaPipe.
+0000000:00:00  INFO: Loading definition for module LedaPipeline.
+0000000:00:00  INFO: Loading definition for module LedaPosition.
+0000000:00:00  INFO: Loading definition for module LedaPressureBoundary.
+0000000:00:00  INFO: Loading definition for module LedaProfile.
+0000000:00:00  INFO: Loading definition for module LedaPump.
+0000000:00:00  INFO: Loading definition for module LedaSlugMonitor.
+0000000:00:00  INFO: Loading definition for module LedaSource.
+0000000:00:00  INFO: Loading definition for module LedaTuning.
+0000000:00:00  INFO: Loading definition for module LedaTransmitter.
+0000000:00:00  INFO: Loading definition for module LedaValve.
+0000000:00:00  INFO: Loading definition for module LedaWell.
+0000000:00:00  INFO: Loading definition for module LedaInput.
+0000000:00:00  INFO: Loading definition for module AsphalteneMonitor.
+0000000:00:00  INFO: Loading definition for module PipeAsphalteneMonitor.
+0000000:00:00  INFO: Loading definition for module CorrosionMonitor.
+0000000:00:00  INFO: Loading definition for module ErosionMonitor.
+0000000:00:00  INFO: Loading definition for module HydrateMarginCalculator.
+0000000:00:00  INFO: Loading definition for module WaxMarginCalculator.
+0000000:00:00  INFO: Loading definition for module LedaFlowBoundary.
+0000000:00:00  INFO: Loading definition for module LedaFlowOperator.
+0000000:00:00  INFO: Loading definition for module LedaFlowPipeline.
+0000000:00:00  INFO: Loading definition for module LedaFlowPosition.
+0000000:00:00  INFO: Loading definition for module LedaFlowPressureBoundary.
+0000000:00:00  INFO: Loading definition for module LedaFlowWell.
+0000000:00:00  INFO: Loading definition for module LedaFlowInflowPerformanceRelationship.
+0000000:00:00  INFO: Loading definition for module LedaFlowValve.
+0000000:00:00  INFO: Loading definition for module LedaFlowPig.
+0000000:00:00  INFO: Loading definition for module LedaFlowPigTracker.
+0000000:00:00  INFO: Loading definition for module LedaFlowSource.
+0000000:00:00  INFO: Loading definition for module LedaFlowLeak.
+0000000:00:00  INFO: Loading definition for module AsynchronousMachine.
+0000000:00:00  INFO: Loading definition for module DcsPidController.
+0000000:00:00  INFO: Loading definition for module DeltaVMotorOperatedValve.
+0000000:00:00  INFO: Loading definition for module FieldSwitch.
+0000000:00:00  INFO: Loading definition for module LatchControlledAsynchronousMachine.
+0000000:00:00  INFO: Loading definition for module LatchControlledSynchronousMachine.
+0000000:00:00  INFO: Loading definition for module PulseControlledAsynchronousMachine.
+0000000:00:00  INFO: Loading definition for module PulseControlledSynchronousMachine.
+0000000:00:00  INFO: Loading definition for module SynchronousMachine.
+0000000:00:00  INFO: Loading definition for module TrueClosesValve.
+0000000:00:00  INFO: Loading definition for module TrueOpensValve.
+0000000:00:00  INFO: Loading definition for module TrueStartsAsynchronousMachine.
+0000000:00:00  INFO: Loading definition for module TrueStopsAsynchronousMachine.
+0000000:00:00  INFO: Loading definition for module Valve.
+0000000:00:00  INFO: Loading definition for module AbsoluteValue.
+0000000:00:00  INFO: Loading definition for module Add.
+0000000:00:00  INFO: Loading definition for module And.
+0000000:00:00  INFO: Loading definition for module Average.
+0000000:00:00  INFO: Loading definition for module CompareHigh.
+0000000:00:00  INFO: Loading definition for module CompareInputs.
+0000000:00:00  INFO: Loading definition for module CompareLow.
+0000000:00:00  INFO: Loading definition for module Cosine.
+0000000:00:00  INFO: Loading definition for module Counter.
+0000000:00:00  INFO: Loading definition for module DelayedPulse.
+0000000:00:00  INFO: Loading definition for module Division.
+0000000:00:00  INFO: Loading definition for module DLatch.
+0000000:00:00  INFO: Loading definition for module ExponentialFunction.
+0000000:00:00  INFO: Loading definition for module Integral.
+0000000:00:00  INFO: Loading definition for module Invert.
+0000000:00:00  INFO: Loading definition for module Limit.
+0000000:00:00  INFO: Loading definition for module LogicOperator.
+0000000:00:00  INFO: Loading definition for module LowPassFilter.
+0000000:00:00  INFO: Loading definition for module Max.
+0000000:00:00  INFO: Loading definition for module Median.
+0000000:00:00  INFO: Loading definition for module Min.
+0000000:00:00  INFO: Loading definition for module Multiply.
+0000000:00:00  INFO: Loading definition for module Nand.
+0000000:00:00  INFO: Loading definition for module Nor.
+0000000:00:00  INFO: Loading definition for module Or.
+0000000:00:00  INFO: Loading definition for module Oscillator.
+0000000:00:00  INFO: Loading definition for module Parameter.
+0000000:00:00  INFO: Loading definition for module PulseDuration.
+0000000:00:00  INFO: Loading definition for module Ramp.
+0000000:00:00  INFO: Loading definition for module RateOfChange.
+0000000:00:00  INFO: Loading definition for module SampleAndHold.
+0000000:00:00  INFO: Loading definition for module SelectInput.
+0000000:00:00  INFO: Loading definition for module SelectParameter.
+0000000:00:00  INFO: Loading definition for module SelectParameterOrInput.
+0000000:00:00  INFO: Loading definition for module SetReset.
+0000000:00:00  INFO: Loading definition for module SetReset2.
+0000000:00:00  INFO: Loading definition for module Sine.
+0000000:00:00  INFO: Loading definition for module SquareRoot.
+0000000:00:00  INFO: Loading definition for module StartLogic.
+0000000:00:00  INFO: Loading definition for module Subtract.
+0000000:00:00  INFO: Loading definition for module Switch.
+0000000:00:00  INFO: Loading definition for module Tangent.
+0000000:00:00  INFO: Loading definition for module TimerOff.
+0000000:00:00  INFO: Loading definition for module TimerOn.
+0000000:00:00  INFO: Loading definition for module TimeStepDelay.
+0000000:00:00  INFO: Loading definition for module UnitAdapter.
+0000000:00:00  INFO: Loading definition for module VotingLogic.
+0000000:00:00  INFO: Loading definition for module Xor.
+0000000:00:00  INFO: Loading definition for module Membrane.
+0000000:00:00  INFO: Loading definition for module MultistageMembrane.
+0000000:00:00  INFO: Loading definition for module CentrifugalCompressorMonitor.
+0000000:00:00  INFO: Loading definition for module CentrifugalPumpMonitor.
+0000000:00:00  INFO: Loading definition for module DisplacementPumpMonitor.
+0000000:00:00  INFO: Loading definition for module HeatExchangerMonitor.
+0000000:00:00  INFO: Loading definition for module PidMonitor.
+0000000:00:00  INFO: Loading definition for module ProcessValueMonitor.
+0000000:00:00  INFO: Loading definition for module ValveMonitor.
+0000000:00:00  INFO: Loading definition for module BasePidController.
+0000000:00:00  INFO: Loading definition for module PidController.
+0000000:00:00  INFO: Loading definition for module PidControllerRT.
+0000000:00:00  INFO: Loading definition for module BatchTracker.
+0000000:00:00  INFO: Loading definition for module CheckValve.
+0000000:00:00  INFO: Loading definition for module MatchPoint.
+0000000:00:00  INFO: Loading definition for module Orifice.
+0000000:00:00  INFO: Loading definition for module PipeFlow.
+0000000:00:00  INFO: Loading definition for module PipeVolume.
+0000000:00:00  INFO: Loading definition for module Venturi.
+0000000:00:00  INFO: Loading definition for module PistonCompressor.
+0000000:00:00  INFO: Loading definition for module ElectricCircuitBreaker.
+0000000:00:00  INFO: Loading definition for module ElectricLoadCentre.
+0000000:00:00  INFO: Loading definition for module DieselEngine.
+0000000:00:00  INFO: Loading definition for module ElectricGenerator.
+0000000:00:00  INFO: Loading definition for module ElectricMotor.
+0000000:00:00  INFO: Loading definition for module ElectricPowerSystemManager.
+0000000:00:00  INFO: Loading definition for module ElectricPowerSystemSupervisor.
+0000000:00:00  INFO: Loading definition for module ElectricSwitchboard.
+0000000:00:00  INFO: Loading definition for module ElectricSynchroscope.
+0000000:00:00  INFO: Loading definition for module ElectricTransformer.
+0000000:00:00  INFO: Loading definition for module EngineController.
+0000000:00:00  INFO: Loading definition for module PressureFlowNetwork.
+0000000:00:00  INFO: Loading definition for module Calibrator.
+0000000:00:00  INFO: Loading definition for module OnlineCluster.
+0000000:00:00  INFO: Loading definition for module OnlineTransmitter.
+0000000:00:00  INFO: Loading definition for module OnlineStatistics.
+0000000:00:00  INFO: Loading definition for module Replacer.
+0000000:00:00  INFO: Loading definition for module ProfileViewer.
+0000000:00:00  INFO: Loading definition for module StreamCollector.
+0000000:00:00  INFO: Loading definition for module RemoteInput.
+0000000:00:00  INFO: Loading definition for module RunMode.
+0000000:00:00  INFO: Loading definition for module AnalogResponse.
+0000000:00:00  INFO: Loading definition for module SingleBinaryResponse.
+0000000:00:00  INFO: Loading definition for module DoubleBinaryResponse.
+0000000:00:00  INFO: Loading definition for module AnalogFeedback.
+0000000:00:00  INFO: Loading definition for module BinaryFeedback.
+0000000:00:00  INFO: Loading definition for module AnalogValueActivation.
+0000000:00:00  INFO: Loading definition for module ResponseEmulator.
+0000000:00:00  INFO: Loading definition for module AirReleaseValve.
+0000000:00:00  INFO: Loading definition for module AutomaticRecirculationValve.
+0000000:00:00  INFO: Loading definition for module SafetyValve.
+0000000:00:00  INFO: Loading definition for module Separator.
+0000000:00:00  INFO: Loading definition for module SetResetLatch.
+0000000:00:00  INFO: Loading definition for module Convergence.
+0000000:00:00  INFO: Loading definition for module SFCmanager.
+0000000:00:00  INFO: Loading definition for module Step.
+0000000:00:00  INFO: Loading definition for module Divergence.
+0000000:00:00  INFO: Loading definition for module Transition.
+0000000:00:00  INFO: Loading definition for module ShipOrientation.
+0000000:00:00  INFO: Loading definition for module SignalLogic.
+0000000:00:00  INFO: Loading definition for module SignalManipulator.
+0000000:00:00  INFO: Loading definition for module SplitRange.
+0000000:00:00  INFO: Loading definition for module SpringLoadedHydraulicActuator.
+0000000:00:00  INFO: Loading definition for module SteadyStateIdentifier.
+0000000:00:00  INFO: Loading definition for module PressureBoundary.
+0000000:00:00  INFO: Loading definition for module SignalConnector.
+0000000:00:00  INFO: Loading definition for module StreamBoundary.
+0000000:00:00  INFO: Loading definition for module StreamConnector.
+0000000:00:00  INFO: Loading definition for module AnalogSwitch.
+0000000:00:00  INFO: Loading definition for module KeySwitch.
+0000000:00:00  INFO: Loading definition for module MultiInputConnector.
+0000000:00:00  INFO: Loading definition for module SelectSwitch.
+0000000:00:00  INFO: Loading definition for module TableView.
+0000000:00:00  INFO: Loading definition for module ThermoControl.
+0000000:00:00  INFO: Loading definition for module Tracer.
+0000000:00:00  INFO: Loading definition for module Timer.
+0000000:00:00  INFO: Loading definition for module TimeDateTrigger.
+0000000:00:00  INFO: Loading definition for module InwardFlowRadialStage.
+0000000:00:00  INFO: Loading definition for module MultiStageAxialTurbine.
+0000000:00:00  INFO: Loading definition for module SingleStageAxialTurbine.
+0000000:00:00  INFO: Loading definition for module HydraulicTurbine.
+0000000:00:00  INFO: Loading definition for module WindTurbine.
+0000000:00:00  INFO: Loading definition for module VacuumPump.
+0000000:00:00  INFO: Loading definition for module BlockValve.
+0000000:00:00  INFO: Loading definition for module ConstantFlowValve.
+0000000:00:00  INFO: Loading definition for module ControlValve.
+0000000:00:00  INFO: Loading definition for module FlapperController.
+0000000:00:00  INFO: Loading definition for module MotorOperatedValve.
+0000000:00:00  INFO: Loading definition for module PulseControlledValve.
+0000000:00:00  INFO: Loading definition for module YokogawaChoke.
+0000000:00:00  INFO: Loading definition for module WellIndex.
+0000000:00:00  INFO: Module definitions loaded. 302 modules read. 302 supported in ModelServer.
+0000000:00:00  TRACE: Reading module manifest. Time elapsed: 136 ms.
+0000000:00:00  INFO: Created new empty model
+0000000:00:00  INFO: Loading the available thermo packages.
+0000000:00:00  TRACE: The thermo package "DirectCallMultiflash" has been loaded.
+0000000:00:00  TRACE: The thermo package "Olga oil table" has been loaded.
+0000000:00:00  TRACE: The thermo package "Olga gas table" has been loaded.
+0000000:00:00  TRACE: The thermo package "Olga water table" has been loaded.
+0000000:00:00  TRACE: The thermo package "Single phase table" has been loaded.
+0000000:00:00  TRACE: The thermo package "ThermoTable" has been loaded.
+0000000:00:00  INFO: Connecting 1 blocks.
+0000000:00:00  TRACE: Reading file C:\K-Spice-Projects\CompDemo_Rev4_V04\Timelines\Tutorial\Data\ModelFiles\aa3ee160-8988-45fd-8b83-694b3d5e96cf\ProcessModel\aa3ee160-8988-45fd-8b83-694b3d5e96cf.mdl.
+0000000:00:00  INFO: Loading the available thermo packages.
+0000000:00:00  TRACE: The thermo package "DirectCallMultiflash" has been loaded.
+0000000:00:00  TRACE: The thermo package "Olga oil table" has been loaded.
+0000000:00:00  TRACE: The thermo package "Olga gas table" has been loaded.
+0000000:00:00  TRACE: The thermo package "Olga water table" has been loaded.
+0000000:00:00  TRACE: The thermo package "Single phase table" has been loaded.
+0000000:00:00  TRACE: The thermo package "ThermoTable" has been loaded.
+0000000:00:00  TRACE: C:\K-Spice-Projects\CompDemo_Rev4_V04\Timelines\Tutorial\Data\ModelFiles\aa3ee160-8988-45fd-8b83-694b3d5e96cf\ProcessModel\aa3ee160-8988-45fd-8b83-694b3d5e96cf.mdl. Time elapsed: 66 ms.
+0000000:00:00  INFO: Using user's trend definition settings.
+0000000:00:00  INFO: Model polling time set to 0.2 seconds.
+0000000:00:00  TRACE: Reading file C:\K-Spice-Projects\CompDemo_Rev4_V04\Timelines\Tutorial\Data\Parameters\f3f0092c-be02-4977-8e44-4127d5579a79\ProcessModel\f3f0092c-be02-4977-8e44-4127d5579a79.prm.
+0000000:00:00  TRACE: C:\K-Spice-Projects\CompDemo_Rev4_V04\Timelines\Tutorial\Data\Parameters\f3f0092c-be02-4977-8e44-4127d5579a79\ProcessModel\f3f0092c-be02-4977-8e44-4127d5579a79.prm. Time elapsed: 41 ms.
+0000000:00:00  TRACE: Reading file C:\K-Spice-Projects\CompDemo_Rev4_V04\Timelines\Tutorial\Data\InitialConditions\7ed7f362-53c6-47e8-8d3d-52ad81ba1c6b\ProcessModel\7ed7f362-53c6-47e8-8d3d-52ad81ba1c6b.val.
+0000000:00:00  ERROR: Unrecognized block name or name missing: 23VA001 
+0000000:00:00  ERROR: Unrecognized block name or name missing: 23MA0003_pf 
+0000000:00:00  ERROR: Unrecognized block name or name missing: pv_23L0002 
+0000000:00:00  ERROR: Unrecognized block name or name missing: 23MA0003 
+0000000:00:00  ERROR: Unrecognized block name or name missing: 23LIC002 
+0000000:00:00  ERROR: Unrecognized block name or name missing: 23HX0001_view 
+0000000:00:00  INFO: Connecting 162 blocks.
+0000000:00:00  TRACE: C:\K-Spice-Projects\CompDemo_Rev4_V04\Timelines\Tutorial\Data\InitialConditions\7ed7f362-53c6-47e8-8d3d-52ad81ba1c6b\ProcessModel\7ed7f362-53c6-47e8-8d3d-52ad81ba1c6b.val. Time elapsed: 30 ms.
+0000000:00:00  INFO: Initialising....
+0000000:00:00  INFO: Thermo file directory: C:\K-Spice-Projects\CompDemo_Rev4_V04\CommonData
+0000000:00:00  INFO: ThermoControl: Loading ThermoDynamic Property data.
+0000000:00:00  INFO: ThermoControl: Loading thermo method No  1 of 2.
+0000000:00:00  INFO: Loading thermo table: DefaultOil.ttb.
+0000000:00:00  INFO: ThermoControl: Loading thermo method No  2 of 2.
+0000000:00:00  INFO: Loading thermo table: CoolHeatMedium.ttb.
+0000000:00:00  INFO: ThermoControl: Number of thermodynamic methods loaded: 2
+0000000:00:00  TRACE: The solver package "GmresSolver" has been loaded.
+0000000:00:00  TRACE: The solver package "Knasc" has been loaded.
+0000000:00:00  TRACE: The solver package "PardisoDriver" has been loaded.
+0000000:00:00  TRACE: The solver package "GmresSolver" has been loaded.
+0000000:00:00  TRACE: The solver package "Knasc" has been loaded.
+0000000:00:00  TRACE: The solver package "PardisoDriver" has been loaded.
+0000000:00:00  TRACE: The solver package "GmresSolver" has been loaded.
+0000000:00:00  TRACE: The solver package "Knasc" has been loaded.
+0000000:00:00  TRACE: The solver package "PardisoDriver" has been loaded.
+0000000:00:00  WARNING: "23VA0001" (Separator): Settling calculation = Constant phase fractions. This option is intended for steady state considerations.
+0000000:00:00  TRACE: The solver package "GmresSolver" has been loaded.
+0000000:00:00  TRACE: The solver package "Knasc" has been loaded.
+0000000:00:00  TRACE: The solver package "PardisoDriver" has been loaded.
+0000000:00:00  TRACE: The solver package "GmresSolver" has been loaded.
+0000000:00:00  TRACE: The solver package "Knasc" has been loaded.
+0000000:00:00  TRACE: The solver package "PardisoDriver" has been loaded.
+0000000:00:00  WARNING: "23COLD1001" (StreamBoundary): The input composition vector sums to zero or less. A uniform composition profile is used as default.
+0000000:00:00  INFO: "23HX1001s" (HeatExchangerStream): STEADY HEAT EXCHANGER STREAM. Number of sections 20.
+0000000:00:00  WARNING: "Feed3" (StreamBoundary): The input composition vector sums to zero or less. A uniform composition profile is used as default.
+0000000:00:00  WARNING: "23UV1001_pf:OutletStream" (Stream): Thermo method 1, routine two_pt reported: Low Temperature.
+0000000:00:00  INFO: "23HX1001" (HeatExchangerStream): STEADY HEAT EXCHANGER STREAM. Number of sections 20.
+0000000:00:00  WARNING: "23UV3001_pf:OutletStream" (Stream): Thermo method 1, routine two_pt reported: Low Temperature.
+0000000:00:00  INFO: "23HX3001" (HeatExchangerStream): STEADY HEAT EXCHANGER STREAM. Number of sections 20.
+0000000:00:00  WARNING: "23UV2001_pf:OutletStream" (Stream): Thermo method 1, routine two_pt reported: Low Temperature.
+0000000:00:00  INFO: "23HX2001" (HeatExchangerStream): STEADY HEAT EXCHANGER STREAM. Number of sections 20.
+0000000:00:00  WARNING: "23COLD2001" (StreamBoundary): The input composition vector sums to zero or less. A uniform composition profile is used as default.
+0000000:00:00  INFO: "23HX2001s" (HeatExchangerStream): STEADY HEAT EXCHANGER STREAM. Number of sections 20.
+0000000:00:00  WARNING: "23COLD3001" (StreamBoundary): The input composition vector sums to zero or less. A uniform composition profile is used as default.
+0000000:00:00  INFO: "23HX3001s" (HeatExchangerStream): STEADY HEAT EXCHANGER STREAM. Number of sections 20.
+0000000:00:00  INFO: Model polling time set to 0.2 seconds.
+0000000:00:00  TRACE: Model Initialization. Time elapsed: 305 ms.
+0000000:00:00  INFO: Model initialisation Complete.
+0000000:00:00  ERROR: Cannot parse DataItem name "MPC_LPA_OPC:@V_enums".
+0000000:00:00  ERROR: Cannot parse DataItem name "MPC_LPA_OPC:@V_enums".
+0000000:00:00  ERROR: Cannot parse DataItem name "MPC_LPA_OPC:@V_unit".
+0000000:00:00  TRACE: Reading file C:\K-Spice-Projects\CompDemo_Rev4_V04\Timelines\Tutorial\Data\ModelFiles\aa3ee160-8988-45fd-8b83-694b3d5e96cf\ProcessModel\aa3ee160-8988-45fd-8b83-694b3d5e96cf.mdl.
+0000000:00:00  INFO: Loading the available thermo packages.
+0000000:00:00  TRACE: The thermo package "DirectCallMultiflash" has been loaded.
+0000000:00:00  TRACE: The thermo package "Olga oil table" has been loaded.
+0000000:00:00  TRACE: The thermo package "Olga gas table" has been loaded.
+0000000:00:00  TRACE: The thermo package "Olga water table" has been loaded.
+0000000:00:00  TRACE: The thermo package "Single phase table" has been loaded.
+0000000:00:00  TRACE: The thermo package "ThermoTable" has been loaded.
+0000000:00:00  TRACE: C:\K-Spice-Projects\CompDemo_Rev4_V04\Timelines\Tutorial\Data\ModelFiles\aa3ee160-8988-45fd-8b83-694b3d5e96cf\ProcessModel\aa3ee160-8988-45fd-8b83-694b3d5e96cf.mdl. Time elapsed: 57 ms.
+0000000:00:00  INFO: Using user's trend definition settings.
+0000000:00:00  INFO: Model polling time set to 0.2 seconds.
+0000000:00:00  TRACE: Reading file C:\K-Spice-Projects\CompDemo_Rev4_V04\Timelines\Tutorial\Data\Parameters\f3f0092c-be02-4977-8e44-4127d5579a79\ProcessModel\f3f0092c-be02-4977-8e44-4127d5579a79.prm.
+0000000:00:00  TRACE: C:\K-Spice-Projects\CompDemo_Rev4_V04\Timelines\Tutorial\Data\Parameters\f3f0092c-be02-4977-8e44-4127d5579a79\ProcessModel\f3f0092c-be02-4977-8e44-4127d5579a79.prm. Time elapsed: 44 ms.
+0000000:00:00  TRACE: Reading file C:\K-Spice-Projects\CompDemo_Rev4_V04\Timelines\Tutorial\Data\InitialConditions\7ed7f362-53c6-47e8-8d3d-52ad81ba1c6b\ProcessModel\7ed7f362-53c6-47e8-8d3d-52ad81ba1c6b.val.
+0000000:00:00  ERROR: Unrecognized block name or name missing: 23VA001 
+0000000:00:00  ERROR: Unrecognized block name or name missing: 23MA0003_pf 
+0000000:00:00  ERROR: Unrecognized block name or name missing: pv_23L0002 
+0000000:00:00  ERROR: Unrecognized block name or name missing: 23MA0003 
+0000000:00:00  ERROR: Unrecognized block name or name missing: 23LIC002 
+0000000:00:00  ERROR: Unrecognized block name or name missing: 23HX0001_view 
+0000000:00:00  INFO: Connecting 162 blocks.
+0000000:00:00  TRACE: C:\K-Spice-Projects\CompDemo_Rev4_V04\Timelines\Tutorial\Data\InitialConditions\7ed7f362-53c6-47e8-8d3d-52ad81ba1c6b\ProcessModel\7ed7f362-53c6-47e8-8d3d-52ad81ba1c6b.val. Time elapsed: 28 ms.
+0000000:00:00  ERROR: Cannot parse DataItem name "MPC_LPA_OPC:@V_enums".
+0000000:00:00  ERROR: Cannot parse DataItem name "MPC_LPA_OPC:@V_enums".
+0000000:00:00  ERROR: Cannot parse DataItem name "MPC_LPA_OPC:@V_unit".
+0000000:00:00  TRACE: Reading file C:\K-Spice-Projects\CompDemo_Rev4_V04\Timelines\Tutorial\Applications\ProcessModel\TutorialHN.mdl.
+0000000:00:00  INFO: Loading the available thermo packages.
+0000000:00:00  TRACE: The thermo package "DirectCallMultiflash" has been loaded.
+0000000:00:00  TRACE: The thermo package "Olga oil table" has been loaded.
+0000000:00:00  TRACE: The thermo package "Olga gas table" has been loaded.
+0000000:00:00  TRACE: The thermo package "Olga water table" has been loaded.
+0000000:00:00  TRACE: The thermo package "Single phase table" has been loaded.
+0000000:00:00  TRACE: The thermo package "ThermoTable" has been loaded.
+0000000:00:00  TRACE: C:\K-Spice-Projects\CompDemo_Rev4_V04\Timelines\Tutorial\Applications\ProcessModel\TutorialHN.mdl. Time elapsed: 13 ms.
+0000000:00:00  INFO: Using user's trend definition settings.
+0000000:00:00  INFO: Model polling time set to 0.1 seconds.
+0000000:00:00  TRACE: Reading file C:\K-Spice-Projects\CompDemo_Rev4_V04\Timelines\Tutorial\Applications\ProcessModel\TutorialHN.prm.
+0000000:00:00  TRACE: C:\K-Spice-Projects\CompDemo_Rev4_V04\Timelines\Tutorial\Applications\ProcessModel\TutorialHN.prm. Time elapsed: 7 ms.
+0000000:00:00  TRACE: Reading file C:\K-Spice-Projects\CompDemo_Rev4_V04\Timelines\Tutorial\Data\InitialConditions\7ed7f362-53c6-47e8-8d3d-52ad81ba1c6b\ProcessModel\7ed7f362-53c6-47e8-8d3d-52ad81ba1c6b.val.
+0000000:00:00  ERROR: Unrecognized block name or name missing: 23VA001 
+0000000:00:00  ERROR: Unrecognized block name or name missing: pv_23L0005 
+0000000:00:00  ERROR: Unrecognized block name or name missing: 23MA0003_pf 
+0000000:00:00  ERROR: Unrecognized block name or name missing: pv_23L0002 
+0000000:00:00  ERROR: Unrecognized block name or name missing: 23MA0003 
+0000000:00:00  ERROR: Unrecognized block name or name missing: 23LIC002 
+0000000:00:00  ERROR: Unrecognized block name or name missing: 23HX0001_view 
+0000000:00:00  INFO: Connecting 54 blocks.
+0000000:00:00  TRACE: C:\K-Spice-Projects\CompDemo_Rev4_V04\Timelines\Tutorial\Data\InitialConditions\7ed7f362-53c6-47e8-8d3d-52ad81ba1c6b\ProcessModel\7ed7f362-53c6-47e8-8d3d-52ad81ba1c6b.val. Time elapsed: 27 ms.
+0000000:00:00  INFO: Initialising....
+0000000:00:00  INFO: Thermo file directory: C:\K-Spice-Projects\CompDemo_Rev4_V04\CommonData
+0000000:00:00  INFO: ThermoControl: Loading ThermoDynamic Property data.
+0000000:00:00  INFO: ThermoControl: Loading thermo method No  1 of 2.
+0000000:00:00  INFO: Loading thermo table: DefaultOil.ttb.
+0000000:00:00  INFO: ThermoControl: Loading thermo method No  2 of 2.
+0000000:00:00  INFO: Loading thermo table: CoolHeatMedium.ttb.
+0000000:00:00  INFO: ThermoControl: Number of thermodynamic methods loaded: 2
+0000000:00:00  TRACE: The solver package "GmresSolver" has been loaded.
+0000000:00:00  TRACE: The solver package "Knasc" has been loaded.
+0000000:00:00  TRACE: The solver package "PardisoDriver" has been loaded.
+0000000:00:00  WARNING: "23VA0001" (Separator): Settling calculation = Constant phase fractions. This option is intended for steady state considerations.
+0000000:00:00  TRACE: The solver package "GmresSolver" has been loaded.
+0000000:00:00  TRACE: The solver package "Knasc" has been loaded.
+0000000:00:00  TRACE: The solver package "PardisoDriver" has been loaded.
+0000000:00:00  INFO: Model polling time set to 0.1 seconds.
+0000000:00:00  TRACE: Model Initialization. Time elapsed: 253 ms.
+0000000:00:00  INFO: Model initialisation Complete.
+0000000:02:18  ERROR: "23VA001:Volume@V_typemask": Cannot find DataItem being requested based on tagname or block type.
+0000000:02:18  ERROR: "23VA001:Volume@V_typemask": Cannot find DataItem being requested based on tagname or block type.
+0000000:02:18  ERROR: "23VA001:Volume@V_typemask": Cannot find DataItem being requested based on tagname or block type.
+0000000:02:18  ERROR: "23VA001:Volume@V_typemask": Cannot find DataItem being requested based on tagname or block type.
+0000000:02:18  ERROR: "23VA001:Volume@V_typemask": Cannot find DataItem being requested based on tagname or block type.
+0000000:02:18  ERROR: "23VA001:Volume@V_typemask": Cannot find DataItem being requested based on tagname or block type.
+0000000:02:18  ERROR: "23VA001:Volume@V_typemask": Cannot find DataItem being requested based on tagname or block type.
+0000000:02:18  ERROR: "23VA001:Volume@V_typemask": Cannot find DataItem being requested based on tagname or block type.
+0000000:02:18  ERROR: "23VA001:Volume@V_typemask": Cannot find DataItem being requested based on tagname or block type.
+0000000:02:18  ERROR: "23VA001:Volume@V_typemask": Cannot find DataItem being requested based on tagname or block type.
+0000000:02:18  ERROR: "23VA001:Volume@V_typemask": Cannot find DataItem being requested based on tagname or block type.
+0000000:02:18  ERROR: "23VA001:Volume@V_typemask": Cannot find DataItem being requested based on tagname or block type.
+0000000:02:18  ERROR: "23VA001:Volume@V_typemask": Cannot find DataItem being requested based on tagname or block type.
+0000000:02:18  ERROR: "23VA001:Volume@V_typemask": Cannot find DataItem being requested based on tagname or block type.
+0000000:32:26  ERROR: Cannot find DataItem "23VA001:Volume" specified in the message: "23VA001:Volume@V_units".
+0000000:32:26  ERROR: "23VA001:Volume@V_typemask": Cannot find DataItem being requested based on tagname or block type.
+0000000:52:26  ERROR: Cannot find DataItem "23VA001:Volume" specified in the message: "23VA001:Volume@V_units".
+0000000:52:26  ERROR: "23VA001:Volume@V_typemask": Cannot find DataItem being requested based on tagname or block type.
+0000000:52:26  ERROR: "23VA001:Volume@V_typemask": Cannot find DataItem being requested based on tagname or block type.
+0000000:52:26  ERROR: "23VA001:Volume@V_typemask": Cannot find DataItem being requested based on tagname or block type.
+0000000:52:26  ERROR: "23VA001:Volume@V_typemask": Cannot find DataItem being requested based on tagname or block type.
+0000000:52:26  ERROR: "23VA001:Volume@V_typemask": Cannot find DataItem being requested based on tagname or block type.
+0000000:54:52  ERROR: "23VA001:Volume@V_typemask": Cannot find DataItem being requested based on tagname or block type.
+0000001:02:26  ERROR: Cannot find DataItem "23VA001:Volume" specified in the message: "23VA001:Volume@V_units".
+0000001:02:26  ERROR: "23VA001:Volume@V_typemask": Cannot find DataItem being requested based on tagname or block type.

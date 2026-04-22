@@ -1,0 +1,1694 @@
+[
+  {
+    "ID": "25HV0001_MassFlow",
+    "Component": "25HV0001",
+    "State": "MassFlow",
+    "Formula": "F = Cv * sqrt(dP * density)",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE",
+      "LOCAL_CONTROL"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "25HV0001_Temperature",
+    "Component": "25HV0001",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, P_in, P_out)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "25HV0002_MassFlow",
+    "Component": "25HV0002",
+    "State": "MassFlow",
+    "Formula": "F = Cv * sqrt(dP * density)",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE",
+      "LOCAL_CONTROL"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "25HV0002_Temperature",
+    "Component": "25HV0002",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, P_in, P_out)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "25ESV0001_MassFlow",
+    "Component": "25ESV0001",
+    "State": "MassFlow",
+    "Formula": "Boundary Flow",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "25ESV0001_Pressure",
+    "Component": "25ESV0001",
+    "State": "Pressure",
+    "Formula": "Boundary Pressure",
+    "Inputs": [],
+    "Role": "Volume"
+  },
+  {
+    "ID": "25ESV0001_Temperature",
+    "Component": "25ESV0001",
+    "State": "Temperature",
+    "Formula": "Boundary Energy",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23LV0001_MassFlow",
+    "Component": "23LV0001",
+    "State": "MassFlow",
+    "Formula": "F = Cv * sqrt(dP * density)",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE",
+      "LOCAL_CONTROL"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23LV0001_Temperature",
+    "Component": "23LV0001",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, P_in, P_out)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23MV0003_MassFlow",
+    "Component": "23MV0003",
+    "State": "MassFlow",
+    "Formula": "F = Cv * sqrt(dP * density)",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE",
+      "LOCAL_CONTROL"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23MV0003_Temperature",
+    "Component": "23MV0003",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, P_in, P_out)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23ESV0002_MassFlow",
+    "Component": "23ESV0002",
+    "State": "MassFlow",
+    "Formula": "Boundary Flow",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23ESV0002_Pressure",
+    "Component": "23ESV0002",
+    "State": "Pressure",
+    "Formula": "Boundary Pressure",
+    "Inputs": [],
+    "Role": "Volume"
+  },
+  {
+    "ID": "23ESV0002_Temperature",
+    "Component": "23ESV0002",
+    "State": "Temperature",
+    "Formula": "Boundary Energy",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23LV0002_MassFlow",
+    "Component": "23LV0002",
+    "State": "MassFlow",
+    "Formula": "F = Cv * sqrt(dP * density)",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE",
+      "LOCAL_CONTROL"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23LV0002_Temperature",
+    "Component": "23LV0002",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, P_in, P_out)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23LIC0001_Control",
+    "Component": "23LIC0001",
+    "State": "Control",
+    "Formula": "PID(e(t)) | U(t) = Kp*e(t) + ...",
+    "Inputs": [
+      "MEASURED_STATE"
+    ],
+    "Role": "Controller"
+  },
+  {
+    "ID": "23LIC0002_Control",
+    "Component": "23LIC0002",
+    "State": "Control",
+    "Formula": "PID(e(t)) | U(t) = Kp*e(t) + ...",
+    "Inputs": [
+      "MEASURED_STATE"
+    ],
+    "Role": "Controller"
+  },
+  {
+    "ID": "23PIC0001_Control",
+    "Component": "23PIC0001",
+    "State": "Control",
+    "Formula": "PID(e(t)) | U(t) = Kp*e(t) + ...",
+    "Inputs": [
+      "MEASURED_STATE"
+    ],
+    "Role": "Controller"
+  },
+  {
+    "ID": "23HX0001_ProfileViewer1_MassFlow",
+    "Component": "23HX0001_ProfileViewer1",
+    "State": "MassFlow",
+    "Formula": "Boundary Flow",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23HX0001_ProfileViewer1_Pressure",
+    "Component": "23HX0001_ProfileViewer1",
+    "State": "Pressure",
+    "Formula": "Boundary Pressure",
+    "Inputs": [],
+    "Role": "Volume"
+  },
+  {
+    "ID": "23HX0001_ProfileViewer1_Temperature",
+    "Component": "23HX0001_ProfileViewer1",
+    "State": "Temperature",
+    "Formula": "Boundary Energy",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23ESV0005_MassFlow",
+    "Component": "23ESV0005",
+    "State": "MassFlow",
+    "Formula": "Boundary Flow",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23ESV0005_Pressure",
+    "Component": "23ESV0005",
+    "State": "Pressure",
+    "Formula": "Boundary Pressure",
+    "Inputs": [],
+    "Role": "Volume"
+  },
+  {
+    "ID": "23ESV0005_Temperature",
+    "Component": "23ESV0005",
+    "State": "Temperature",
+    "Formula": "Boundary Energy",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23TV0003_MassFlow",
+    "Component": "23TV0003",
+    "State": "MassFlow",
+    "Formula": "F = Cv * sqrt(dP * density)",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE",
+      "LOCAL_CONTROL"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23TV0003_Temperature",
+    "Component": "23TV0003",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, P_in, P_out)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23COLD0001_MassFlow",
+    "Component": "23COLD0001",
+    "State": "MassFlow",
+    "Formula": "Boundary Flow",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23COLD0001_Pressure",
+    "Component": "23COLD0001",
+    "State": "Pressure",
+    "Formula": "Boundary Pressure",
+    "Inputs": [],
+    "Role": "Volume"
+  },
+  {
+    "ID": "23COLD0001_Temperature",
+    "Component": "23COLD0001",
+    "State": "Temperature",
+    "Formula": "Boundary Energy",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23HX0001s_MassFlow",
+    "Component": "23HX0001s",
+    "State": "MassFlow",
+    "Formula": "F = sum(DOWNSTREAM_FLOW)",
+    "Inputs": [
+      "DOWNSTREAM_FLOW_SUM"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23HX0001s_Pressure",
+    "Component": "23HX0001s",
+    "State": "Pressure",
+    "Formula": "P_out = P_in - dP",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "23HX0001s_MassFlow"
+    ],
+    "Role": "Volume"
+  },
+  {
+    "ID": "23HX0001s_Temperature",
+    "Component": "23HX0001s",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, T_cool, MassFlow)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "23HX0001s_MassFlow",
+      "COOLING_TEMP"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23TIC0003_Control",
+    "Component": "23TIC0003",
+    "State": "Control",
+    "Formula": "PID(e(t)) | U(t) = Kp*e(t) + ...",
+    "Inputs": [
+      "MEASURED_STATE"
+    ],
+    "Role": "Controller"
+  },
+  {
+    "ID": "23ASC0001_Control",
+    "Component": "23ASC0001",
+    "State": "Control",
+    "Formula": "ASC(e(t)) | U(t) = f(Flow, Pressure)",
+    "Inputs": [
+      "MEASURED_FLOW",
+      "MEASURED_PRESSURE"
+    ],
+    "Role": "Controller"
+  },
+  {
+    "ID": "23UV0001_MassFlow",
+    "Component": "23UV0001",
+    "State": "MassFlow",
+    "Formula": "F = Cv * sqrt(dP * density)",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE",
+      "LOCAL_CONTROL"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23UV0001_Temperature",
+    "Component": "23UV0001",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, P_in, P_out)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23PV_0001_MassFlow",
+    "Component": "23PV_0001",
+    "State": "MassFlow",
+    "Formula": "F = Cv * sqrt(dP * density)",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE",
+      "LOCAL_CONTROL"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23PV_0001_Temperature",
+    "Component": "23PV_0001",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, P_in, P_out)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23ESV1002_MassFlow",
+    "Component": "23ESV1002",
+    "State": "MassFlow",
+    "Formula": "Boundary Flow",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23ESV1002_Pressure",
+    "Component": "23ESV1002",
+    "State": "Pressure",
+    "Formula": "Boundary Pressure",
+    "Inputs": [],
+    "Role": "Volume"
+  },
+  {
+    "ID": "23ESV1002_Temperature",
+    "Component": "23ESV1002",
+    "State": "Temperature",
+    "Formula": "Boundary Energy",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23HX1001_ProfileViewer1_MassFlow",
+    "Component": "23HX1001_ProfileViewer1",
+    "State": "MassFlow",
+    "Formula": "Boundary Flow",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23HX1001_ProfileViewer1_Pressure",
+    "Component": "23HX1001_ProfileViewer1",
+    "State": "Pressure",
+    "Formula": "Boundary Pressure",
+    "Inputs": [],
+    "Role": "Volume"
+  },
+  {
+    "ID": "23HX1001_ProfileViewer1_Temperature",
+    "Component": "23HX1001_ProfileViewer1",
+    "State": "Temperature",
+    "Formula": "Boundary Energy",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23ESV1005_MassFlow",
+    "Component": "23ESV1005",
+    "State": "MassFlow",
+    "Formula": "Boundary Flow",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23ESV1005_Pressure",
+    "Component": "23ESV1005",
+    "State": "Pressure",
+    "Formula": "Boundary Pressure",
+    "Inputs": [],
+    "Role": "Volume"
+  },
+  {
+    "ID": "23ESV1005_Temperature",
+    "Component": "23ESV1005",
+    "State": "Temperature",
+    "Formula": "Boundary Energy",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23TV1003_MassFlow",
+    "Component": "23TV1003",
+    "State": "MassFlow",
+    "Formula": "F = Cv * sqrt(dP * density)",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE",
+      "LOCAL_CONTROL"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23TV1003_Temperature",
+    "Component": "23TV1003",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, P_in, P_out)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23COLD1001_MassFlow",
+    "Component": "23COLD1001",
+    "State": "MassFlow",
+    "Formula": "Boundary Flow",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23COLD1001_Pressure",
+    "Component": "23COLD1001",
+    "State": "Pressure",
+    "Formula": "Boundary Pressure",
+    "Inputs": [],
+    "Role": "Volume"
+  },
+  {
+    "ID": "23COLD1001_Temperature",
+    "Component": "23COLD1001",
+    "State": "Temperature",
+    "Formula": "Boundary Energy",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23HX1001s_MassFlow",
+    "Component": "23HX1001s",
+    "State": "MassFlow",
+    "Formula": "F = sum(DOWNSTREAM_FLOW)",
+    "Inputs": [
+      "DOWNSTREAM_FLOW_SUM"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23HX1001s_Pressure",
+    "Component": "23HX1001s",
+    "State": "Pressure",
+    "Formula": "P_out = P_in - dP",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "23HX1001s_MassFlow"
+    ],
+    "Role": "Volume"
+  },
+  {
+    "ID": "23HX1001s_Temperature",
+    "Component": "23HX1001s",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, T_cool, MassFlow)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "23HX1001s_MassFlow",
+      "COOLING_TEMP"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23TIC1003_Control",
+    "Component": "23TIC1003",
+    "State": "Control",
+    "Formula": "PID(e(t)) | U(t) = Kp*e(t) + ...",
+    "Inputs": [
+      "MEASURED_STATE"
+    ],
+    "Role": "Controller"
+  },
+  {
+    "ID": "23FE1001_MassFlow",
+    "Component": "23FE1001",
+    "State": "MassFlow",
+    "Formula": "Boundary Flow",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23FE1001_Pressure",
+    "Component": "23FE1001",
+    "State": "Pressure",
+    "Formula": "Boundary Pressure",
+    "Inputs": [],
+    "Role": "Volume"
+  },
+  {
+    "ID": "23FE1001_Temperature",
+    "Component": "23FE1001",
+    "State": "Temperature",
+    "Formula": "Boundary Energy",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23ASC1001_Control",
+    "Component": "23ASC1001",
+    "State": "Control",
+    "Formula": "ASC(e(t)) | U(t) = f(Flow, Pressure)",
+    "Inputs": [
+      "MEASURED_FLOW",
+      "MEASURED_PRESSURE"
+    ],
+    "Role": "Controller"
+  },
+  {
+    "ID": "23UV1001_MassFlow",
+    "Component": "23UV1001",
+    "State": "MassFlow",
+    "Formula": "F = Cv * sqrt(dP * density)",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE",
+      "LOCAL_CONTROL"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23UV1001_Temperature",
+    "Component": "23UV1001",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, P_in, P_out)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "Feed3_MassFlow",
+    "Component": "Feed3",
+    "State": "MassFlow",
+    "Formula": "Boundary Flow",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "Feed3_Pressure",
+    "Component": "Feed3",
+    "State": "Pressure",
+    "Formula": "Boundary Pressure",
+    "Inputs": [],
+    "Role": "Volume"
+  },
+  {
+    "ID": "Feed3_Temperature",
+    "Component": "Feed3",
+    "State": "Temperature",
+    "Formula": "Boundary Energy",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "Feed2_MassFlow",
+    "Component": "Feed2",
+    "State": "MassFlow",
+    "Formula": "Boundary Flow",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "Feed2_Pressure",
+    "Component": "Feed2",
+    "State": "Pressure",
+    "Formula": "Boundary Pressure",
+    "Inputs": [],
+    "Role": "Volume"
+  },
+  {
+    "ID": "Feed2_Temperature",
+    "Component": "Feed2",
+    "State": "Temperature",
+    "Formula": "Boundary Energy",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "Feed1_MassFlow",
+    "Component": "Feed1",
+    "State": "MassFlow",
+    "Formula": "Boundary Flow",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "Feed1_Pressure",
+    "Component": "Feed1",
+    "State": "Pressure",
+    "Formula": "Boundary Pressure",
+    "Inputs": [],
+    "Role": "Volume"
+  },
+  {
+    "ID": "Feed1_Temperature",
+    "Component": "Feed1",
+    "State": "Temperature",
+    "Formula": "Boundary Energy",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "25HV0003_MassFlow",
+    "Component": "25HV0003",
+    "State": "MassFlow",
+    "Formula": "F = Cv * sqrt(dP * density)",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE",
+      "LOCAL_CONTROL"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "25HV0003_Temperature",
+    "Component": "25HV0003",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, P_in, P_out)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23VA0001_Pressure",
+    "Component": "23VA0001",
+    "State": "Pressure",
+    "Formula": "dP/dt = k * (MassFlow_In - MassFlow_Out)",
+    "Inputs": [
+      "UPSTREAM_FLOW",
+      "DOWNSTREAM_FLOW"
+    ],
+    "Role": "Volume",
+    "Param": "D: 3,5 L: 5"
+  },
+  {
+    "ID": "23VA0001_WaterLevel",
+    "Component": "23VA0001",
+    "State": "WaterLevel",
+    "Formula": "dL_water/dt = 1/A * (WaterFlow_In - WaterFlow_Out)",
+    "Inputs": [
+      "UPSTREAM_FLOW",
+      "DOWNSTREAM_FLOW"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23VA0001_OilLevel",
+    "Component": "23VA0001",
+    "State": "OilLevel",
+    "Formula": "dL_oil/dt = 1/A * (OilFlow_In - OilFlow_Out)",
+    "Inputs": [
+      "UPSTREAM_FLOW",
+      "DOWNSTREAM_FLOW"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23VA0001_TotalLevel",
+    "Component": "23VA0001",
+    "State": "TotalLevel",
+    "Formula": "dL/dt = 1/A * (MassFlow_In - MassFlow_Out)",
+    "Inputs": [
+      "UPSTREAM_FLOW",
+      "DOWNSTREAM_FLOW"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23VA0001_Temperature",
+    "Component": "23VA0001",
+    "State": "Temperature",
+    "Formula": "T from enthalpy inflow, loss, and water-weighted holdup",
+    "Inputs": [
+      "UPSTREAM_FLOW",
+      "UPSTREAM_TEMP",
+      "DOWNSTREAM_FLOW",
+      "23VA0001_WaterLevel"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "pf_Pipe0003A_MassFlow",
+    "Component": "pf_Pipe0003A",
+    "State": "MassFlow",
+    "Formula": "F = Cv * sqrt(dP * density)",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE",
+      "LOCAL_CONTROL"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "pf_Pipe0003A_Temperature",
+    "Component": "pf_Pipe0003A",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, P_in, P_out)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23KA1001_MassFlow",
+    "Component": "23KA1001",
+    "State": "MassFlow",
+    "Formula": "F = sum(DOWNSTREAM_FLOW)",
+    "Inputs": [
+      "DOWNSTREAM_FLOW_SUM"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23KA1001_Pressure",
+    "Component": "23KA1001",
+    "State": "Pressure",
+    "Formula": "P_out = P_in + Head(F, Speed)",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "23KA1001_MassFlow",
+      "LOCAL_CONTROL"
+    ],
+    "Role": "Volume",
+    "Param": "D: 0,5 L: "
+  },
+  {
+    "ID": "23KA1001_Temperature",
+    "Component": "23KA1001",
+    "State": "Temperature",
+    "Formula": "T_out = T_in * (P_out/P_in)^((k-1)/k)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "23KA1001_Pressure",
+      "UPSTREAM_PRESSURE"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23HX1001_MassFlow",
+    "Component": "23HX1001",
+    "State": "MassFlow",
+    "Formula": "F = sum(DOWNSTREAM_FLOW)",
+    "Inputs": [
+      "DOWNSTREAM_FLOW_SUM"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23HX1001_Pressure",
+    "Component": "23HX1001",
+    "State": "Pressure",
+    "Formula": "P_out = P_in - dP",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "23HX1001_MassFlow"
+    ],
+    "Role": "Volume"
+  },
+  {
+    "ID": "23HX1001_Temperature",
+    "Component": "23HX1001",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, T_cool, MassFlow)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "23HX1001_MassFlow",
+      "COOLING_TEMP"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23KA0001_MassFlow",
+    "Component": "23KA0001",
+    "State": "MassFlow",
+    "Formula": "F = sum(DOWNSTREAM_FLOW)",
+    "Inputs": [
+      "DOWNSTREAM_FLOW_SUM"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23KA0001_Pressure",
+    "Component": "23KA0001",
+    "State": "Pressure",
+    "Formula": "P_out = P_in + Head(F, Speed)",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "23KA0001_MassFlow",
+      "LOCAL_CONTROL"
+    ],
+    "Role": "Volume",
+    "Param": "D: 0,5 L: "
+  },
+  {
+    "ID": "23KA0001_Temperature",
+    "Component": "23KA0001",
+    "State": "Temperature",
+    "Formula": "T_out = T_in * (P_out/P_in)^((k-1)/k)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "23KA0001_Pressure",
+      "UPSTREAM_PRESSURE"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23HX0001_MassFlow",
+    "Component": "23HX0001",
+    "State": "MassFlow",
+    "Formula": "F = sum(DOWNSTREAM_FLOW)",
+    "Inputs": [
+      "DOWNSTREAM_FLOW_SUM"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23HX0001_Pressure",
+    "Component": "23HX0001",
+    "State": "Pressure",
+    "Formula": "P_out = P_in - dP",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "23HX0001_MassFlow"
+    ],
+    "Role": "Volume"
+  },
+  {
+    "ID": "23HX0001_Temperature",
+    "Component": "23HX0001",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, T_cool, MassFlow)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "23HX0001_MassFlow",
+      "COOLING_TEMP"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23ESV3002_MassFlow",
+    "Component": "23ESV3002",
+    "State": "MassFlow",
+    "Formula": "F = Cv * sqrt(dP * density)",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE",
+      "LOCAL_CONTROL"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23ESV3002_Temperature",
+    "Component": "23ESV3002",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, P_in, P_out)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23KA3001_MassFlow",
+    "Component": "23KA3001",
+    "State": "MassFlow",
+    "Formula": "F = sum(DOWNSTREAM_FLOW)",
+    "Inputs": [
+      "DOWNSTREAM_FLOW_SUM"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23KA3001_Pressure",
+    "Component": "23KA3001",
+    "State": "Pressure",
+    "Formula": "P_out = P_in + Head(F, Speed)",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "23KA3001_MassFlow",
+      "LOCAL_CONTROL"
+    ],
+    "Role": "Volume",
+    "Param": "D: 0,5 L: "
+  },
+  {
+    "ID": "23KA3001_Temperature",
+    "Component": "23KA3001",
+    "State": "Temperature",
+    "Formula": "T_out = T_in * (P_out/P_in)^((k-1)/k)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "23KA3001_Pressure",
+      "UPSTREAM_PRESSURE"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23HX3001_MassFlow",
+    "Component": "23HX3001",
+    "State": "MassFlow",
+    "Formula": "F = sum(DOWNSTREAM_FLOW)",
+    "Inputs": [
+      "DOWNSTREAM_FLOW_SUM"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23HX3001_Pressure",
+    "Component": "23HX3001",
+    "State": "Pressure",
+    "Formula": "P_out = P_in - dP",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "23HX3001_MassFlow"
+    ],
+    "Role": "Volume"
+  },
+  {
+    "ID": "23HX3001_Temperature",
+    "Component": "23HX3001",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, T_cool, MassFlow)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "23HX3001_MassFlow",
+      "COOLING_TEMP"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23ESV3005_MassFlow",
+    "Component": "23ESV3005",
+    "State": "MassFlow",
+    "Formula": "F = Cv * sqrt(dP * density)",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE",
+      "LOCAL_CONTROL"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23ESV3005_Temperature",
+    "Component": "23ESV3005",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, P_in, P_out)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23UV3001_MassFlow",
+    "Component": "23UV3001",
+    "State": "MassFlow",
+    "Formula": "F = Cv * sqrt(dP * density)",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE",
+      "LOCAL_CONTROL"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23UV3001_Temperature",
+    "Component": "23UV3001",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, P_in, P_out)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23ESV2002_MassFlow",
+    "Component": "23ESV2002",
+    "State": "MassFlow",
+    "Formula": "F = Cv * sqrt(dP * density)",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE",
+      "LOCAL_CONTROL"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23ESV2002_Temperature",
+    "Component": "23ESV2002",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, P_in, P_out)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23KA2001_MassFlow",
+    "Component": "23KA2001",
+    "State": "MassFlow",
+    "Formula": "F = sum(DOWNSTREAM_FLOW)",
+    "Inputs": [
+      "DOWNSTREAM_FLOW_SUM"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23KA2001_Pressure",
+    "Component": "23KA2001",
+    "State": "Pressure",
+    "Formula": "P_out = P_in + Head(F, Speed)",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "23KA2001_MassFlow",
+      "LOCAL_CONTROL"
+    ],
+    "Role": "Volume",
+    "Param": "D: 0,5 L: "
+  },
+  {
+    "ID": "23KA2001_Temperature",
+    "Component": "23KA2001",
+    "State": "Temperature",
+    "Formula": "T_out = T_in * (P_out/P_in)^((k-1)/k)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "23KA2001_Pressure",
+      "UPSTREAM_PRESSURE"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23HX2001_MassFlow",
+    "Component": "23HX2001",
+    "State": "MassFlow",
+    "Formula": "F = sum(DOWNSTREAM_FLOW)",
+    "Inputs": [
+      "DOWNSTREAM_FLOW_SUM"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23HX2001_Pressure",
+    "Component": "23HX2001",
+    "State": "Pressure",
+    "Formula": "P_out = P_in - dP",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "23HX2001_MassFlow"
+    ],
+    "Role": "Volume"
+  },
+  {
+    "ID": "23HX2001_Temperature",
+    "Component": "23HX2001",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, T_cool, MassFlow)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "23HX2001_MassFlow",
+      "COOLING_TEMP"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23UV2001_MassFlow",
+    "Component": "23UV2001",
+    "State": "MassFlow",
+    "Formula": "F = Cv * sqrt(dP * density)",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE",
+      "LOCAL_CONTROL"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23UV2001_Temperature",
+    "Component": "23UV2001",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, P_in, P_out)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23ESV2005_MassFlow",
+    "Component": "23ESV2005",
+    "State": "MassFlow",
+    "Formula": "F = Cv * sqrt(dP * density)",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE",
+      "LOCAL_CONTROL"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23ESV2005_Temperature",
+    "Component": "23ESV2005",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, P_in, P_out)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23PV_1002_MassFlow",
+    "Component": "23PV_1002",
+    "State": "MassFlow",
+    "Formula": "F = Cv * sqrt(dP * density)",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE",
+      "LOCAL_CONTROL"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23PV_1002_Temperature",
+    "Component": "23PV_1002",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, P_in, P_out)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23PSV0001_MassFlow",
+    "Component": "23PSV0001",
+    "State": "MassFlow",
+    "Formula": "Boundary Flow",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23PSV0001_Pressure",
+    "Component": "23PSV0001",
+    "State": "Pressure",
+    "Formula": "Boundary Pressure",
+    "Inputs": [],
+    "Role": "Volume"
+  },
+  {
+    "ID": "23PSV0001_Temperature",
+    "Component": "23PSV0001",
+    "State": "Temperature",
+    "Formula": "Boundary Energy",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23PA0001_MassFlow",
+    "Component": "23PA0001",
+    "State": "MassFlow",
+    "Formula": "F = sum(DOWNSTREAM_FLOW)",
+    "Inputs": [
+      "DOWNSTREAM_FLOW_SUM"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23PA0001_Pressure",
+    "Component": "23PA0001",
+    "State": "Pressure",
+    "Formula": "P_out = P_in + Head(F, Speed)",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "23PA0001_MassFlow",
+      "LOCAL_CONTROL"
+    ],
+    "Role": "Volume"
+  },
+  {
+    "ID": "23PA0001_Temperature",
+    "Component": "23PA0001",
+    "State": "Temperature",
+    "Formula": "T_out = T_in * (P_out/P_in)^((k-1)/k)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "23PA0001_Pressure",
+      "UPSTREAM_PRESSURE"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "pv23L0002_MassFlow",
+    "Component": "pv23L0002",
+    "State": "MassFlow",
+    "Formula": "Boundary Flow",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "pv23L0002_Pressure",
+    "Component": "pv23L0002",
+    "State": "Pressure",
+    "Formula": "Boundary Pressure",
+    "Inputs": [],
+    "Role": "Volume"
+  },
+  {
+    "ID": "pv23L0002_Temperature",
+    "Component": "pv23L0002",
+    "State": "Temperature",
+    "Formula": "Boundary Energy",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23PIC2001_Control",
+    "Component": "23PIC2001",
+    "State": "Control",
+    "Formula": "PID(e(t)) | U(t) = Kp*e(t) + ...",
+    "Inputs": [
+      "MEASURED_STATE"
+    ],
+    "Role": "Controller"
+  },
+  {
+    "ID": "23HX2001_ProfileViewer1_MassFlow",
+    "Component": "23HX2001_ProfileViewer1",
+    "State": "MassFlow",
+    "Formula": "Boundary Flow",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23HX2001_ProfileViewer1_Pressure",
+    "Component": "23HX2001_ProfileViewer1",
+    "State": "Pressure",
+    "Formula": "Boundary Pressure",
+    "Inputs": [],
+    "Role": "Volume"
+  },
+  {
+    "ID": "23HX2001_ProfileViewer1_Temperature",
+    "Component": "23HX2001_ProfileViewer1",
+    "State": "Temperature",
+    "Formula": "Boundary Energy",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23TV2003_MassFlow",
+    "Component": "23TV2003",
+    "State": "MassFlow",
+    "Formula": "F = Cv * sqrt(dP * density)",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE",
+      "LOCAL_CONTROL"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23TV2003_Temperature",
+    "Component": "23TV2003",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, P_in, P_out)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23COLD2001_MassFlow",
+    "Component": "23COLD2001",
+    "State": "MassFlow",
+    "Formula": "Boundary Flow",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23COLD2001_Pressure",
+    "Component": "23COLD2001",
+    "State": "Pressure",
+    "Formula": "Boundary Pressure",
+    "Inputs": [],
+    "Role": "Volume"
+  },
+  {
+    "ID": "23COLD2001_Temperature",
+    "Component": "23COLD2001",
+    "State": "Temperature",
+    "Formula": "Boundary Energy",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23HX2001s_MassFlow",
+    "Component": "23HX2001s",
+    "State": "MassFlow",
+    "Formula": "F = sum(DOWNSTREAM_FLOW)",
+    "Inputs": [
+      "DOWNSTREAM_FLOW_SUM"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23HX2001s_Pressure",
+    "Component": "23HX2001s",
+    "State": "Pressure",
+    "Formula": "P_out = P_in - dP",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "23HX2001s_MassFlow"
+    ],
+    "Role": "Volume"
+  },
+  {
+    "ID": "23HX2001s_Temperature",
+    "Component": "23HX2001s",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, T_cool, MassFlow)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "23HX2001s_MassFlow",
+      "COOLING_TEMP"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23TIC2003_Control",
+    "Component": "23TIC2003",
+    "State": "Control",
+    "Formula": "PID(e(t)) | U(t) = Kp*e(t) + ...",
+    "Inputs": [
+      "MEASURED_STATE"
+    ],
+    "Role": "Controller"
+  },
+  {
+    "ID": "23FE2001_MassFlow",
+    "Component": "23FE2001",
+    "State": "MassFlow",
+    "Formula": "Boundary Flow",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23FE2001_Pressure",
+    "Component": "23FE2001",
+    "State": "Pressure",
+    "Formula": "Boundary Pressure",
+    "Inputs": [],
+    "Role": "Volume"
+  },
+  {
+    "ID": "23FE2001_Temperature",
+    "Component": "23FE2001",
+    "State": "Temperature",
+    "Formula": "Boundary Energy",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23ASC2001_Control",
+    "Component": "23ASC2001",
+    "State": "Control",
+    "Formula": "ASC(e(t)) | U(t) = f(Flow, Pressure)",
+    "Inputs": [
+      "MEASURED_FLOW",
+      "MEASURED_PRESSURE"
+    ],
+    "Role": "Controller"
+  },
+  {
+    "ID": "23HX3001_ProfileViewer1_MassFlow",
+    "Component": "23HX3001_ProfileViewer1",
+    "State": "MassFlow",
+    "Formula": "Boundary Flow",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23HX3001_ProfileViewer1_Pressure",
+    "Component": "23HX3001_ProfileViewer1",
+    "State": "Pressure",
+    "Formula": "Boundary Pressure",
+    "Inputs": [],
+    "Role": "Volume"
+  },
+  {
+    "ID": "23HX3001_ProfileViewer1_Temperature",
+    "Component": "23HX3001_ProfileViewer1",
+    "State": "Temperature",
+    "Formula": "Boundary Energy",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23TV3003_MassFlow",
+    "Component": "23TV3003",
+    "State": "MassFlow",
+    "Formula": "F = Cv * sqrt(dP * density)",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE",
+      "LOCAL_CONTROL"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23TV3003_Temperature",
+    "Component": "23TV3003",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, P_in, P_out)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_PRESSURE"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23COLD3001_MassFlow",
+    "Component": "23COLD3001",
+    "State": "MassFlow",
+    "Formula": "Boundary Flow",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23COLD3001_Pressure",
+    "Component": "23COLD3001",
+    "State": "Pressure",
+    "Formula": "Boundary Pressure",
+    "Inputs": [],
+    "Role": "Volume"
+  },
+  {
+    "ID": "23COLD3001_Temperature",
+    "Component": "23COLD3001",
+    "State": "Temperature",
+    "Formula": "Boundary Energy",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23HX3001s_MassFlow",
+    "Component": "23HX3001s",
+    "State": "MassFlow",
+    "Formula": "F = sum(DOWNSTREAM_FLOW)",
+    "Inputs": [
+      "DOWNSTREAM_FLOW_SUM"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23HX3001s_Pressure",
+    "Component": "23HX3001s",
+    "State": "Pressure",
+    "Formula": "P_out = P_in - dP",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "23HX3001s_MassFlow"
+    ],
+    "Role": "Volume"
+  },
+  {
+    "ID": "23HX3001s_Temperature",
+    "Component": "23HX3001s",
+    "State": "Temperature",
+    "Formula": "T_out = f(T_in, T_cool, MassFlow)",
+    "Inputs": [
+      "UPSTREAM_TEMP",
+      "23HX3001s_MassFlow",
+      "COOLING_TEMP"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23TIC3003_Control",
+    "Component": "23TIC3003",
+    "State": "Control",
+    "Formula": "PID(e(t)) | U(t) = Kp*e(t) + ...",
+    "Inputs": [
+      "MEASURED_STATE"
+    ],
+    "Role": "Controller"
+  },
+  {
+    "ID": "23FE3001_MassFlow",
+    "Component": "23FE3001",
+    "State": "MassFlow",
+    "Formula": "Boundary Flow",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23FE3001_Pressure",
+    "Component": "23FE3001",
+    "State": "Pressure",
+    "Formula": "Boundary Pressure",
+    "Inputs": [],
+    "Role": "Volume"
+  },
+  {
+    "ID": "23FE3001_Temperature",
+    "Component": "23FE3001",
+    "State": "Temperature",
+    "Formula": "Boundary Energy",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23ASC3001_Control",
+    "Component": "23ASC3001",
+    "State": "Control",
+    "Formula": "ASC(e(t)) | U(t) = f(Flow, Pressure)",
+    "Inputs": [
+      "MEASURED_FLOW",
+      "MEASURED_PRESSURE"
+    ],
+    "Role": "Controller"
+  },
+  {
+    "ID": "23SIC1001_Control",
+    "Component": "23SIC1001",
+    "State": "Control",
+    "Formula": "PID(e(t)) | U(t) = Kp*e(t) + ...",
+    "Inputs": [
+      "MEASURED_STATE"
+    ],
+    "Role": "Controller"
+  },
+  {
+    "ID": "23SIC3001_Control",
+    "Component": "23SIC3001",
+    "State": "Control",
+    "Formula": "PID(e(t)) | U(t) = Kp*e(t) + ...",
+    "Inputs": [
+      "MEASURED_STATE"
+    ],
+    "Role": "Controller"
+  },
+  {
+    "ID": "23SIC0001_Control",
+    "Component": "23SIC0001",
+    "State": "Control",
+    "Formula": "PID(e(t)) | U(t) = Kp*e(t) + ...",
+    "Inputs": [
+      "MEASURED_STATE"
+    ],
+    "Role": "Controller"
+  },
+  {
+    "ID": "23SIC2001_Control",
+    "Component": "23SIC2001",
+    "State": "Control",
+    "Formula": "PID(e(t)) | U(t) = Kp*e(t) + ...",
+    "Inputs": [
+      "MEASURED_STATE"
+    ],
+    "Role": "Controller"
+  },
+  {
+    "ID": "SumCompPower_MassFlow",
+    "Component": "SumCompPower",
+    "State": "MassFlow",
+    "Formula": "Boundary Flow",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "SumCompPower_Pressure",
+    "Component": "SumCompPower",
+    "State": "Pressure",
+    "Formula": "Boundary Pressure",
+    "Inputs": [],
+    "Role": "Volume"
+  },
+  {
+    "ID": "SumCompPower_Temperature",
+    "Component": "SumCompPower",
+    "State": "Temperature",
+    "Formula": "Boundary Energy",
+    "Inputs": [],
+    "Role": "FlowEquipment"
+  }
+]

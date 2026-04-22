@@ -1,0 +1,3132 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<KSpiceData>
+  <FileInfo>
+    <Description></Description>
+    <Comment></Comment>
+    <ModelTime></ModelTime>
+    <SaveTime>2025-02-05T12:55:01.539Z</SaveTime>
+    <ModelFile></ModelFile>
+    <ParameterFile></ParameterFile>
+    <ValueFile></ValueFile>
+    <KernelInfo>K-Spice ModelServer Release 25.1.1.6 (Jan  6 2025 09:24:01)</KernelInfo>
+    <KernelVersion>25.1.1.6</KernelVersion>
+    <IsFileExported>false</IsFileExported>
+  </FileInfo>
+  <Block Name="ThermoControlCenter" Type="ThermoControl" Description="Thermodynamics Control" State="g" StepBase="0.2" >
+    <Drawing></Drawing>
+    <Sizes keyword="ThermoMethods" >2</Sizes>
+    <Sizes keyword="StreamComponentsForSwapTables" >0</Sizes>
+    <Sizes keyword="NumberOfStreamsAutoSwapTables" >1</Sizes>
+    <Sizes keyword="NumberOfTablesEachAutoSwap" >1</Sizes>
+    <Sizes keyword="Stages" >1</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="25HV0001" Type="ControlValve" Description="Manual valve" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="ValveOption" >
+        <Value>1</Value>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="25HV0002" Type="ControlValve" Description="Manual valve" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="ValveOption" >
+        <Value>1</Value>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="25ESV0001" Type="BlockValve" Description="Block valve" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23LV0001" Type="ControlValve" Description="Control valve" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>LocalControlSignalIn</Destination>
+        <Source>23LIC0001:ControllerOutput</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="ValveOption" >
+        <Value>0</Value>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="23MV0003" Type="ControlValve" Description="Manual valve" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="ValveOption" >
+        <Value>1</Value>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="23ESV0002" Type="BlockValve" Description="Block valve" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23PA0001_m" Type="ControlledAsynchronousMachine" Description="Dcs Controlled Asynchronous Machine" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="ExternalMachines" >1</Sizes>
+    <Sizes keyword="TorqueSpeedPoints" >9</Sizes>
+    <Sizes keyword="VFDCharacteristic" >4</Sizes>
+    <Sizes keyword="DisplayCurves" >100</Sizes>
+    <Sizes keyword="DisplayVFDCurve" >100</Sizes>
+    <Sizes keyword="EfficiencyLoadCurve" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>Torque[0]</Destination>
+        <Source>23PA0001:Torque</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23LV0002" Type="ControlValve" Description="Control valve" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>LocalControlSignalIn</Destination>
+        <Source>23LIC0002:ControllerOutput</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="ValveOption" >
+        <Value>0</Value>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="23LT0001" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>23VA0001:LevelHeavyPhaseFeedSideWeir</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23LIC0001" Type="PidController" Description="PIDController" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="BufferSize" >50</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>DcsFeedback</Destination>
+        <Source>23LV0001:TargetPosition</Source>
+      </Input>
+      <Input>
+        <Destination>InputSwitch</Destination>
+        <Source>23LV0001:OutputSwitch</Source>
+      </Input>
+      <Input>
+        <Destination>Measurement</Destination>
+        <Source>23LT0001:MeasuredValue</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23LT0002" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>23VA0001:LevelOverflowLiquid</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23LIC0002" Type="PidController" Description="PIDController" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="BufferSize" >50</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>DcsFeedback</Destination>
+        <Source>23LV0002:TargetPosition</Source>
+      </Input>
+      <Input>
+        <Destination>InputSwitch</Destination>
+        <Source>23LV0002:OutputSwitch</Source>
+      </Input>
+      <Input>
+        <Destination>Measurement</Destination>
+        <Source>23LT0002:MeasuredValue</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23PT0001" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>pv_23L0003:Pressure</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23PIC0001" Type="PidController" Description="PIDController" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="BufferSize" >50</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>Measurement</Destination>
+        <Source>23PT0001:MeasuredValue</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23KA0001_m" Type="ControlledAsynchronousMachine" Description="Dcs Controlled Asynchronous Machine" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="ExternalMachines" >1</Sizes>
+    <Sizes keyword="TorqueSpeedPoints" >9</Sizes>
+    <Sizes keyword="VFDCharacteristic" >4</Sizes>
+    <Sizes keyword="DisplayCurves" >100</Sizes>
+    <Sizes keyword="DisplayVFDCurve" >100</Sizes>
+    <Sizes keyword="EfficiencyLoadCurve" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>LocalControlSignalIn</Destination>
+        <Source>23SIC0001:ControllerOutput</Source>
+      </Input>
+      <Input>
+        <Destination>Torque[0]</Destination>
+        <Source>23KA0001:Torque</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23HX0001_ProfileViewer1" Type="ProfileViewer" Description="Profile viewer" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="ElementsA" >21</Sizes>
+    <Sizes keyword="ProfilesA" >2</Sizes>
+    <Sizes keyword="ElementsB" >20</Sizes>
+    <Sizes keyword="ProfilesB" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>XA</Destination>
+        <Source>23HX0001:SectionBoundaryPositions</Source>
+      </Input>
+      <Input>
+        <Destination>XB</Destination>
+        <Source>23HX0001:SectionMidpointPositions</Source>
+      </Input>
+      <Input>
+        <Destination>YA[0]</Destination>
+        <Source>23HX0001s:FluidTemperatureProfile</Source>
+      </Input>
+      <Input>
+        <Destination>YA[1]</Destination>
+        <Source>23HX0001:FluidTemperatureProfile</Source>
+      </Input>
+      <Input>
+        <Destination>YB[0]</Destination>
+        <Source>23HX0001:WallTemperatureProfile</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23ESV0005" Type="BlockValve" Description="Block valve" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23TV0003" Type="ControlValve" Description="Control valve" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>LocalControlSignalIn</Destination>
+        <Source>23TIC0003:ControllerOutput</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="ValveOption" >
+        <Value>0</Value>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="23COLD0001" Type="StreamBoundary" Description="Stream Boundary" State="g" StepBase="0.2" VertexId="22" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="OutletStreamComponents" >3</Sizes>
+    <Sizes keyword="Tracers" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="Network-2" Type="PressureFlowNetwork" Description="Pressure network solver" State="g" StepBase="0.2" >
+    <Drawing></Drawing>
+    <Sizes keyword="NodesNumber" >1</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23HX0001s" Type="HeatExchangerStream" Description="Heat Exchanger Stream - Shell and Tube - Shell side" State="g" StepBase="0.2" VertexId="18" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-2</Thread>
+    <Sizes keyword="Sections" >20</Sizes>
+    <Sizes keyword="SectionBoundaries" >21</Sizes>
+    <Sizes keyword="ExternalStreams" >1</Sizes>
+    <Sizes keyword="RemoteMalfunctions" >0</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Sizes keyword="DisplayPoints" >100</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>23COLD0001:OutletStream</Source>
+      </Input>
+      <Input>
+        <Destination>TemperatureProfileExternal[0]</Destination>
+        <Source>23HX0001:WallTemperatureProfile</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="RemoteMalfunctionType" >
+        <Array>
+        </Array>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="pv_23L0006" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="0.2" VertexId="24" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-2</Thread>
+    <Sizes keyword="StreamComponents" >3</Sizes>
+    <Sizes keyword="InletStreams" >1</Sizes>
+    <Sizes keyword="OutletStreams" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>23HX0001s:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23TV0003_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="0.2" VertexId="23" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-2</Thread>
+    <Sizes keyword="InletStreamComponents" >3</Sizes>
+    <Sizes keyword="OutletStreamComponents" >3</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_23L0006:OutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23TV0003:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23TV0003:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23TV0003:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23TV0003:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23TV0003:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23TT0003" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>pv_23L0005:Temperature</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23TIC0003" Type="PidController" Description="PIDController" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="BufferSize" >50</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>DcsFeedback</Destination>
+        <Source>23TV0003:TargetPosition</Source>
+      </Input>
+      <Input>
+        <Destination>InputSwitch</Destination>
+        <Source>23TV0003:OutputSwitch</Source>
+      </Input>
+      <Input>
+        <Destination>Measurement</Destination>
+        <Source>23TT0003:MeasuredValue</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23PT0002" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>pv_23L0003:Pressure</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23FE0001" Type="FlowElement" Description="Flow Element" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="Points" >2</Sizes>
+    <Sizes keyword="DisplayPoints" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>MeasuredStream</Destination>
+        <Source>pv_23L0003:OutletStream[0]</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23PT0003" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>pv_23L0004:Pressure</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23ASC0001" Type="GenericASC" Description="Generic ASC" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="SurgeCurve" >4</Sizes>
+    <Sizes keyword="CorrectionCurve" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>FlowDPMeasurement</Destination>
+        <Source>23FE0001:DP</Source>
+      </Input>
+      <Input>
+        <Destination>InletPressureMeasurement</Destination>
+        <Source>23PT0002:MeasuredValue</Source>
+      </Input>
+      <Input>
+        <Destination>OutletPressureMeasurement</Destination>
+        <Source>23PT0003:MeasuredValue</Source>
+      </Input>
+      <Input>
+        <Destination>PerformanceDataInput</Destination>
+        <Source>23KA0001:CompressorData</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23UV0001" Type="ControlValve" Description="Control valve" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>LocalControlSignalIn</Destination>
+        <Source>23ASC0001:Output</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="ValveOption" >
+        <Value>0</Value>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="23PV_0001" Type="ControlValve" Description="Manual valve" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="ValveOption" >
+        <Value>1</Value>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="23ESV1002" Type="BlockValve" Description="Block valve" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23PT1001" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>pv_23L1003:Pressure</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23KA1001_m" Type="ControlledAsynchronousMachine" Description="Dcs Controlled Asynchronous Machine" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="ExternalMachines" >1</Sizes>
+    <Sizes keyword="TorqueSpeedPoints" >9</Sizes>
+    <Sizes keyword="VFDCharacteristic" >4</Sizes>
+    <Sizes keyword="DisplayCurves" >100</Sizes>
+    <Sizes keyword="DisplayVFDCurve" >100</Sizes>
+    <Sizes keyword="EfficiencyLoadCurve" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>LocalControlSignalIn</Destination>
+        <Source>23SIC1001:ControllerOutput</Source>
+      </Input>
+      <Input>
+        <Destination>Torque[0]</Destination>
+        <Source>23KA1001:Torque</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23HX1001_ProfileViewer1" Type="ProfileViewer" Description="Profile viewer" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="ElementsA" >21</Sizes>
+    <Sizes keyword="ProfilesA" >2</Sizes>
+    <Sizes keyword="ElementsB" >20</Sizes>
+    <Sizes keyword="ProfilesB" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>XA</Destination>
+        <Source>23HX1001:SectionBoundaryPositions</Source>
+      </Input>
+      <Input>
+        <Destination>XB</Destination>
+        <Source>23HX1001:SectionMidpointPositions</Source>
+      </Input>
+      <Input>
+        <Destination>YA[0]</Destination>
+        <Source>23HX1001s:FluidTemperatureProfile</Source>
+      </Input>
+      <Input>
+        <Destination>YA[1]</Destination>
+        <Source>23HX1001:FluidTemperatureProfile</Source>
+      </Input>
+      <Input>
+        <Destination>YB[0]</Destination>
+        <Source>23HX1001:WallTemperatureProfile</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23ESV1005" Type="BlockValve" Description="Block valve" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23TV1003" Type="ControlValve" Description="Control valve" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>LocalControlSignalIn</Destination>
+        <Source>23TIC1003:ControllerOutput</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="ValveOption" >
+        <Value>0</Value>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="23COLD1001" Type="StreamBoundary" Description="Stream Boundary" State="g" StepBase="0.2" VertexId="38" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="OutletStreamComponents" >3</Sizes>
+    <Sizes keyword="Tracers" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="Network-3" Type="PressureFlowNetwork" Description="Pressure network solver" State="g" StepBase="0.2" >
+    <Drawing></Drawing>
+    <Sizes keyword="NodesNumber" >1</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23HX1001s" Type="HeatExchangerStream" Description="Heat Exchanger Stream - Shell and Tube - Shell side" State="g" StepBase="0.2" VertexId="39" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-3</Thread>
+    <Sizes keyword="Sections" >20</Sizes>
+    <Sizes keyword="SectionBoundaries" >21</Sizes>
+    <Sizes keyword="ExternalStreams" >1</Sizes>
+    <Sizes keyword="RemoteMalfunctions" >0</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Sizes keyword="DisplayPoints" >100</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>23COLD1001:OutletStream</Source>
+      </Input>
+      <Input>
+        <Destination>TemperatureProfileExternal[0]</Destination>
+        <Source>23HX1001:WallTemperatureProfile</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="RemoteMalfunctionType" >
+        <Array>
+        </Array>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="pv_23L1006" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="0.2" VertexId="40" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-3</Thread>
+    <Sizes keyword="StreamComponents" >3</Sizes>
+    <Sizes keyword="InletStreams" >1</Sizes>
+    <Sizes keyword="OutletStreams" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>23HX1001s:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23TV1003_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="0.2" VertexId="41" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-3</Thread>
+    <Sizes keyword="InletStreamComponents" >3</Sizes>
+    <Sizes keyword="OutletStreamComponents" >3</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_23L1006:OutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23TV1003:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23TV1003:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23TV1003:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23TV1003:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23TV1003:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23TT1003" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>pv_23L1005:Temperature</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23TIC1003" Type="PidController" Description="PIDController" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="BufferSize" >50</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>DcsFeedback</Destination>
+        <Source>23TV1003:TargetPosition</Source>
+      </Input>
+      <Input>
+        <Destination>InputSwitch</Destination>
+        <Source>23TV1003:OutputSwitch</Source>
+      </Input>
+      <Input>
+        <Destination>Measurement</Destination>
+        <Source>23TT1003:MeasuredValue</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23PT1002" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>pv_23L1003:Pressure</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23FE1001" Type="FlowElement" Description="Flow Element" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="Points" >2</Sizes>
+    <Sizes keyword="DisplayPoints" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>MeasuredStream</Destination>
+        <Source>pv_23L1003:OutletStream[0]</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23PT1003" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>pv_23L1004:Pressure</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23ASC1001" Type="GenericASC" Description="Generic ASC" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="SurgeCurve" >4</Sizes>
+    <Sizes keyword="CorrectionCurve" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>FlowDPMeasurement</Destination>
+        <Source>23FE1001:DP</Source>
+      </Input>
+      <Input>
+        <Destination>InletPressureMeasurement</Destination>
+        <Source>23PT1002:MeasuredValue</Source>
+      </Input>
+      <Input>
+        <Destination>OutletPressureMeasurement</Destination>
+        <Source>23PT1003:MeasuredValue</Source>
+      </Input>
+      <Input>
+        <Destination>PerformanceDataInput</Destination>
+        <Source>23KA1001:CompressorData</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23UV1001" Type="ControlValve" Description="Control valve" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>LocalControlSignalIn</Destination>
+        <Source>23ASC1001:Output</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="ValveOption" >
+        <Value>0</Value>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="Feed3" Type="StreamBoundary" Description="Stream Boundary" State="g" StepBase="0.2" VertexId="42" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="Tracers" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="Feed2" Type="StreamBoundary" Description="Stream Boundary" State="g" StepBase="0.2" VertexId="2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="Tracers" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="Feed1" Type="StreamBoundary" Description="Stream Boundary" State="g" StepBase="0.2" VertexId="0" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="Tracers" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="Network-0" Type="PressureFlowNetwork" Description="Pressure network solver" State="g" StepBase="0.2" >
+    <Drawing></Drawing>
+    <Sizes keyword="NodesNumber" >20</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="25HV0003_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="0.2" VertexId="43" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>Feed3:OutletStream</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>25HV0003:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>25HV0003:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>25HV0003:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>25HV0003:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>25HV0003:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="25HV0002_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="0.2" VertexId="3" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>Feed2:OutletStream</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>25HV0002:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>25HV0002:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>25HV0002:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>25HV0002:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>25HV0002:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="25HV0001_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="0.2" VertexId="1" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>Feed1:OutletStream</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>25HV0001:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>25HV0001:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>25HV0001:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>25HV0001:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>25HV0001:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="pv_25L0001" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="0.2" VertexId="5" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="StreamComponents" >14</Sizes>
+    <Sizes keyword="InletStreams" >3</Sizes>
+    <Sizes keyword="OutletStreams" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>25HV0001_pf:OutletStream</Source>
+      </Input>
+      <Input>
+        <Destination>InletStream[1]</Destination>
+        <Source>25HV0002_pf:OutletStream</Source>
+      </Input>
+      <Input>
+        <Destination>InletStream[2]</Destination>
+        <Source>25HV0003_pf:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="25ESV0001_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="0.2" VertexId="4" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_25L0001:OutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>25ESV0001:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>25ESV0001:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>25ESV0001:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>25ESV0001:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>25ESV0001:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23VA0001" Type="Separator" Description="Horizontal separator" State="g" StepBase="0.2" VertexId="9" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="StreamComponents" >14</Sizes>
+    <Sizes keyword="InletStreamsFeedSide" >1</Sizes>
+    <Sizes keyword="InletStreamsOverflowSide" >0</Sizes>
+    <Sizes keyword="OutletStreamsFeedSide" >1</Sizes>
+    <Sizes keyword="OutletStreamsOverflowSide" >3</Sizes>
+    <Sizes keyword="FeedMeasurements" >0</Sizes>
+    <Sizes keyword="OverflowMeasurements" >0</Sizes>
+    <Sizes keyword="PointsFeedSideVolumeCurve" >0</Sizes>
+    <Sizes keyword="PointsOverflowSideVolumeCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurves" >100</Sizes>
+    <Sizes keyword="SizeAliasNameList" >0</Sizes>
+    <Sizes keyword="ExternalCoils" >0</Sizes>
+    <Sizes keyword="Sections" >20</Sizes>
+    <Sizes keyword="SectionBoundaries" >21</Sizes>
+    <Sizes keyword="WeirSlits" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>FeedInletStream[0]</Destination>
+        <Source>25ESV0001_pf:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="pf_Pipe0003A" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="0.2" VertexId="27" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >0</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>23VA0001:OverflowOutletStream[1]</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="pv_23L0003A" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="0.2" VertexId="26" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="StreamComponents" >14</Sizes>
+    <Sizes keyword="InletStreams" >1</Sizes>
+    <Sizes keyword="OutletStreams" >2</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>pf_Pipe0003A:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23ESV1002_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="0.2" VertexId="30" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_23L0003A:OutletStream[1]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23ESV1002:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23ESV1002:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23ESV1002:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23ESV1002:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23ESV1002:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="pv_23L1003" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="0.2" VertexId="31" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="StreamComponents" >14</Sizes>
+    <Sizes keyword="InletStreams" >2</Sizes>
+    <Sizes keyword="OutletStreams" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>23ESV1002_pf:OutletStream</Source>
+      </Input>
+      <Input>
+        <Destination>InletStream[1]</Destination>
+        <Source>23UV1001_pf:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23KA1001" Type="ContinuousFlowCompressor" Description="Continuous Flow Compressor" State="g" StepBase="0.2" VertexId="32" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="PerformanceCurvesPrimaryView" >4</Sizes>
+    <Sizes keyword="PerformanceCurvesSecondaryView" >1</Sizes>
+    <Sizes keyword="PerformanceCurvesTertiaryView" >1</Sizes>
+    <Sizes keyword="Points" >5</Sizes>
+    <Sizes keyword="DisplayCurves" >100</Sizes>
+    <Sizes keyword="DisplayCurvesSurge" >0</Sizes>
+    <Sizes keyword="DisplayCurvesChoke" >0</Sizes>
+    <Sizes keyword="PerformanceCurvesCurrentView" >4</Sizes>
+    <Sizes keyword="TotalCurves" >4</Sizes>
+    <Sizes keyword="TotalDataPoints" >20</Sizes>
+    <Sizes keyword="RefGas" >14</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_23L1003:OutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>Speed</Destination>
+        <Source>23KA1001_m:Speed[0]</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="pv_23L1004" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="0.2" VertexId="33" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="StreamComponents" >14</Sizes>
+    <Sizes keyword="InletStreams" >1</Sizes>
+    <Sizes keyword="OutletStreams" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>23KA1001:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23HX1001" Type="HeatExchangerStream" Description="Heat Exchanger Stream - Shell and Tube 1" State="g" StepBase="0.2" VertexId="34" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="Sections" >20</Sizes>
+    <Sizes keyword="SectionBoundaries" >21</Sizes>
+    <Sizes keyword="ExternalStreams" >0</Sizes>
+    <Sizes keyword="RemoteMalfunctions" >0</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Sizes keyword="DisplayPoints" >100</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>AmbientTemperatureIntegrationFactor</Destination>
+        <Source>23HX1001s:TemperatureIntegrationFactor</Source>
+      </Input>
+      <Input>
+        <Destination>AmbientTemperatureProfile</Destination>
+        <Source>23HX1001s:FluidTemperatureProfile</Source>
+      </Input>
+      <Input>
+        <Destination>GridInputProfile</Destination>
+        <Source>23HX1001s:GridProfile</Source>
+      </Input>
+      <Input>
+        <Destination>HeatConductanceProfileAmbient</Destination>
+        <Source>23HX1001s:HeatConductanceProfileExternal[0]</Source>
+      </Input>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_23L1004:OutletStream[0]</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="RemoteMalfunctionType" >
+        <Array>
+        </Array>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="pv_23L1005" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="0.2" VertexId="35" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="StreamComponents" >14</Sizes>
+    <Sizes keyword="InletStreams" >1</Sizes>
+    <Sizes keyword="OutletStreams" >2</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>23HX1001:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23ESV1005_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="0.2" VertexId="37" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_23L1005:OutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23ESV1005:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23ESV1005:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23ESV1005:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23ESV1005:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23ESV1005:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23UV1001_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="0.2" VertexId="36" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_23L1005:OutletStream[1]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23UV1001:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23UV1001:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23UV1001:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23UV1001:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23UV1001:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23ESV0002_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="0.2" VertexId="8" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_23L0003A:OutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23ESV0002:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23ESV0002:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23ESV0002:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23ESV0002:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23ESV0002:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="pv_23L0003" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="0.2" VertexId="16" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="StreamComponents" >14</Sizes>
+    <Sizes keyword="InletStreams" >2</Sizes>
+    <Sizes keyword="OutletStreams" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>23ESV0002_pf:OutletStream</Source>
+      </Input>
+      <Input>
+        <Destination>InletStream[1]</Destination>
+        <Source>23UV0001_pf:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23KA0001" Type="ContinuousFlowCompressor" Description="Continuous Flow Compressor" State="g" StepBase="0.2" VertexId="15" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="PerformanceCurvesPrimaryView" >4</Sizes>
+    <Sizes keyword="PerformanceCurvesSecondaryView" >1</Sizes>
+    <Sizes keyword="PerformanceCurvesTertiaryView" >1</Sizes>
+    <Sizes keyword="Points" >5</Sizes>
+    <Sizes keyword="DisplayCurves" >100</Sizes>
+    <Sizes keyword="DisplayCurvesSurge" >0</Sizes>
+    <Sizes keyword="DisplayCurvesChoke" >0</Sizes>
+    <Sizes keyword="PerformanceCurvesCurrentView" >4</Sizes>
+    <Sizes keyword="TotalCurves" >4</Sizes>
+    <Sizes keyword="TotalDataPoints" >20</Sizes>
+    <Sizes keyword="RefGas" >14</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_23L0003:OutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>Speed</Destination>
+        <Source>23KA0001_m:Speed[0]</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="pv_23L0004" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="0.2" VertexId="20" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="StreamComponents" >14</Sizes>
+    <Sizes keyword="InletStreams" >1</Sizes>
+    <Sizes keyword="OutletStreams" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>23KA0001:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23HX0001" Type="HeatExchangerStream" Description="Heat Exchanger Stream - Shell and Tube 1" State="g" StepBase="0.2" VertexId="17" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="Sections" >20</Sizes>
+    <Sizes keyword="SectionBoundaries" >21</Sizes>
+    <Sizes keyword="ExternalStreams" >0</Sizes>
+    <Sizes keyword="RemoteMalfunctions" >0</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Sizes keyword="DisplayPoints" >100</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>AmbientTemperatureIntegrationFactor</Destination>
+        <Source>23HX0001s:TemperatureIntegrationFactor</Source>
+      </Input>
+      <Input>
+        <Destination>AmbientTemperatureProfile</Destination>
+        <Source>23HX0001s:FluidTemperatureProfile</Source>
+      </Input>
+      <Input>
+        <Destination>GridInputProfile</Destination>
+        <Source>23HX0001s:GridProfile</Source>
+      </Input>
+      <Input>
+        <Destination>HeatConductanceProfileAmbient</Destination>
+        <Source>23HX0001s:HeatConductanceProfileExternal[0]</Source>
+      </Input>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_23L0004:OutletStream[0]</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="RemoteMalfunctionType" >
+        <Array>
+        </Array>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="pv_23L0005" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="0.2" VertexId="21" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="StreamComponents" >14</Sizes>
+    <Sizes keyword="InletStreams" >1</Sizes>
+    <Sizes keyword="OutletStreams" >2</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>23HX0001:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23UV0001_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="0.2" VertexId="25" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_23L0005:OutletStream[1]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23UV0001:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23UV0001:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23UV0001:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23UV0001:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23UV0001:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23ESV0005_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="0.2" VertexId="19" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_23L0005:OutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23ESV0005:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23ESV0005:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23ESV0005:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23ESV0005:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23ESV0005:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="pv_L0007A" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="0.2" VertexId="28" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="StreamComponents" >14</Sizes>
+    <Sizes keyword="InletStreams" >2</Sizes>
+    <Sizes keyword="OutletStreams" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>23ESV0005_pf:OutletStream</Source>
+      </Input>
+      <Input>
+        <Destination>InletStream[1]</Destination>
+        <Source>23ESV1005_pf:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23PV_0001_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="0.2" VertexId="29" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_L0007A:OutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23PV_0001:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23PV_0001:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23PV_0001:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23PV_0001:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23PV_0001:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="pv_L1001" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="0.2" VertexId="44" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="StreamComponents" >14</Sizes>
+    <Sizes keyword="InletStreams" >1</Sizes>
+    <Sizes keyword="OutletStreams" >2</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>23PV_0001_pf:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23ESV3002_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="0.2" VertexId="59" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_L1001:OutletStream[1]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23ESV3002:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23ESV3002:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23ESV3002:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23ESV3002:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23ESV3002:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="pv_23L3003" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="0.2" VertexId="60" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="StreamComponents" >14</Sizes>
+    <Sizes keyword="InletStreams" >2</Sizes>
+    <Sizes keyword="OutletStreams" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>23ESV3002_pf:OutletStream</Source>
+      </Input>
+      <Input>
+        <Destination>InletStream[1]</Destination>
+        <Source>23UV3001_pf:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23KA3001" Type="ContinuousFlowCompressor" Description="Continuous Flow Compressor" State="g" StepBase="0.2" VertexId="61" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="PerformanceCurvesPrimaryView" >4</Sizes>
+    <Sizes keyword="PerformanceCurvesSecondaryView" >1</Sizes>
+    <Sizes keyword="PerformanceCurvesTertiaryView" >1</Sizes>
+    <Sizes keyword="Points" >5</Sizes>
+    <Sizes keyword="DisplayCurves" >100</Sizes>
+    <Sizes keyword="DisplayCurvesSurge" >0</Sizes>
+    <Sizes keyword="DisplayCurvesChoke" >0</Sizes>
+    <Sizes keyword="PerformanceCurvesCurrentView" >4</Sizes>
+    <Sizes keyword="TotalCurves" >4</Sizes>
+    <Sizes keyword="TotalDataPoints" >20</Sizes>
+    <Sizes keyword="RefGas" >14</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_23L3003:OutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>Speed</Destination>
+        <Source>23KA3001_m:Speed[0]</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="pv_23L3004" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="0.2" VertexId="62" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="StreamComponents" >14</Sizes>
+    <Sizes keyword="InletStreams" >1</Sizes>
+    <Sizes keyword="OutletStreams" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>23KA3001:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23HX3001" Type="HeatExchangerStream" Description="Heat Exchanger Stream - Shell and Tube 1" State="g" StepBase="0.2" VertexId="63" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="Sections" >20</Sizes>
+    <Sizes keyword="SectionBoundaries" >21</Sizes>
+    <Sizes keyword="ExternalStreams" >0</Sizes>
+    <Sizes keyword="RemoteMalfunctions" >0</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Sizes keyword="DisplayPoints" >100</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>AmbientTemperatureIntegrationFactor</Destination>
+        <Source>23HX3001s:TemperatureIntegrationFactor</Source>
+      </Input>
+      <Input>
+        <Destination>AmbientTemperatureProfile</Destination>
+        <Source>23HX3001s:FluidTemperatureProfile</Source>
+      </Input>
+      <Input>
+        <Destination>GridInputProfile</Destination>
+        <Source>23HX3001s:GridProfile</Source>
+      </Input>
+      <Input>
+        <Destination>HeatConductanceProfileAmbient</Destination>
+        <Source>23HX3001s:HeatConductanceProfileExternal[0]</Source>
+      </Input>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_23L3004:OutletStream[0]</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="RemoteMalfunctionType" >
+        <Array>
+        </Array>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="pv_233005" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="0.2" VertexId="64" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="StreamComponents" >14</Sizes>
+    <Sizes keyword="InletStreams" >1</Sizes>
+    <Sizes keyword="OutletStreams" >2</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>23HX3001:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23ESV3005_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="0.2" VertexId="66" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_233005:OutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23ESV3005:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23ESV3005:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23ESV3005:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23ESV3005:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23ESV3005:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23UV3001_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="0.2" VertexId="65" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_233005:OutletStream[1]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23UV3001:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23UV3001:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23UV3001:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23UV3001:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23UV3001:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23ESV2002_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="0.2" VertexId="49" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_L1001:OutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23ESV2002:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23ESV2002:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23ESV2002:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23ESV2002:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23ESV2002:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="pv_23L2003" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="0.2" VertexId="50" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="StreamComponents" >14</Sizes>
+    <Sizes keyword="InletStreams" >2</Sizes>
+    <Sizes keyword="OutletStreams" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>23ESV2002_pf:OutletStream</Source>
+      </Input>
+      <Input>
+        <Destination>InletStream[1]</Destination>
+        <Source>23UV2001_pf:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23KA2001" Type="ContinuousFlowCompressor" Description="Continuous Flow Compressor" State="g" StepBase="0.2" VertexId="51" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="PerformanceCurvesPrimaryView" >4</Sizes>
+    <Sizes keyword="PerformanceCurvesSecondaryView" >1</Sizes>
+    <Sizes keyword="PerformanceCurvesTertiaryView" >1</Sizes>
+    <Sizes keyword="Points" >5</Sizes>
+    <Sizes keyword="DisplayCurves" >100</Sizes>
+    <Sizes keyword="DisplayCurvesSurge" >0</Sizes>
+    <Sizes keyword="DisplayCurvesChoke" >0</Sizes>
+    <Sizes keyword="PerformanceCurvesCurrentView" >4</Sizes>
+    <Sizes keyword="TotalCurves" >4</Sizes>
+    <Sizes keyword="TotalDataPoints" >20</Sizes>
+    <Sizes keyword="RefGas" >14</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_23L2003:OutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>Speed</Destination>
+        <Source>23KA2001_m:Speed[0]</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="pv_23L2004" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="0.2" VertexId="52" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="StreamComponents" >14</Sizes>
+    <Sizes keyword="InletStreams" >1</Sizes>
+    <Sizes keyword="OutletStreams" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>23KA2001:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23HX2001" Type="HeatExchangerStream" Description="Heat Exchanger Stream - Shell and Tube 1" State="g" StepBase="0.2" VertexId="53" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="Sections" >20</Sizes>
+    <Sizes keyword="SectionBoundaries" >21</Sizes>
+    <Sizes keyword="ExternalStreams" >0</Sizes>
+    <Sizes keyword="RemoteMalfunctions" >0</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Sizes keyword="DisplayPoints" >100</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>AmbientTemperatureIntegrationFactor</Destination>
+        <Source>23HX2001s:TemperatureIntegrationFactor</Source>
+      </Input>
+      <Input>
+        <Destination>AmbientTemperatureProfile</Destination>
+        <Source>23HX2001s:FluidTemperatureProfile</Source>
+      </Input>
+      <Input>
+        <Destination>GridInputProfile</Destination>
+        <Source>23HX2001s:GridProfile</Source>
+      </Input>
+      <Input>
+        <Destination>HeatConductanceProfileAmbient</Destination>
+        <Source>23HX2001s:HeatConductanceProfileExternal[0]</Source>
+      </Input>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_23L2004:OutletStream[0]</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="RemoteMalfunctionType" >
+        <Array>
+        </Array>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="pv_232005" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="0.2" VertexId="54" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="StreamComponents" >14</Sizes>
+    <Sizes keyword="InletStreams" >1</Sizes>
+    <Sizes keyword="OutletStreams" >2</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>23HX2001:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23UV2001_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="0.2" VertexId="56" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_232005:OutletStream[1]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23UV2001:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23UV2001:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23UV2001:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23UV2001:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23UV2001:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23ESV2005_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="0.2" VertexId="55" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_232005:OutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23ESV2005:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23ESV2005:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23ESV2005:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23ESV2005:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23ESV2005:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="pv_L1002" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="0.2" VertexId="57" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="StreamComponents" >14</Sizes>
+    <Sizes keyword="InletStreams" >2</Sizes>
+    <Sizes keyword="OutletStreams" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>23ESV2005_pf:OutletStream</Source>
+      </Input>
+      <Input>
+        <Destination>InletStream[1]</Destination>
+        <Source>23ESV3005_pf:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23PV_1002_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="0.2" VertexId="58" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_L1002:OutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23PV_1002:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23PV_1002:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23PV_1002:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23PV_1002:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23PV_1002:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23PSV0001" Type="SafetyValve" Description="Safety valve" State="g" StepBase="0.2" VertexId="10" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="OpeningCurve" >2</Sizes>
+    <Sizes keyword="ClosingCurve" >2</Sizes>
+    <Sizes keyword="DischargeCoefficientCurve" >2</Sizes>
+    <Sizes keyword="DisplayDischargeCoefficientCurve" >100</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>23VA0001:OverflowOutletStream[2]</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23MV0003_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="0.2" VertexId="7" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>23VA0001:OverflowOutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23MV0003:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23MV0003:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23MV0003:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23MV0003:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23MV0003:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="pv_23MV0003" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="0.2" VertexId="13" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="StreamComponents" >14</Sizes>
+    <Sizes keyword="InletStreams" >1</Sizes>
+    <Sizes keyword="OutletStreams" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>23MV0003_pf:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23PA0001" Type="CentrifugalPump" Description="Centrifugal Pump" State="g" StepBase="0.2" VertexId="11" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="Points" >7</Sizes>
+    <Sizes keyword="DisplayPoints" >100</Sizes>
+    <Sizes keyword="PerformanceCurves" >1</Sizes>
+    <Sizes keyword="DisplayPointsLeft" >100</Sizes>
+    <Sizes keyword="DisplayPointsRight" >100</Sizes>
+    <Sizes keyword="DisplayMinThermal" >0</Sizes>
+    <Sizes keyword="DisplayMinAllowable" >0</Sizes>
+    <Sizes keyword="DisplayMaxAllowable" >0</Sizes>
+    <Sizes keyword="DisplayMinPreferred" >0</Sizes>
+    <Sizes keyword="DisplayMaxPreferred" >0</Sizes>
+    <Sizes keyword="NPSHCurves" >0</Sizes>
+    <Sizes keyword="NPSHDisplayPoints" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_23MV0003:OutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>Speed</Destination>
+        <Source>23PA0001_m:Speed[0]</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="pv23L0002" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="0.2" VertexId="14" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="StreamComponents" >14</Sizes>
+    <Sizes keyword="InletStreams" >1</Sizes>
+    <Sizes keyword="OutletStreams" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>23PA0001:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23LV0002_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="0.2" VertexId="12" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv23L0002:OutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23LV0002:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23LV0002:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23LV0002:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23LV0002:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23LV0002:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23LV0001_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="0.2" VertexId="6" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>23VA0001:FeedOutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23LV0001:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23LV0001:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23LV0001:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23LV0001:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23LV0001:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="25HV0003" Type="ControlValve" Description="Manual valve" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="ValveOption" >
+        <Value>1</Value>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="23ESV2002" Type="BlockValve" Description="Block valve" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23PT2001" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>pv_23L2003:Pressure</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23PIC2001" Type="PidController" Description="PIDController" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="BufferSize" >50</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>Measurement</Destination>
+        <Source>23PT2001:MeasuredValue</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23KA2001_m" Type="ControlledAsynchronousMachine" Description="Dcs Controlled Asynchronous Machine" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="ExternalMachines" >1</Sizes>
+    <Sizes keyword="TorqueSpeedPoints" >9</Sizes>
+    <Sizes keyword="VFDCharacteristic" >4</Sizes>
+    <Sizes keyword="DisplayCurves" >100</Sizes>
+    <Sizes keyword="DisplayVFDCurve" >100</Sizes>
+    <Sizes keyword="EfficiencyLoadCurve" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>LocalControlSignalIn</Destination>
+        <Source>23SIC2001:ControllerOutput</Source>
+      </Input>
+      <Input>
+        <Destination>Torque[0]</Destination>
+        <Source>23KA2001:Torque</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23HX2001_ProfileViewer1" Type="ProfileViewer" Description="Profile viewer" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="ElementsA" >21</Sizes>
+    <Sizes keyword="ProfilesA" >2</Sizes>
+    <Sizes keyword="ElementsB" >20</Sizes>
+    <Sizes keyword="ProfilesB" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>XA</Destination>
+        <Source>23HX2001:SectionBoundaryPositions</Source>
+      </Input>
+      <Input>
+        <Destination>XB</Destination>
+        <Source>23HX2001:SectionMidpointPositions</Source>
+      </Input>
+      <Input>
+        <Destination>YA[0]</Destination>
+        <Source>23HX2001s:FluidTemperatureProfile</Source>
+      </Input>
+      <Input>
+        <Destination>YA[1]</Destination>
+        <Source>23HX2001:FluidTemperatureProfile</Source>
+      </Input>
+      <Input>
+        <Destination>YB[0]</Destination>
+        <Source>23HX2001:WallTemperatureProfile</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23ESV2005" Type="BlockValve" Description="Block valve" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23TV2003" Type="ControlValve" Description="Control valve" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>LocalControlSignalIn</Destination>
+        <Source>23TIC2003:ControllerOutput</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="ValveOption" >
+        <Value>0</Value>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="23COLD2001" Type="StreamBoundary" Description="Stream Boundary" State="g" StepBase="0.2" VertexId="45" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="OutletStreamComponents" >3</Sizes>
+    <Sizes keyword="Tracers" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="Network-4" Type="PressureFlowNetwork" Description="Pressure network solver" State="g" StepBase="0.2" >
+    <Drawing></Drawing>
+    <Sizes keyword="NodesNumber" >1</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23HX2001s" Type="HeatExchangerStream" Description="Heat Exchanger Stream - Shell and Tube - Shell side" State="g" StepBase="0.2" VertexId="46" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-4</Thread>
+    <Sizes keyword="Sections" >20</Sizes>
+    <Sizes keyword="SectionBoundaries" >21</Sizes>
+    <Sizes keyword="ExternalStreams" >1</Sizes>
+    <Sizes keyword="RemoteMalfunctions" >0</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Sizes keyword="DisplayPoints" >100</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>23COLD2001:OutletStream</Source>
+      </Input>
+      <Input>
+        <Destination>TemperatureProfileExternal[0]</Destination>
+        <Source>23HX2001:WallTemperatureProfile</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="RemoteMalfunctionType" >
+        <Array>
+        </Array>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="pv_23L2006" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="0.2" VertexId="47" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-4</Thread>
+    <Sizes keyword="StreamComponents" >3</Sizes>
+    <Sizes keyword="InletStreams" >1</Sizes>
+    <Sizes keyword="OutletStreams" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>23HX2001s:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23TV2003_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="0.2" VertexId="48" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-4</Thread>
+    <Sizes keyword="InletStreamComponents" >3</Sizes>
+    <Sizes keyword="OutletStreamComponents" >3</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_23L2006:OutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23TV2003:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23TV2003:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23TV2003:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23TV2003:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23TV2003:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23TT2003" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>pv_232005:Temperature</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23TIC2003" Type="PidController" Description="PIDController" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="BufferSize" >50</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>DcsFeedback</Destination>
+        <Source>23TV2003:TargetPosition</Source>
+      </Input>
+      <Input>
+        <Destination>InputSwitch</Destination>
+        <Source>23TV2003:OutputSwitch</Source>
+      </Input>
+      <Input>
+        <Destination>Measurement</Destination>
+        <Source>23TT2003:MeasuredValue</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23PT2002" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>pv_23L2003:Pressure</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23FE2001" Type="FlowElement" Description="Flow Element" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="Points" >2</Sizes>
+    <Sizes keyword="DisplayPoints" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>MeasuredStream</Destination>
+        <Source>pv_23L2003:OutletStream[0]</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23PT2003" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>pv_23L2004:Pressure</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23ASC2001" Type="GenericASC" Description="Generic ASC" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="SurgeCurve" >4</Sizes>
+    <Sizes keyword="CorrectionCurve" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>FlowDPMeasurement</Destination>
+        <Source>23FE2001:DP</Source>
+      </Input>
+      <Input>
+        <Destination>InletPressureMeasurement</Destination>
+        <Source>23PT2002:MeasuredValue</Source>
+      </Input>
+      <Input>
+        <Destination>OutletPressureMeasurement</Destination>
+        <Source>23PT2003:MeasuredValue</Source>
+      </Input>
+      <Input>
+        <Destination>PerformanceDataInput</Destination>
+        <Source>23KA2001:CompressorData</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23UV2001" Type="ControlValve" Description="Control valve" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>LocalControlSignalIn</Destination>
+        <Source>23ASC2001:Output</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="ValveOption" >
+        <Value>0</Value>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="23PV_1002" Type="ControlValve" Description="Manual valve" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="ValveOption" >
+        <Value>1</Value>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="23ESV3002" Type="BlockValve" Description="Block valve" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23PT3001" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>pv_23L3003:Pressure</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23KA3001_m" Type="ControlledAsynchronousMachine" Description="Dcs Controlled Asynchronous Machine" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="ExternalMachines" >1</Sizes>
+    <Sizes keyword="TorqueSpeedPoints" >9</Sizes>
+    <Sizes keyword="VFDCharacteristic" >4</Sizes>
+    <Sizes keyword="DisplayCurves" >100</Sizes>
+    <Sizes keyword="DisplayVFDCurve" >100</Sizes>
+    <Sizes keyword="EfficiencyLoadCurve" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>LocalControlSignalIn</Destination>
+        <Source>23SIC3001:ControllerOutput</Source>
+      </Input>
+      <Input>
+        <Destination>Torque[0]</Destination>
+        <Source>23KA3001:Torque</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23HX3001_ProfileViewer1" Type="ProfileViewer" Description="Profile viewer" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="ElementsA" >21</Sizes>
+    <Sizes keyword="ProfilesA" >2</Sizes>
+    <Sizes keyword="ElementsB" >20</Sizes>
+    <Sizes keyword="ProfilesB" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>XA</Destination>
+        <Source>23HX3001:SectionBoundaryPositions</Source>
+      </Input>
+      <Input>
+        <Destination>XB</Destination>
+        <Source>23HX3001:SectionMidpointPositions</Source>
+      </Input>
+      <Input>
+        <Destination>YA[0]</Destination>
+        <Source>23HX3001s:FluidTemperatureProfile</Source>
+      </Input>
+      <Input>
+        <Destination>YA[1]</Destination>
+        <Source>23HX3001:FluidTemperatureProfile</Source>
+      </Input>
+      <Input>
+        <Destination>YB[0]</Destination>
+        <Source>23HX3001:WallTemperatureProfile</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23ESV3005" Type="BlockValve" Description="Block valve" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23TV3003" Type="ControlValve" Description="Control valve" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>LocalControlSignalIn</Destination>
+        <Source>23TIC3003:ControllerOutput</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="ValveOption" >
+        <Value>0</Value>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="23COLD3001" Type="StreamBoundary" Description="Stream Boundary" State="g" StepBase="0.2" VertexId="67" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="OutletStreamComponents" >3</Sizes>
+    <Sizes keyword="Tracers" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="Network-1" Type="PressureFlowNetwork" Description="Pressure network solver" State="g" StepBase="0.2" >
+    <Drawing></Drawing>
+    <Sizes keyword="NodesNumber" >1</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23HX3001s" Type="HeatExchangerStream" Description="Heat Exchanger Stream - Shell and Tube - Shell side" State="g" StepBase="0.2" VertexId="68" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-1</Thread>
+    <Sizes keyword="Sections" >20</Sizes>
+    <Sizes keyword="SectionBoundaries" >21</Sizes>
+    <Sizes keyword="ExternalStreams" >1</Sizes>
+    <Sizes keyword="RemoteMalfunctions" >0</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Sizes keyword="DisplayPoints" >100</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>23COLD3001:OutletStream</Source>
+      </Input>
+      <Input>
+        <Destination>TemperatureProfileExternal[0]</Destination>
+        <Source>23HX3001:WallTemperatureProfile</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="RemoteMalfunctionType" >
+        <Array>
+        </Array>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="pv_23L3006" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="0.2" VertexId="69" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-1</Thread>
+    <Sizes keyword="StreamComponents" >3</Sizes>
+    <Sizes keyword="InletStreams" >1</Sizes>
+    <Sizes keyword="OutletStreams" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>23HX3001s:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23TV3003_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="0.2" VertexId="70" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Thread>Network-1</Thread>
+    <Sizes keyword="InletStreamComponents" >3</Sizes>
+    <Sizes keyword="OutletStreamComponents" >3</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_23L3006:OutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23TV3003:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23TV3003:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23TV3003:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23TV3003:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23TV3003:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23TT3003" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>pv_233005:Temperature</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23TIC3003" Type="PidController" Description="PIDController" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="BufferSize" >50</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>DcsFeedback</Destination>
+        <Source>23TV3003:TargetPosition</Source>
+      </Input>
+      <Input>
+        <Destination>InputSwitch</Destination>
+        <Source>23TV3003:OutputSwitch</Source>
+      </Input>
+      <Input>
+        <Destination>Measurement</Destination>
+        <Source>23TT3003:MeasuredValue</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23PT3002" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>pv_23L3003:Pressure</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23FE3001" Type="FlowElement" Description="Flow Element" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="Points" >2</Sizes>
+    <Sizes keyword="DisplayPoints" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>MeasuredStream</Destination>
+        <Source>pv_23L3003:OutletStream[0]</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23PT3003" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>pv_23L3004:Pressure</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23ASC3001" Type="GenericASC" Description="Generic ASC" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="SurgeCurve" >4</Sizes>
+    <Sizes keyword="CorrectionCurve" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>FlowDPMeasurement</Destination>
+        <Source>23FE3001:DP</Source>
+      </Input>
+      <Input>
+        <Destination>InletPressureMeasurement</Destination>
+        <Source>23PT3002:MeasuredValue</Source>
+      </Input>
+      <Input>
+        <Destination>OutletPressureMeasurement</Destination>
+        <Source>23PT3003:MeasuredValue</Source>
+      </Input>
+      <Input>
+        <Destination>PerformanceDataInput</Destination>
+        <Source>23KA3001:CompressorData</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23UV3001" Type="ControlValve" Description="Control valve" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>LocalControlSignalIn</Destination>
+        <Source>23ASC3001:Output</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="ValveOption" >
+        <Value>0</Value>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="23ST1001" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>23KA1001_m:MachineSpeed</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23SIC1001" Type="PidController" Description="PIDController" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="BufferSize" >50</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>DcsFeedback</Destination>
+        <Source>23KA1001_m:TargetSignal</Source>
+      </Input>
+      <Input>
+        <Destination>ExternalSetpoint</Destination>
+        <Source>23ST0001:MeasuredValue</Source>
+      </Input>
+      <Input>
+        <Destination>InputSwitch</Destination>
+        <Source>23KA1001_m:OutputSwitch</Source>
+      </Input>
+      <Input>
+        <Destination>Measurement</Destination>
+        <Source>23ST1001:MeasuredValue</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23ST3001" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>23KA3001_m:MachineSpeed</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23SIC3001" Type="PidController" Description="PIDController" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="BufferSize" >50</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>DcsFeedback</Destination>
+        <Source>23KA3001_m:TargetSignal</Source>
+      </Input>
+      <Input>
+        <Destination>ExternalSetpoint</Destination>
+        <Source>23ST2001:MeasuredValue</Source>
+      </Input>
+      <Input>
+        <Destination>InputSwitch</Destination>
+        <Source>23KA3001_m:OutputSwitch</Source>
+      </Input>
+      <Input>
+        <Destination>Measurement</Destination>
+        <Source>23ST3001:MeasuredValue</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23ST0001" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>23KA0001_m:MachineSpeed</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23SIC0001" Type="PidController" Description="PIDController" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="BufferSize" >50</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>DcsFeedback</Destination>
+        <Source>23KA0001_m:TargetSignal</Source>
+      </Input>
+      <Input>
+        <Destination>ExternalSetpoint</Destination>
+        <Source>23PIC0001:ControllerOutput</Source>
+      </Input>
+      <Input>
+        <Destination>InputSwitch</Destination>
+        <Source>23KA0001_m:OutputSwitch</Source>
+      </Input>
+      <Input>
+        <Destination>Measurement</Destination>
+        <Source>23ST0001:MeasuredValue</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23ST2001" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>23KA2001_m:MachineSpeed</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23SIC2001" Type="PidController" Description="PIDController" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="BufferSize" >50</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>DcsFeedback</Destination>
+        <Source>23KA2001_m:TargetSignal</Source>
+      </Input>
+      <Input>
+        <Destination>ExternalSetpoint</Destination>
+        <Source>23PIC2001:ControllerOutput</Source>
+      </Input>
+      <Input>
+        <Destination>InputSwitch</Destination>
+        <Source>23KA2001_m:OutputSwitch</Source>
+      </Input>
+      <Input>
+        <Destination>Measurement</Destination>
+        <Source>23ST2001:MeasuredValue</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="SumCompPower" Type="ArithmeticOperator" Description="Arithmetic operator" State="g" StepBase="0.2" >
+    <Drawing>Comp_2xLP_2xHP_Rev3B</Drawing>
+    <Sizes keyword="Inputs" >4</Sizes>
+    <Sizes keyword="Multipliers" >1</Sizes>
+    <Sizes keyword="Divisors" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>Input[0]</Destination>
+        <Source>23KA0001:Power</Source>
+      </Input>
+      <Input>
+        <Destination>Input[1]</Destination>
+        <Source>23KA1001:Power</Source>
+      </Input>
+      <Input>
+        <Destination>Input[2]</Destination>
+        <Source>23KA2001:Power</Source>
+      </Input>
+      <Input>
+        <Destination>Input[3]</Destination>
+        <Source>23KA3001:Power</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+</KSpiceData>

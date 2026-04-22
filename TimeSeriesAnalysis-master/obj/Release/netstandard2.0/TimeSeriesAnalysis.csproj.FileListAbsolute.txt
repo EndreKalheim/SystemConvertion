@@ -1,0 +1,12 @@
+C:\Users\Endre\OneDrive\Dokumenter\sem3\TSA\KspicetoTsa\TimeSeriesAnalysis-master\bin\Release\netstandard2.0\Accord.dll.config
+C:\Users\Endre\OneDrive\Dokumenter\sem3\TSA\KspicetoTsa\TimeSeriesAnalysis-master\bin\Release\netstandard2.0\TimeSeriesAnalysis.deps.json
+C:\Users\Endre\OneDrive\Dokumenter\sem3\TSA\KspicetoTsa\TimeSeriesAnalysis-master\bin\Release\netstandard2.0\TimeSeriesAnalysis.dll
+C:\Users\Endre\OneDrive\Dokumenter\sem3\TSA\KspicetoTsa\TimeSeriesAnalysis-master\bin\Release\netstandard2.0\TimeSeriesAnalysis.xml
+C:\Users\Endre\OneDrive\Dokumenter\sem3\TSA\KspicetoTsa\TimeSeriesAnalysis-master\obj\Release\netstandard2.0\TimeSeriesAnalysis.csproj.AssemblyReference.cache
+C:\Users\Endre\OneDrive\Dokumenter\sem3\TSA\KspicetoTsa\TimeSeriesAnalysis-master\obj\Release\netstandard2.0\TimeSeriesAnalysis.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Endre\OneDrive\Dokumenter\sem3\TSA\KspicetoTsa\TimeSeriesAnalysis-master\obj\Release\netstandard2.0\TimeSeriesAnalysis.AssemblyInfoInputs.cache
+C:\Users\Endre\OneDrive\Dokumenter\sem3\TSA\KspicetoTsa\TimeSeriesAnalysis-master\obj\Release\netstandard2.0\TimeSeriesAnalysis.AssemblyInfo.cs
+C:\Users\Endre\OneDrive\Dokumenter\sem3\TSA\KspicetoTsa\TimeSeriesAnalysis-master\obj\Release\netstandard2.0\TimeSeriesAnalysis.csproj.CoreCompileInputs.cache
+C:\Users\Endre\OneDrive\Dokumenter\sem3\TSA\KspicetoTsa\TimeSeriesAnalysis-master\obj\Release\netstandard2.0\TimeSeriesAnalysis.sourcelink.json
+C:\Users\Endre\OneDrive\Dokumenter\sem3\TSA\KspicetoTsa\TimeSeriesAnalysis-master\obj\Release\netstandard2.0\TimeSeriesAnalysis.dll
+C:\Users\Endre\OneDrive\Dokumenter\sem3\TSA\KspicetoTsa\TimeSeriesAnalysis-master\obj\Release\netstandard2.0\TimeSeriesAnalysis.xml

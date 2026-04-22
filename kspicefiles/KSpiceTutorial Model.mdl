@@ -1,0 +1,1083 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<KSpiceData>
+  <FileInfo>
+    <Description></Description>
+    <Comment></Comment>
+    <ModelTime></ModelTime>
+    <SaveTime>2025-02-05T12:45:02.504Z</SaveTime>
+    <ModelFile></ModelFile>
+    <ParameterFile></ParameterFile>
+    <ValueFile></ValueFile>
+    <KernelInfo>K-Spice ModelServer Release 25.1.1.6 (Jan  6 2025 09:24:01)</KernelInfo>
+    <KernelVersion>25.1.1.6</KernelVersion>
+    <IsFileExported>false</IsFileExported>
+  </FileInfo>
+  <Block Name="ThermoControlCenter" Type="ThermoControl" Description="Thermodynamics Control" State="g" StepBase="1" >
+    <Drawing></Drawing>
+    <Sizes keyword="ThermoMethods" >2</Sizes>
+    <Sizes keyword="StreamComponentsForSwapTables" >0</Sizes>
+    <Sizes keyword="NumberOfStreamsAutoSwapTables" >1</Sizes>
+    <Sizes keyword="NumberOfTablesEachAutoSwap" >1</Sizes>
+    <Sizes keyword="Stages" >1</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="25HV0001" Type="ControlValve" Description="Manual valve" State="g" StepBase="1" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="ValveOption" >
+        <Value>1</Value>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="Feed2" Type="StreamBoundary" Description="Stream Boundary" State="g" StepBase="1" VertexId="2" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="Tracers" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="Feed1" Type="StreamBoundary" Description="Stream Boundary" State="g" StepBase="1" VertexId="0" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="Tracers" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="Network-0" Type="PressureFlowNetwork" Description="Pressure network solver" State="g" StepBase="1" >
+    <Drawing></Drawing>
+    <Sizes keyword="NodesNumber" >7</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="25HV0002_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="1" VertexId="3" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>Feed2:OutletStream</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>25HV0002:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>25HV0002:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>25HV0002:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>25HV0002:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>25HV0002:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="25HV0001_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="1" VertexId="1" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>Feed1:OutletStream</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>25HV0001:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>25HV0001:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>25HV0001:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>25HV0001:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>25HV0001:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="pv_25L0001" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="1" VertexId="5" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="StreamComponents" >14</Sizes>
+    <Sizes keyword="InletStreams" >2</Sizes>
+    <Sizes keyword="OutletStreams" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>25HV0001_pf:OutletStream</Source>
+      </Input>
+      <Input>
+        <Destination>InletStream[1]</Destination>
+        <Source>25HV0002_pf:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="25ESV0001_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="1" VertexId="4" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_25L0001:OutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>25ESV0001:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>25ESV0001:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>25ESV0001:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>25ESV0001:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>25ESV0001:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23VA001" Type="Separator" Description="Horizontal separator" State="g" StepBase="1" VertexId="9" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="StreamComponents" >14</Sizes>
+    <Sizes keyword="InletStreamsFeedSide" >2</Sizes>
+    <Sizes keyword="InletStreamsOverflowSide" >0</Sizes>
+    <Sizes keyword="OutletStreamsFeedSide" >1</Sizes>
+    <Sizes keyword="OutletStreamsOverflowSide" >3</Sizes>
+    <Sizes keyword="FeedMeasurements" >0</Sizes>
+    <Sizes keyword="OverflowMeasurements" >0</Sizes>
+    <Sizes keyword="PointsFeedSideVolumeCurve" >0</Sizes>
+    <Sizes keyword="PointsOverflowSideVolumeCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurves" >100</Sizes>
+    <Sizes keyword="SizeAliasNameList" >0</Sizes>
+    <Sizes keyword="ExternalCoils" >0</Sizes>
+    <Sizes keyword="Sections" >20</Sizes>
+    <Sizes keyword="SectionBoundaries" >21</Sizes>
+    <Sizes keyword="WeirSlits" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>FeedInletStream[0]</Destination>
+        <Source>25ESV0001_pf:OutletStream</Source>
+      </Input>
+      <Input>
+        <Destination>FeedInletStream[1]</Destination>
+        <Source>23UV0001_pf:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23PSV0001" Type="SafetyValve" Description="Safety valve" State="g" StepBase="1" VertexId="10" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="OpeningCurve" >2</Sizes>
+    <Sizes keyword="ClosingCurve" >2</Sizes>
+    <Sizes keyword="DischargeCoefficientCurve" >2</Sizes>
+    <Sizes keyword="DisplayDischargeCoefficientCurve" >100</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>23VA001:OverflowOutletStream[2]</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23ESV0002_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="1" VertexId="8" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>23VA001:OverflowOutletStream[1]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23ESV0002:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23ESV0002:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23ESV0002:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23ESV0002:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23ESV0002:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="pv_23L0003" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="1" VertexId="16" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="StreamComponents" >14</Sizes>
+    <Sizes keyword="InletStreams" >1</Sizes>
+    <Sizes keyword="OutletStreams" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>23ESV0002_pf:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23KA0001" Type="ContinuousFlowCompressor" Description="Continuous Flow Compressor" State="g" StepBase="1" VertexId="15" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="PerformanceCurvesPrimaryView" >4</Sizes>
+    <Sizes keyword="PerformanceCurvesSecondaryView" >1</Sizes>
+    <Sizes keyword="PerformanceCurvesTertiaryView" >1</Sizes>
+    <Sizes keyword="Points" >5</Sizes>
+    <Sizes keyword="DisplayCurves" >100</Sizes>
+    <Sizes keyword="DisplayCurvesSurge" >0</Sizes>
+    <Sizes keyword="DisplayCurvesChoke" >0</Sizes>
+    <Sizes keyword="PerformanceCurvesCurrentView" >4</Sizes>
+    <Sizes keyword="TotalCurves" >4</Sizes>
+    <Sizes keyword="TotalDataPoints" >20</Sizes>
+    <Sizes keyword="RefGas" >14</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_23L0003:OutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>Speed</Destination>
+        <Source>23KA0001_m:Speed[0]</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="pv_23L0004" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="1" VertexId="19" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="StreamComponents" >14</Sizes>
+    <Sizes keyword="InletStreams" >1</Sizes>
+    <Sizes keyword="OutletStreams" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>23KA0001:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23HX0001" Type="HeatExchangerStream" Description="Heat Exchanger Stream - Shell and Tube 1" State="g" StepBase="1" VertexId="17" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="Sections" >20</Sizes>
+    <Sizes keyword="SectionBoundaries" >21</Sizes>
+    <Sizes keyword="ExternalStreams" >0</Sizes>
+    <Sizes keyword="RemoteMalfunctions" >0</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Sizes keyword="DisplayPoints" >100</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>AmbientTemperatureIntegrationFactor</Destination>
+        <Source>23HX0001s:TemperatureIntegrationFactor</Source>
+      </Input>
+      <Input>
+        <Destination>AmbientTemperatureProfile</Destination>
+        <Source>23HX0001s:FluidTemperatureProfile</Source>
+      </Input>
+      <Input>
+        <Destination>GridInputProfile</Destination>
+        <Source>23HX0001s:GridProfile</Source>
+      </Input>
+      <Input>
+        <Destination>HeatConductanceProfileAmbient</Destination>
+        <Source>23HX0001s:HeatConductanceProfileExternal[0]</Source>
+      </Input>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_23L0004:OutletStream[0]</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="RemoteMalfunctionType" >
+        <Array>
+        </Array>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="pv_23L0005" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="1" VertexId="20" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="StreamComponents" >14</Sizes>
+    <Sizes keyword="InletStreams" >1</Sizes>
+    <Sizes keyword="OutletStreams" >2</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>23HX0001:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23UV0001_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="1" VertexId="25" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_23L0005:OutletStream[1]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23UV0001:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23UV0001:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23UV0001:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23UV0001:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23UV0001:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23ESV0005_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="1" VertexId="21" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_23L0005:OutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23ESV0005:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23ESV0005:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23ESV0005:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23ESV0005:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23ESV0005:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23MA0003_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="1" VertexId="7" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>23VA001:OverflowOutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23MA0003:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23MA0003:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23MA0003:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23MA0003:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23MA0003:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="pv_23MV0003" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="1" VertexId="13" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="StreamComponents" >14</Sizes>
+    <Sizes keyword="InletStreams" >1</Sizes>
+    <Sizes keyword="OutletStreams" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>23MA0003_pf:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23PA0001" Type="CentrifugalPump" Description="Centrifugal Pump" State="g" StepBase="1" VertexId="11" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="Points" >7</Sizes>
+    <Sizes keyword="DisplayPoints" >100</Sizes>
+    <Sizes keyword="PerformanceCurves" >1</Sizes>
+    <Sizes keyword="DisplayPointsLeft" >100</Sizes>
+    <Sizes keyword="DisplayPointsRight" >100</Sizes>
+    <Sizes keyword="DisplayMinThermal" >0</Sizes>
+    <Sizes keyword="DisplayMinAllowable" >0</Sizes>
+    <Sizes keyword="DisplayMaxAllowable" >0</Sizes>
+    <Sizes keyword="DisplayMinPreferred" >0</Sizes>
+    <Sizes keyword="DisplayMaxPreferred" >0</Sizes>
+    <Sizes keyword="NPSHCurves" >0</Sizes>
+    <Sizes keyword="NPSHDisplayPoints" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_23MV0003:OutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>Speed</Destination>
+        <Source>23PA0001_m:Speed[0]</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="pv_23L0002" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="1" VertexId="14" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="StreamComponents" >14</Sizes>
+    <Sizes keyword="InletStreams" >1</Sizes>
+    <Sizes keyword="OutletStreams" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>23PA0001:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23LV0002_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="1" VertexId="12" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_23L0002:OutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23LV0002:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23LV0002:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23LV0002:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23LV0002:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23LV0002:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23LV0001_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="1" VertexId="6" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Thread>Network-0</Thread>
+    <Sizes keyword="InletStreamComponents" >14</Sizes>
+    <Sizes keyword="OutletStreamComponents" >14</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>23VA001:FeedOutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23LV0001:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23LV0001:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23LV0001:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23LV0001:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23LV0001:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="25HV0002" Type="ControlValve" Description="Manual valve" State="g" StepBase="1" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="ValveOption" >
+        <Value>1</Value>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="25ESV0001" Type="BlockValve" Description="Block valve" State="g" StepBase="1" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23LV0001" Type="ControlValve" Description="Control valve" State="g" StepBase="1" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>LocalControlSignalIn</Destination>
+        <Source>23LIC0001:ControllerOutput</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="ValveOption" >
+        <Value>0</Value>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="23MA0003" Type="ControlValve" Description="Manual valve" State="g" StepBase="1" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="ValveOption" >
+        <Value>1</Value>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="23ESV0002" Type="BlockValve" Description="Block valve" State="g" StepBase="1" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23PA0001_m" Type="LatchedAsynchronousMachine" Description="Dcs Latch Controlled Asynchronous Machine" State="g" StepBase="1" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Sizes keyword="ExternalMachines" >1</Sizes>
+    <Sizes keyword="TorqueSpeedPoints" >9</Sizes>
+    <Sizes keyword="VFDCharacteristic" >4</Sizes>
+    <Sizes keyword="DisplayCurves" >100</Sizes>
+    <Sizes keyword="DisplayVFDCurve" >100</Sizes>
+    <Sizes keyword="EfficiencyLoadCurve" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>Torque[0]</Destination>
+        <Source>23PA0001:Torque</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23LV0002" Type="ControlValve" Description="Control valve" State="g" StepBase="1" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>LocalControlSignalIn</Destination>
+        <Source>23LIC002:ControllerOutput</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="ValveOption" >
+        <Value>0</Value>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="23LT0001" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="1" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>23VA001:LevelHeavyPhaseFeedSideWeir</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23LIC0001" Type="PidController" Description="PIDController" State="g" StepBase="1" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Sizes keyword="BufferSize" >10</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>Measurement</Destination>
+        <Source>23LT0001:MeasuredValue</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23LT0002" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="1" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>23VA001:LevelOverflowLiquid</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23LIC002" Type="PidController" Description="PIDController" State="g" StepBase="1" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Sizes keyword="BufferSize" >10</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>Measurement</Destination>
+        <Source>23LT0002:MeasuredValue</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23PT0001" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="1" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>23VA001:Pressure</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23PIC0001" Type="PidController" Description="PIDController" State="g" StepBase="1" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Sizes keyword="BufferSize" >10</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>Measurement</Destination>
+        <Source>23PT0001:MeasuredValue</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23KA0001_m" Type="LatchedAsynchronousMachine" Description="Dcs Latch Controlled Asynchronous Machine" State="g" StepBase="1" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Sizes keyword="ExternalMachines" >1</Sizes>
+    <Sizes keyword="TorqueSpeedPoints" >9</Sizes>
+    <Sizes keyword="VFDCharacteristic" >4</Sizes>
+    <Sizes keyword="DisplayCurves" >100</Sizes>
+    <Sizes keyword="DisplayVFDCurve" >100</Sizes>
+    <Sizes keyword="EfficiencyLoadCurve" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>LocalControlSignalIn</Destination>
+        <Source>23PIC0001:ControllerOutput</Source>
+      </Input>
+      <Input>
+        <Destination>Torque[0]</Destination>
+        <Source>23KA0001:Torque</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23HX0001_view" Type="ProfileViewer" Description="Profile viewer" State="g" StepBase="1" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Sizes keyword="ElementsA" >21</Sizes>
+    <Sizes keyword="ProfilesA" >2</Sizes>
+    <Sizes keyword="ElementsB" >20</Sizes>
+    <Sizes keyword="ProfilesB" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>XA</Destination>
+        <Source>23HX0001:SectionBoundaryPositions</Source>
+      </Input>
+      <Input>
+        <Destination>XB</Destination>
+        <Source>23HX0001:SectionMidpointPositions</Source>
+      </Input>
+      <Input>
+        <Destination>YA[0]</Destination>
+        <Source>23HX0001s:FluidTemperatureProfile</Source>
+      </Input>
+      <Input>
+        <Destination>YA[1]</Destination>
+        <Source>23HX0001:FluidTemperatureProfile</Source>
+      </Input>
+      <Input>
+        <Destination>YB[0]</Destination>
+        <Source>23HX0001:WallTemperatureProfile</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23ESV0005" Type="BlockValve" Description="Block valve" State="g" StepBase="1" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23TV0003" Type="ControlValve" Description="Control valve" State="g" StepBase="1" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>LocalControlSignalIn</Destination>
+        <Source>23TIC0003:ControllerOutput</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="ValveOption" >
+        <Value>0</Value>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="23COLD0001" Type="StreamBoundary" Description="Stream Boundary" State="g" StepBase="1" VertexId="22" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Sizes keyword="OutletStreamComponents" >3</Sizes>
+    <Sizes keyword="Tracers" >0</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="Network-1" Type="PressureFlowNetwork" Description="Pressure network solver" State="g" StepBase="1" >
+    <Drawing></Drawing>
+    <Sizes keyword="NodesNumber" >1</Sizes>
+    <Inputs>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23HX0001s" Type="HeatExchangerStream" Description="Heat Exchanger Stream - Shell and Tube - Shell side" State="g" StepBase="1" VertexId="18" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Thread>Network-1</Thread>
+    <Sizes keyword="Sections" >20</Sizes>
+    <Sizes keyword="SectionBoundaries" >21</Sizes>
+    <Sizes keyword="ExternalStreams" >1</Sizes>
+    <Sizes keyword="RemoteMalfunctions" >0</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Sizes keyword="DisplayPoints" >100</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>23COLD0001:OutletStream</Source>
+      </Input>
+      <Input>
+        <Destination>TemperatureProfileExternal[0]</Destination>
+        <Source>23HX0001:WallTemperatureProfile</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="RemoteMalfunctionType" >
+        <Array>
+        </Array>
+      </DataItem>
+    </DataItems>
+  </Block>
+  <Block Name="pv_23L0006" Type="PipeVolume" Description="Pipe Volume" State="g" StepBase="1" VertexId="24" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Thread>Network-1</Thread>
+    <Sizes keyword="StreamComponents" >3</Sizes>
+    <Sizes keyword="InletStreams" >1</Sizes>
+    <Sizes keyword="OutletStreams" >1</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream[0]</Destination>
+        <Source>23HX0001s:OutletStream</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23TV0003_pf" Type="PipeFlow" Description="Pipe Flow" State="g" StepBase="1" VertexId="23" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Thread>Network-1</Thread>
+    <Sizes keyword="InletStreamComponents" >3</Sizes>
+    <Sizes keyword="OutletStreamComponents" >3</Sizes>
+    <Sizes keyword="PipeSegments" >1</Sizes>
+    <Sizes keyword="Valves" >1</Sizes>
+    <Sizes keyword="Absorbates" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>InletStream</Destination>
+        <Source>pv_23L0006:OutletStream[0]</Source>
+      </Input>
+      <Input>
+        <Destination>ValveCv[0]</Destination>
+        <Source>23TV0003:CvAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFL[0]</Destination>
+        <Source>23TV0003:FLAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveFd[0]</Destination>
+        <Source>23TV0003:FdAtCurrentOpening</Source>
+      </Input>
+      <Input>
+        <Destination>ValveSize[0]</Destination>
+        <Source>23TV0003:ValveSizeInfo</Source>
+      </Input>
+      <Input>
+        <Destination>ValveXT[0]</Destination>
+        <Source>23TV0003:xTAtCurrentOpening</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23TT0003" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="1" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>pv_23L0005:Temperature</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23TIC0003" Type="PidController" Description="PIDController" State="g" StepBase="1" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Sizes keyword="BufferSize" >10</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>Measurement</Destination>
+        <Source>23TT0003:MeasuredValue</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23PT0002" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="1" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>pv_23L0003:Pressure</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23FE0001" Type="FlowElement" Description="Flow Element" State="g" StepBase="1" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Sizes keyword="Points" >2</Sizes>
+    <Sizes keyword="DisplayPoints" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>MeasuredStream</Destination>
+        <Source>pv_23L0003:OutletStream[0]</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23PT0003" Type="AlarmTransmitter" Description="AlarmTransmitter" State="g" StepBase="1" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Inputs>
+      <Input>
+        <Destination>Value</Destination>
+        <Source>pv_23L0004:Pressure</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23ASC0001" Type="GenericASC" Description="Generic ASC" State="g" StepBase="1" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Sizes keyword="SurgeCurve" >4</Sizes>
+    <Sizes keyword="CorrectionCurve" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>FlowDPMeasurement</Destination>
+        <Source>23FE0001:DP</Source>
+      </Input>
+      <Input>
+        <Destination>InletPressureMeasurement</Destination>
+        <Source>23PT0002:MeasuredValue</Source>
+      </Input>
+      <Input>
+        <Destination>OutletPressureMeasurement</Destination>
+        <Source>23PT0003:MeasuredValue</Source>
+      </Input>
+      <Input>
+        <Destination>PerformanceDataInput</Destination>
+        <Source>23KA0001:CompressorData</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+    </DataItems>
+  </Block>
+  <Block Name="23UV0001" Type="ControlValve" Description="Control valve" State="g" StepBase="1" >
+    <Drawing>KSpiceTutorial Model</Drawing>
+    <Sizes keyword="PointsInCharacteristicCurve" >0</Sizes>
+    <Sizes keyword="PointsInDisplayCurve" >10</Sizes>
+    <Sizes keyword="TuningCurve" >2</Sizes>
+    <Sizes keyword="TuningFactors" >0</Sizes>
+    <Inputs>
+      <Input>
+        <Destination>LocalControlSignalIn</Destination>
+        <Source>23ASC0001:Output</Source>
+      </Input>
+    </Inputs>
+    <DataItems>
+      <DataItem Name="ValveOption" >
+        <Value>0</Value>
+      </DataItem>
+    </DataItems>
+  </Block>
+</KSpiceData>
