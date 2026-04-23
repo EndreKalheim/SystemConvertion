@@ -5,7 +5,10 @@
       "Bash(dotnet --version)",
       "Bash(python *)",
       "Bash(dotnet build *)",
-      "Bash(dotnet run *)"
+      "Bash(dotnet run *)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:equinor.github.io)",
+      "WebSearch"
     ]
   }
 }

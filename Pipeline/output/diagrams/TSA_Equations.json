@@ -3,7 +3,7 @@
     "ID": "25HV0001_MassFlow",
     "Component": "25HV0001",
     "State": "MassFlow",
-    "Formula": "F = Cv * sqrt(dP * density)",
+    "Formula": "F = Cv * sqrt(dP * rho)",
     "Inputs": [
       "UPSTREAM_PRESSURE",
       "DOWNSTREAM_PRESSURE",
@@ -75,7 +75,7 @@
     "ID": "25HV0002_MassFlow",
     "Component": "25HV0002",
     "State": "MassFlow",
-    "Formula": "F = Cv * sqrt(dP * density)",
+    "Formula": "F = Cv * sqrt(dP * rho)",
     "Inputs": [
       "UPSTREAM_PRESSURE",
       "DOWNSTREAM_PRESSURE",
@@ -99,7 +99,7 @@
     "ID": "25ESV0001_MassFlow",
     "Component": "25ESV0001",
     "State": "MassFlow",
-    "Formula": "F = Cv * sqrt(dP * density)",
+    "Formula": "F = Cv * sqrt(dP * rho)",
     "Inputs": [
       "UPSTREAM_PRESSURE",
       "DOWNSTREAM_PRESSURE",
@@ -123,7 +123,7 @@
     "ID": "23VA0001_Pressure",
     "Component": "23VA0001",
     "State": "Pressure",
-    "Formula": "dP/dt = k * (MassFlow_In - MassFlow_Out)",
+    "Formula": "dP/dt = k * (m_in - m_out)",
     "Inputs": [
       "UPSTREAM_FLOW",
       "DOWNSTREAM_FLOW"
@@ -135,45 +135,44 @@
     "ID": "23VA0001_WaterLevel",
     "Component": "23VA0001",
     "State": "WaterLevel",
-    "Formula": "dL_water/dt = 1/A * (WaterFlow_In - WaterFlow_Out)",
+    "Formula": "dL_w/dt = (1/A) * (m_in - m_out)",
     "Inputs": [
       "UPSTREAM_FLOW",
       "DOWNSTREAM_FLOW"
     ],
-    "Role": "FlowEquipment"
+    "Role": "Volume"
   },
   {
     "ID": "23VA0001_OilLevel",
     "Component": "23VA0001",
     "State": "OilLevel",
-    "Formula": "dL_oil/dt = 1/A * (OilFlow_In - OilFlow_Out)",
+    "Formula": "dL_o/dt = (1/A) * (m_in - m_out)",
     "Inputs": [
       "UPSTREAM_FLOW",
       "DOWNSTREAM_FLOW"
     ],
-    "Role": "FlowEquipment"
+    "Role": "Volume"
   },
   {
     "ID": "23VA0001_TotalLevel",
     "Component": "23VA0001",
     "State": "TotalLevel",
-    "Formula": "dL/dt = 1/A * (MassFlow_In - MassFlow_Out)",
+    "Formula": "dL/dt   = (1/A) * (m_in - m_out)",
     "Inputs": [
       "UPSTREAM_FLOW",
       "DOWNSTREAM_FLOW"
     ],
-    "Role": "FlowEquipment"
+    "Role": "Volume"
   },
   {
     "ID": "23VA0001_Temperature",
     "Component": "23VA0001",
     "State": "Temperature",
-    "Formula": "T from enthalpy inflow, loss, and water-weighted holdup",
+    "Formula": "T_out = f(T_in, m_in, m_out)",
     "Inputs": [
       "UPSTREAM_FLOW",
       "UPSTREAM_TEMP",
-      "DOWNSTREAM_FLOW",
-      "23VA0001_WaterLevel"
+      "DOWNSTREAM_FLOW"
     ],
     "Role": "FlowEquipment"
   },
@@ -205,7 +204,7 @@
     "ID": "23ESV0002_MassFlow",
     "Component": "23ESV0002",
     "State": "MassFlow",
-    "Formula": "F = Cv * sqrt(dP * density)",
+    "Formula": "F = Cv * sqrt(dP * rho)",
     "Inputs": [
       "UPSTREAM_PRESSURE",
       "DOWNSTREAM_PRESSURE",
@@ -229,7 +228,7 @@
     "ID": "23KA0001_MassFlow",
     "Component": "23KA0001",
     "State": "MassFlow",
-    "Formula": "F = sum(DOWNSTREAM_FLOW)",
+    "Formula": "F = sum(m_downstream)",
     "Inputs": [
       "DOWNSTREAM_FLOW_SUM"
     ],
@@ -239,7 +238,7 @@
     "ID": "23KA0001_Pressure",
     "Component": "23KA0001",
     "State": "Pressure",
-    "Formula": "P_out = P_in + Head(F, Speed)",
+    "Formula": "P_out = P_in + Head(F, N)",
     "Inputs": [
       "UPSTREAM_PRESSURE",
       "23KA0001_MassFlow",
@@ -264,7 +263,7 @@
     "ID": "23HX0001_MassFlow",
     "Component": "23HX0001",
     "State": "MassFlow",
-    "Formula": "F = sum(DOWNSTREAM_FLOW)",
+    "Formula": "F = sum(m_downstream)",
     "Inputs": [
       "DOWNSTREAM_FLOW_SUM"
     ],
@@ -274,7 +273,7 @@
     "ID": "23HX0001_Pressure",
     "Component": "23HX0001",
     "State": "Pressure",
-    "Formula": "P_out = P_in - dP",
+    "Formula": "P_out = P_in - dP(F)",
     "Inputs": [
       "UPSTREAM_PRESSURE",
       "23HX0001_MassFlow"
@@ -285,7 +284,7 @@
     "ID": "23HX0001_Temperature",
     "Component": "23HX0001",
     "State": "Temperature",
-    "Formula": "T_out = f(T_in, T_cool, MassFlow)",
+    "Formula": "T_out = f(T_in, T_cool, F)",
     "Inputs": [
       "UPSTREAM_TEMP",
       "23HX0001_MassFlow",
@@ -297,7 +296,7 @@
     "ID": "23UV0001_MassFlow",
     "Component": "23UV0001",
     "State": "MassFlow",
-    "Formula": "F = Cv * sqrt(dP * density)",
+    "Formula": "F = Cv * sqrt(dP * rho)",
     "Inputs": [
       "UPSTREAM_PRESSURE",
       "DOWNSTREAM_PRESSURE",
@@ -321,7 +320,7 @@
     "ID": "23ESV0005_MassFlow",
     "Component": "23ESV0005",
     "State": "MassFlow",
-    "Formula": "F = Cv * sqrt(dP * density)",
+    "Formula": "F = Cv * sqrt(dP * rho)",
     "Inputs": [
       "UPSTREAM_PRESSURE",
       "DOWNSTREAM_PRESSURE",
@@ -345,7 +344,7 @@
     "ID": "23MV0003_MassFlow",
     "Component": "23MV0003",
     "State": "MassFlow",
-    "Formula": "F = Cv * sqrt(dP * density)",
+    "Formula": "F = Cv * sqrt(dP * rho)",
     "Inputs": [
       "UPSTREAM_PRESSURE",
       "DOWNSTREAM_PRESSURE",
@@ -369,7 +368,7 @@
     "ID": "23PA0001_MassFlow",
     "Component": "23PA0001",
     "State": "MassFlow",
-    "Formula": "F = sum(DOWNSTREAM_FLOW)",
+    "Formula": "F = sum(m_downstream)",
     "Inputs": [
       "DOWNSTREAM_FLOW_SUM"
     ],
@@ -379,7 +378,7 @@
     "ID": "23PA0001_Pressure",
     "Component": "23PA0001",
     "State": "Pressure",
-    "Formula": "P_out = P_in + Head(F, Speed)",
+    "Formula": "P_out = P_in + Head(F, N)",
     "Inputs": [
       "UPSTREAM_PRESSURE",
       "23PA0001_MassFlow",
@@ -403,7 +402,7 @@
     "ID": "23LV0002_MassFlow",
     "Component": "23LV0002",
     "State": "MassFlow",
-    "Formula": "F = Cv * sqrt(dP * density)",
+    "Formula": "F = Cv * sqrt(dP * rho)",
     "Inputs": [
       "UPSTREAM_PRESSURE",
       "DOWNSTREAM_PRESSURE",
@@ -427,7 +426,7 @@
     "ID": "23LV0001_MassFlow",
     "Component": "23LV0001",
     "State": "MassFlow",
-    "Formula": "F = Cv * sqrt(dP * density)",
+    "Formula": "F = Cv * sqrt(dP * rho)",
     "Inputs": [
       "UPSTREAM_PRESSURE",
       "DOWNSTREAM_PRESSURE",
@@ -451,7 +450,7 @@
     "ID": "23LIC0001_Control",
     "Component": "23LIC0001",
     "State": "Control",
-    "Formula": "PID(e(t)) | U(t) = Kp*e(t) + ...",
+    "Formula": "PID: U(t) = Kp*e + Ki*∫e dt",
     "Inputs": [
       "MEASURED_STATE"
     ],
@@ -461,7 +460,7 @@
     "ID": "23LIC0002_Control",
     "Component": "23LIC0002",
     "State": "Control",
-    "Formula": "PID(e(t)) | U(t) = Kp*e(t) + ...",
+    "Formula": "PID: U(t) = Kp*e + Ki*∫e dt",
     "Inputs": [
       "MEASURED_STATE"
     ],
@@ -471,7 +470,7 @@
     "ID": "23PIC0001_Control",
     "Component": "23PIC0001",
     "State": "Control",
-    "Formula": "PID(e(t)) | U(t) = Kp*e(t) + ...",
+    "Formula": "PID: U(t) = Kp*e + Ki*∫e dt",
     "Inputs": [
       "MEASURED_STATE"
     ],
@@ -481,7 +480,7 @@
     "ID": "23TV0003_MassFlow",
     "Component": "23TV0003",
     "State": "MassFlow",
-    "Formula": "F = Cv * sqrt(dP * density)",
+    "Formula": "F = Cv * sqrt(dP * rho)",
     "Inputs": [
       "UPSTREAM_PRESSURE",
       "DOWNSTREAM_PRESSURE",
@@ -529,7 +528,7 @@
     "ID": "23HX0001s_MassFlow",
     "Component": "23HX0001s",
     "State": "MassFlow",
-    "Formula": "F = sum(DOWNSTREAM_FLOW)",
+    "Formula": "F = sum(m_downstream)",
     "Inputs": [
       "DOWNSTREAM_FLOW_SUM"
     ],
@@ -539,7 +538,7 @@
     "ID": "23HX0001s_Pressure",
     "Component": "23HX0001s",
     "State": "Pressure",
-    "Formula": "P_out = P_in - dP",
+    "Formula": "P_out = P_in - dP(F)",
     "Inputs": [
       "UPSTREAM_PRESSURE",
       "23HX0001s_MassFlow"
@@ -550,7 +549,7 @@
     "ID": "23HX0001s_Temperature",
     "Component": "23HX0001s",
     "State": "Temperature",
-    "Formula": "T_out = f(T_in, T_cool, MassFlow)",
+    "Formula": "T_out = f(T_in, T_cool, F)",
     "Inputs": [
       "UPSTREAM_TEMP",
       "23HX0001s_MassFlow",
@@ -562,7 +561,7 @@
     "ID": "23TIC0003_Control",
     "Component": "23TIC0003",
     "State": "Control",
-    "Formula": "PID(e(t)) | U(t) = Kp*e(t) + ...",
+    "Formula": "PID: U(t) = Kp*e + Ki*∫e dt",
     "Inputs": [
       "MEASURED_STATE"
     ],
@@ -572,7 +571,7 @@
     "ID": "23ASC0001_Control",
     "Component": "23ASC0001",
     "State": "Control",
-    "Formula": "ASC(e(t)) | U(t) = f(Flow, Pressure)",
+    "Formula": "ASC: U(t) = f(Flow, Pressure)",
     "Inputs": [
       "MEASURED_FLOW",
       "MEASURED_PRESSURE"

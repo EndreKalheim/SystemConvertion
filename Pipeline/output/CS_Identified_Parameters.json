@@ -42,8 +42,8 @@
   },
   "23VA0001_Temperature": {
     "ModelType": "IdentifyLinear",
-    "FitScore": 86.875,
-    "Note": "ThermalMixingModel diverged (-1284,6%), replaced by linear fit"
+    "FitScore": 86.682,
+    "TimeConstant_s": 46.161
   },
   "23ESV0002_MassFlow": {
     "ModelType": "Fallback",

@@ -68,7 +68,7 @@
     },
     {
       "id": "25ESV0001_MassFlow",
-      "label": "25ESV0001\n(MassFlow)\n\nEq: F = Cv * sqrt(dP * density)",
+      "label": "25ESV0001\n(MassFlow)\n\nEq: F = Cv * sqrt(dP * rho)",
       "color": "#a3d2ca",
       "shape": "box",
       "group": "25ESV0001",
@@ -90,7 +90,7 @@
     },
     {
       "id": "23VA0001_Pressure",
-      "label": "23VA0001\n(Pressure)\n\nEq: dP/dt = k * (MassFlow_In - MassFlow_Out)\n[D: 3,5 L: 5]",
+      "label": "23VA0001\n(Pressure)\n\nEq: dP/dt = k * (m_in - m_out)\n[D: 3,5 L: 5]",
       "color": "#f5d787",
       "shape": "box",
       "group": "23VA0001",
@@ -101,7 +101,7 @@
     },
     {
       "id": "23VA0001_WaterLevel",
-      "label": "23VA0001\n(WaterLevel)\n\nEq: dL_water/dt = 1/A * (WaterFlow_In - WaterFlow_Out)",
+      "label": "23VA0001\n(WaterLevel)\n\nEq: dL_w/dt = (1/A) * (m_in - m_out)",
       "color": "#81ecec",
       "shape": "box",
       "group": "23VA0001",
@@ -112,7 +112,7 @@
     },
     {
       "id": "23VA0001_OilLevel",
-      "label": "23VA0001\n(OilLevel)\n\nEq: dL_oil/dt = 1/A * (OilFlow_In - OilFlow_Out)",
+      "label": "23VA0001\n(OilLevel)\n\nEq: dL_o/dt = (1/A) * (m_in - m_out)",
       "color": "#81ecec",
       "shape": "box",
       "group": "23VA0001",
@@ -123,7 +123,7 @@
     },
     {
       "id": "23VA0001_TotalLevel",
-      "label": "23VA0001\n(TotalLevel)\n\nEq: dL/dt = 1/A * (MassFlow_In - MassFlow_Out)",
+      "label": "23VA0001\n(TotalLevel)\n\nEq: dL/dt   = (1/A) * (m_in - m_out)",
       "color": "#81ecec",
       "shape": "box",
       "group": "23VA0001",
@@ -134,7 +134,7 @@
     },
     {
       "id": "23VA0001_Temperature",
-      "label": "23VA0001\n(Temperature)\n\nEq: T from enthalpy inflow, loss, and water-weighted holdup",
+      "label": "23VA0001\n(Temperature)\n\nEq: T_out = f(T_in, m_in, m_out)",
       "color": "#f3a683",
       "shape": "box",
       "group": "23VA0001",
@@ -178,7 +178,7 @@
     },
     {
       "id": "23KA0001_MassFlow",
-      "label": "23KA0001\n(MassFlow)\n\nEq: F = sum(DOWNSTREAM_FLOW)",
+      "label": "23KA0001\n(MassFlow)\n\nEq: F = sum(m_downstream)",
       "color": "#a3d2ca",
       "shape": "box",
       "group": "23KA0001",
@@ -189,7 +189,7 @@
     },
     {
       "id": "23KA0001_Pressure",
-      "label": "23KA0001\n(Pressure)\n\nEq: P_out = P_in + Head(F, Speed)\n[D: 0,5 L: ]",
+      "label": "23KA0001\n(Pressure)\n\nEq: P_out = P_in + Head(F, N)\n[D: 0,5 L: ]",
       "color": "#f5d787",
       "shape": "box",
       "group": "23KA0001",
@@ -211,7 +211,7 @@
     },
     {
       "id": "23HX0001_MassFlow",
-      "label": "23HX0001\n(MassFlow)\n\nEq: F = sum(DOWNSTREAM_FLOW)",
+      "label": "23HX0001\n(MassFlow)\n\nEq: F = sum(m_downstream)",
       "color": "#a3d2ca",
       "shape": "box",
       "group": "23HX0001",
@@ -222,7 +222,7 @@
     },
     {
       "id": "23HX0001_Pressure",
-      "label": "23HX0001\n(Pressure)\n\nEq: P_out = P_in - dP",
+      "label": "23HX0001\n(Pressure)\n\nEq: P_out = P_in - dP(F)",
       "color": "#f5d787",
       "shape": "box",
       "group": "23HX0001",
@@ -233,7 +233,7 @@
     },
     {
       "id": "23HX0001_Temperature",
-      "label": "23HX0001\n(Temperature)\n\nEq: T_out = f(T_in, T_cool, MassFlow)",
+      "label": "23HX0001\n(Temperature)\n\nEq: T_out = f(T_in, T_cool, F)",
       "color": "#f3a683",
       "shape": "box",
       "group": "23HX0001",
@@ -244,7 +244,7 @@
     },
     {
       "id": "23UV0001_MassFlow",
-      "label": "23UV0001\n(MassFlow)\n\nEq: F = Cv * sqrt(dP * density)",
+      "label": "23UV0001\n(MassFlow)\n\nEq: F = Cv * sqrt(dP * rho)",
       "color": "#a3d2ca",
       "shape": "box",
       "group": "23UV0001",
@@ -266,7 +266,7 @@
     },
     {
       "id": "23ESV0005_MassFlow",
-      "label": "23ESV0005\n(MassFlow)\n\nEq: F = Cv * sqrt(dP * density)",
+      "label": "23ESV0005\n(MassFlow)\n\nEq: F = Cv * sqrt(dP * rho)",
       "color": "#a3d2ca",
       "shape": "box",
       "group": "23ESV0005",
@@ -288,7 +288,7 @@
     },
     {
       "id": "23MV0003_MassFlow",
-      "label": "23MV0003\n(MassFlow)\n\nEq: F = Cv * sqrt(dP * density)",
+      "label": "23MV0003\n(MassFlow)\n\nEq: F = Cv * sqrt(dP * rho)",
       "color": "#a3d2ca",
       "shape": "box",
       "group": "23MV0003",
@@ -310,7 +310,7 @@
     },
     {
       "id": "23PA0001_MassFlow",
-      "label": "23PA0001\n(MassFlow)\n\nEq: F = sum(DOWNSTREAM_FLOW)",
+      "label": "23PA0001\n(MassFlow)\n\nEq: F = sum(m_downstream)",
       "color": "#a3d2ca",
       "shape": "box",
       "group": "23PA0001",
@@ -321,7 +321,7 @@
     },
     {
       "id": "23PA0001_Pressure",
-      "label": "23PA0001\n(Pressure)\n\nEq: P_out = P_in + Head(F, Speed)",
+      "label": "23PA0001\n(Pressure)\n\nEq: P_out = P_in + Head(F, N)",
       "color": "#f5d787",
       "shape": "box",
       "group": "23PA0001",
@@ -343,7 +343,7 @@
     },
     {
       "id": "23LV0002_MassFlow",
-      "label": "23LV0002\n(MassFlow)\n\nEq: F = Cv * sqrt(dP * density)",
+      "label": "23LV0002\n(MassFlow)\n\nEq: F = Cv * sqrt(dP * rho)",
       "color": "#a3d2ca",
       "shape": "box",
       "group": "23LV0002",
@@ -365,7 +365,7 @@
     },
     {
       "id": "23LV0001_MassFlow",
-      "label": "23LV0001\n(MassFlow)\n\nEq: F = Cv * sqrt(dP * density)",
+      "label": "23LV0001\n(MassFlow)\n\nEq: F = Cv * sqrt(dP * rho)",
       "color": "#a3d2ca",
       "shape": "box",
       "group": "23LV0001",
@@ -387,7 +387,7 @@
     },
     {
       "id": "23LIC0001_Control",
-      "label": "23LIC0001\n(Control)\n\nEq: PID(e(t)) | U(t) = Kp*e(t) + ...",
+      "label": "23LIC0001\n(Control)\n\nEq: PID: U(t) = Kp*e + Ki*\u222be dt",
       "color": "#ff7675",
       "shape": "box",
       "group": "23LIC0001",
@@ -398,7 +398,7 @@
     },
     {
       "id": "23LIC0002_Control",
-      "label": "23LIC0002\n(Control)\n\nEq: PID(e(t)) | U(t) = Kp*e(t) + ...",
+      "label": "23LIC0002\n(Control)\n\nEq: PID: U(t) = Kp*e + Ki*\u222be dt",
       "color": "#ff7675",
       "shape": "box",
       "group": "23LIC0002",
@@ -409,7 +409,7 @@
     },
     {
       "id": "23PIC0001_Control",
-      "label": "23PIC0001\n(Control)\n\nEq: PID(e(t)) | U(t) = Kp*e(t) + ...",
+      "label": "23PIC0001\n(Control)\n\nEq: PID: U(t) = Kp*e + Ki*\u222be dt",
       "color": "#ff7675",
       "shape": "box",
       "group": "23PIC0001",
@@ -420,7 +420,7 @@
     },
     {
       "id": "23TV0003_MassFlow",
-      "label": "23TV0003\n(MassFlow)\n\nEq: F = Cv * sqrt(dP * density)",
+      "label": "23TV0003\n(MassFlow)\n\nEq: F = Cv * sqrt(dP * rho)",
       "color": "#a3d2ca",
       "shape": "box",
       "group": "23TV0003",
@@ -475,7 +475,7 @@
     },
     {
       "id": "23HX0001s_MassFlow",
-      "label": "23HX0001s\n(MassFlow)\n\nEq: F = sum(DOWNSTREAM_FLOW)",
+      "label": "23HX0001s\n(MassFlow)\n\nEq: F = sum(m_downstream)",
       "color": "#a3d2ca",
       "shape": "box",
       "group": "23HX0001s",
@@ -486,7 +486,7 @@
     },
     {
       "id": "23HX0001s_Pressure",
-      "label": "23HX0001s\n(Pressure)\n\nEq: P_out = P_in - dP",
+      "label": "23HX0001s\n(Pressure)\n\nEq: P_out = P_in - dP(F)",
       "color": "#f5d787",
       "shape": "box",
       "group": "23HX0001s",
@@ -497,7 +497,7 @@
     },
     {
       "id": "23HX0001s_Temperature",
-      "label": "23HX0001s\n(Temperature)\n\nEq: T_out = f(T_in, T_cool, MassFlow)",
+      "label": "23HX0001s\n(Temperature)\n\nEq: T_out = f(T_in, T_cool, F)",
       "color": "#f3a683",
       "shape": "box",
       "group": "23HX0001s",
@@ -508,7 +508,7 @@
     },
     {
       "id": "23TIC0003_Control",
-      "label": "23TIC0003\n(Control)\n\nEq: PID(e(t)) | U(t) = Kp*e(t) + ...",
+      "label": "23TIC0003\n(Control)\n\nEq: PID: U(t) = Kp*e + Ki*\u222be dt",
       "color": "#ff7675",
       "shape": "box",
       "group": "23TIC0003",
@@ -519,7 +519,7 @@
     },
     {
       "id": "23ASC0001_Control",
-      "label": "23ASC0001\n(Control)\n\nEq: ASC(e(t)) | U(t) = f(Flow, Pressure)",
+      "label": "23ASC0001\n(Control)\n\nEq: ASC: U(t) = f(Flow, Pressure)",
       "color": "#ff7675",
       "shape": "box",
       "group": "23ASC0001",
@@ -894,15 +894,6 @@
       "from": "23KA0001_MassFlow",
       "to": "23VA0001_Temperature",
       "label": "m_out",
-      "arrows": "to",
-      "font": {
-        "size": 8
-      }
-    },
-    {
-      "from": "23VA0001_WaterLevel",
-      "to": "23VA0001_Temperature",
-      "label": "local_var",
       "arrows": "to",
       "font": {
         "size": 8

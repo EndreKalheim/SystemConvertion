@@ -341,165 +341,47 @@ namespace KSpiceEngine
                 }
                 
                 // -----------------------------------------------------
-                //   D. Separator Temperature Modeling (Thermal Mixing)
+                //   D. Separator Temperature: data-driven linear fit
                 // -----------------------------------------------------
                 else if (state == "Temperature" && kspiceType.IndexOf("Separator", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
-                    Console.WriteLine($"[Model] {id}: ThermalMixingModel (enthalpy-weighted streams, water-heavy hold-up)...");
-                    var m_in_total = new double[numRows];
-                    var t_in_mixed = new double[numRows];
-                    var m_out_total = new double[numRows];
-
                     var inputCols = FindInputSignals(id, inputEdges, signalMap, dataset);
+                    Console.WriteLine($"[Model] {id}: IdentifyLinear (separator temperature, {inputCols.Count} inputs)");
 
-                    var flowsIn = new List<(string key, double[] d)>();
-                    var tempsIn = new List<(string key, double[] d)>();
-                    var flowsOut = new List<(string key, double[] d)>();
-
-                    foreach (var input in inputCols)
+                    if (inputCols.Count > 0)
                     {
-                        var nm = input.Item1;
-                        if (nm.Contains("_MassFlow", StringComparison.Ordinal) && nm.Contains("(m_in)", StringComparison.Ordinal))
-                            flowsIn.Add((StreamBaseFromTopologyName(nm), input.Item2));
-                        else if (nm.Contains("_MassFlow", StringComparison.Ordinal) && nm.Contains("(m_out)", StringComparison.Ordinal))
-                            flowsOut.Add((StreamBaseFromTopologyName(nm), input.Item2));
-                        else if (nm.Contains("_Temperature", StringComparison.Ordinal) && nm.Contains("(T_in)", StringComparison.Ordinal))
-                            tempsIn.Add((StreamBaseFromTopologyName(nm), input.Item2));
-                    }
-
-                    if (flowsIn.Count > 0 && tempsIn.Count > 0)
-                    {
-                        for (int i = 0; i < numRows; i++)
+                        try
                         {
-                            double mTot = 0, hTot = 0, mOut = 0;
-                            foreach (var (fk, fd) in flowsIn)
+                            var unitDataSet = BuildUnitDataSet(inputCols, Y_true, timeBase_s);
+                            var model = UnitIdentifier.IdentifyLinear(ref unitDataSet, null, false);
+                            if (model.modelParameters.Fitting.WasAbleToIdentify && unitDataSet.Y_sim != null)
                             {
-                                var match = tempsIn.FirstOrDefault(t => string.Equals(t.key, fk, StringComparison.OrdinalIgnoreCase));
-                                double tUse = match.d != null && i < match.d.Length ? match.d[i] : 0;
-                                double mj = i < fd.Length ? fd[i] : 0;
-                                mTot += mj;
-                                hTot += mj * tUse;
-                            }
-                            foreach (var (_, fd) in flowsOut)
-                                mOut += i < fd.Length ? fd[i] : 0;
-                            if (mOut <= 1e-9) mOut = mTot;
-                            m_in_total[i] = mTot;
-                            t_in_mixed[i] = mTot > 1e-12 ? hTot / mTot : 0;
-                            m_out_total[i] = mOut;
-                        }
-
-                        double[] waterLevel = GetSignalFromMap(dataset, signalMap, $"{comp}_WaterLevel");
-
-                        var thermalModel = new KSpiceEngine.CustomModels.ThermalMixingModel(id, "M_in", "T_in", "M_out", "WaterLevel", null, id);
-                        thermalModel.modelParameters = new KSpiceEngine.CustomModels.ThermalMixingParameters();
-
-                        thermalModel.WarmStart(null, Y_true[0]);
-
-                        double[] y_sim = new double[numRows];
-                        for (int i = 0; i < numRows; i++)
-                        {
-                            double wl = waterLevel != null && i < waterLevel.Length ? waterLevel[i] : -1;
-                            double[] inputs = new double[] { m_in_total[i], t_in_mixed[i], m_out_total[i], wl, -1 };
-                            y_sim[i] = thermalModel.Iterate(inputs, timeBase_s)[0];
-                        }
-
-                        // Calculate actual fit score for the physics model
-                        double ssRes = 0, ssTot = 0;
-                        double mean = Y_true.Average();
-                        for (int i = 0; i < numRows; i++) {
-                            ssRes += Math.Pow(y_sim[i] - Y_true[i], 2);
-                            ssTot += Math.Pow(Y_true[i] - mean, 2);
-                        }
-                        double fitScore = ssTot > 1e-12 ? (1.0 - ssRes / ssTot) * 100.0 : 0.0;
-
-                        if (fitScore < 0)
-                        {
-                            // Physics model diverged — try linear identification as a fallback
-                            Console.WriteLine($"[WARNING] {id}: ThermalMixingModel diverged (FitScore={fitScore:F1}%). Trying IdentifyLinear...");
-                            bool linearSucceeded = false;
-                            try
-                            {
-                                var unitDataSetFb = BuildUnitDataSet(inputCols, Y_true, timeBase_s);
-                                var modelFb = UnitIdentifier.IdentifyLinear(ref unitDataSetFb, null, false);
-                                if (modelFb.modelParameters.Fitting.WasAbleToIdentify && unitDataSetFb.Y_sim != null)
-                                {
-                                    double fsFb = modelFb.modelParameters.Fitting.FitScorePrc;
-                                    Console.WriteLine($"[SUCCESS] {id}: IdentifyLinear fallback. FitScore={fsFb:F1}%");
-                                    predictions[id] = unitDataSetFb.Y_sim;
-                                    identifiedParams[id] = new JObject {
-                                        ["ModelType"] = "IdentifyLinear",
-                                        ["FitScore"]  = fsFb,
-                                        ["Note"]      = $"ThermalMixingModel diverged ({fitScore:F1}%), replaced by linear fit"
-                                    };
-                                    linearSucceeded = true;
-                                }
-                            }
-                            catch (Exception) { }
-
-                            if (!linearSucceeded)
-                            {
-                                // Nothing worked — store ThermalMixingModel output so the user can see it diverged
-                                predictions[id] = y_sim;
+                                predictions[id] = unitDataSet.Y_sim;
+                                double fitScore = model.modelParameters.Fitting.FitScorePrc;
+                                Console.WriteLine($"[SUCCESS] {id}: FitScore={fitScore:F1}%");
                                 identifiedParams[id] = new JObject {
-                                    ["ModelType"] = "ThermalMixingModel",
-                                    ["FitScore"]  = fitScore,
-                                    ["Formula"]   = "dT ~ (m_in*(Tin-T) - m_out*T)/(M_eff*Cp) - k_loss*(T-Tamb)",
-                                    ["Note"]      = "Diverged — physics parameters need tuning"
+                                    ["ModelType"]      = "IdentifyLinear",
+                                    ["FitScore"]       = fitScore,
+                                    ["TimeConstant_s"] = model.modelParameters.TimeConstant_s
                                 };
                             }
+                            else
+                            {
+                                Console.WriteLine($"[WARNING] {id}: IdentifyLinear could not fit.");
+                                predictions[id] = (double[])Y_true.Clone();
+                                identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = "IdentifyLinear could not fit" };
+                            }
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            predictions[id] = y_sim;
-                            Console.WriteLine($"[SUCCESS] {id}: ThermalMixingModel simulation complete. FitScore={fitScore:F1}%");
-                            var mParams = new JObject();
-                            mParams["ModelType"] = "ThermalMixingModel";
-                            mParams["FitScore"] = fitScore;
-                            mParams["Formula"] = "dT ~ (m_in*(Tin-T) - m_out*T)/(M_eff*Cp) - k_loss*(T-Tamb)";
-                            identifiedParams[id] = mParams;
+                            predictions[id] = (double[])Y_true.Clone();
+                            identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = ex.Message };
                         }
                     }
                     else
                     {
-                        // No paired streams found for thermal mixing — fall back to linear identification
-                        // using whatever temperature/flow inputs the topology provides
-                        Console.WriteLine($"[WARNING] {id}: No paired m_in/T_in streams. Falling back to IdentifyLinear.");
-                        var inputCols2 = FindInputSignals(id, inputEdges, signalMap, dataset);
-                        if (inputCols2.Count > 0)
-                        {
-                            try
-                            {
-                                var unitDataSet2 = BuildUnitDataSet(inputCols2, Y_true, timeBase_s);
-                                var model2 = UnitIdentifier.IdentifyLinear(ref unitDataSet2, null, false);
-                                if (model2.modelParameters.Fitting.WasAbleToIdentify && unitDataSet2.Y_sim != null)
-                                {
-                                    predictions[id] = unitDataSet2.Y_sim;
-                                    double fs2 = model2.modelParameters.Fitting.FitScorePrc;
-                                    Console.WriteLine($"[SUCCESS] {id}: IdentifyLinear fallback. FitScore={fs2:F1}%");
-                                    identifiedParams[id] = new JObject {
-                                        ["ModelType"] = "IdentifyLinear",
-                                        ["FitScore"]  = fs2,
-                                        ["Note"]      = "ThermalMixingModel skipped (no paired inflow streams)"
-                                    };
-                                }
-                                else
-                                {
-                                    Console.WriteLine($"[WARNING] {id}: IdentifyLinear also failed.");
-                                    predictions[id] = (double[])Y_true.Clone();
-                                    identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = "Both ThermalMixingModel and IdentifyLinear failed" };
-                                }
-                            }
-                            catch (Exception ex2)
-                            {
-                                predictions[id] = (double[])Y_true.Clone();
-                                identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = ex2.Message };
-                            }
-                        }
-                        else
-                        {
-                            predictions[id] = (double[])Y_true.Clone();
-                            identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = "No input signals in topology for temperature" };
-                        }
+                        predictions[id] = (double[])Y_true.Clone();
+                        identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = "No input signals in topology" };
                     }
                 }
 
@@ -722,22 +604,5 @@ namespace KSpiceEngine
             File.WriteAllLines(path, outputLines);
         }
 
-        private static string StreamBaseFromTopologyName(string displayName)
-        {
-            var core = displayName.Split('(')[0];
-            const string mf = "_MassFlow";
-            const string tf = "_Temperature";
-            if (core.EndsWith(mf, StringComparison.OrdinalIgnoreCase))
-                return core.Substring(0, core.Length - mf.Length);
-            if (core.EndsWith(tf, StringComparison.OrdinalIgnoreCase))
-                return core.Substring(0, core.Length - tf.Length);
-            return core;
-        }
-
-        private static double[] GetSignalFromMap(Dictionary<string, double[]> dataset, Dictionary<string, string> signalMap, string key)
-        {
-            if (!signalMap.TryGetValue(key, out var csv)) return null;
-            return dataset.TryGetValue(csv, out var arr) ? arr : null;
-        }
     }
 }

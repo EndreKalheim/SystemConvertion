@@ -60,7 +60,7 @@ namespace KSpiceEngine
                 {
                     Console.WriteLine("\n[Phase 2] Generating equations...");
 
-                    var plant = KSpiceModelFactory.BuildPlantFromMap(mapPath, out List<JObject> tsaEquationsMap);
+                    KSpiceModelFactory.BuildEquationsMap(mapPath, out List<JObject> tsaEquationsMap);
 
                     Directory.CreateDirectory(diagDir);
                     string eqMapPath = Path.Combine(diagDir, "TSA_Equations.json");
