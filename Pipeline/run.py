@@ -148,14 +148,12 @@ def phase_simulate(csv_path):
 
 def phase_visualize():
     print("\n-- Phase 5 | Generate visualizations --------------------------")
+    # Raw K-Spice component connectivity (overview)
     _run([sys.executable, os.path.join(SRC_VIS, 'TopologyVisualizer.py'),
           '--json', MAP_JSON,
           '--out',  os.path.join(OUT_DIAG, 'System_Topology_V2.html')])
 
-    _run([sys.executable, os.path.join(SRC_VIS, 'StateTopologyBuilder.py'),
-          '--json',     MAP_JSON,
-          '--out_html', os.path.join(OUT_DIAG, 'System_TSA_State_Topology.html')])
-
+    # Validation plots (uses TSA_Explicit_Topology.json from phase 3)
     _run([sys.executable, os.path.join(HERE, 'Plot_CS_Predictions.py')])
 
 
