@@ -1,10 +1,67 @@
 import os
 import glob
 import json
+from collections import deque
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+
+
+def _build_physical_adjacency(system_map_path):
+    """Bidirectional component adjacency from K-Spice stream connections."""
+    if not os.path.exists(system_map_path):
+        return {}
+
+    def _norm(name):
+        if name.endswith('_pf'): return name[:-3]
+        if name.endswith('_m'):  return name[:-2]
+        return name
+
+    with open(system_map_path) as f:
+        smap = json.load(f)
+
+    adj = {}
+    for model in smap.get('Models', []):
+        comp = _norm(model['Name'])
+        for inp in model.get('Inputs', []):
+            if 'Stream' not in inp.get('Destination', ''):
+                continue
+            src_raw = inp.get('Source', '')
+            colon   = src_raw.find(':')
+            if colon <= 0:
+                continue
+            src_comp = _norm(src_raw[:colon])
+            if src_comp == comp:
+                continue
+            adj.setdefault(comp, set()).add(src_comp)
+            adj.setdefault(src_comp, set()).add(comp)
+    return adj
+
+
+def _find_proxy_signal(missing_comp, state_suffix, parent_comp, adj, signal_map, dataset_cols, max_hops=8):
+    """BFS downstream (excluding parent_comp) to find nearest series neighbour
+    that has {neighbour}_{state_suffix} in signal_map with a CSV column.
+    Returns (proxy_key, csv_col) or (None, None)."""
+    visited = {missing_comp}
+    if parent_comp:
+        visited.add(parent_comp)
+
+    queue = deque([(missing_comp, 0)])
+    while queue:
+        comp, depth = queue.popleft()
+        if depth >= max_hops:
+            continue
+        for nb in adj.get(comp, set()):
+            if nb in visited:
+                continue
+            visited.add(nb)
+            candidate = f"{nb}_{state_suffix}"
+            csv_col   = signal_map.get(candidate)
+            if csv_col and csv_col in dataset_cols:
+                return candidate, csv_col
+            queue.append((nb, depth + 1))
+    return None, None
 
 
 def plot_validation():
@@ -14,6 +71,7 @@ def plot_validation():
     mapping_json    = os.path.join(base_dir, "output", "diagrams", "SignalMapping.json")
     params_json     = os.path.join(base_dir, "output", "CS_Identified_Parameters.json")
     topology_json   = os.path.join(base_dir, "output", "diagrams", "TSA_Explicit_Topology.json")
+    system_map_json = os.path.join(base_dir, "data", "extracted", "KSpiceSystemMap.json")
     out_dir         = os.path.join(base_dir, "output", "validation_plots")
 
     # ── Clean up old plots so stale files never accumulate ───────────────────
@@ -43,6 +101,8 @@ def plot_validation():
     except Exception as e:
         print(f"[ERROR] Loading files: {e}")
         return
+
+    phys_adj = _build_physical_adjacency(system_map_json)
 
     # ── Build input-edge map from topology ───────────────────────────────────
     input_edges = {}
@@ -83,11 +143,29 @@ def plot_validation():
             continue   # Nothing was fitted — skip rather than show a misleading plot
 
         # ── Gather input signals from topology ────────────────────────────────
+        # parent component = part of model_id before the last underscore
+        _pi = model_id.rfind('_')
+        parent_comp = model_id[:_pi] if _pi > 0 else None
+
         inputs_by_csv = {}
         for edge_info in input_edges.get(model_id, []):
             src_node   = edge_info['from']
             edge_label = edge_info['label']
             csv_col    = signal_map.get(src_node) or signal_map.get(src_node.replace('_pf', ''))
+
+            if not (csv_col and csv_col in df_raw.columns):
+                # Proxy resolution — only for MassFlow (conserved in series connections)
+                _li = src_node.rfind('_')
+                if _li > 0 and src_node[_li + 1:] == 'MassFlow':
+                    src_comp = src_node[:_li]
+                    proxy_key, csv_col = _find_proxy_signal(
+                        src_comp, 'MassFlow', parent_comp,
+                        phys_adj, signal_map, df_raw.columns
+                    )
+                    if proxy_key:
+                        print(f"  [PROXY] {src_node} → {proxy_key}")
+                        src_node = f"{src_node} [proxy→{proxy_key}]"
+
             if csv_col and csv_col in df_raw.columns:
                 display = f"{edge_label}: {src_node}"
                 if csv_col not in inputs_by_csv:
@@ -97,6 +175,21 @@ def plot_validation():
 
         # csv_col → display_label mapping for subplot rows
         input_signals = {lbl: csv for csv, lbl in inputs_by_csv.items()}
+
+        # ── Build gain lookup: csv_col -> gain (from identified parameters) ─────
+        gain_by_csv = {}
+        input_names  = p.get('InputNames', [])
+        linear_gains = p.get('LinearGains', [])
+        if input_names and linear_gains:
+            for iname, igain in zip(input_names, linear_gains):
+                # Display name format: "resolvedKey(label)" or "resolvedKey(label)_neg"
+                paren = iname.find('(')
+                resolved = iname[:paren].strip() if paren > 0 else iname.strip()
+                if resolved.endswith('_neg'):
+                    resolved = resolved[:-4]
+                csv_c = signal_map.get(resolved)
+                if csv_c:
+                    gain_by_csv[csv_c] = igain
 
         # ── Build title ───────────────────────────────────────────────────────
         fit_score = p.get('FitScore')
@@ -140,11 +233,27 @@ def plot_validation():
             if i >= len(axes):
                 break
             ax = axes[i]
-            ax.plot(df_pred['Time'].values[:min_len],
-                    df_raw[csv_col].values[:min_len],
+            signal_data = df_raw[csv_col].values[:min_len]
+            ax.plot(df_pred['Time'].values[:min_len], signal_data,
                     color='darkorange', linewidth=1.2)
+
+            gain = gain_by_csv.get(csv_col)
+            if gain is not None:
+                # Colour-code: near-zero gain = grey (useless), significant = green
+                is_useful = abs(gain) > 1e-6
+                gcolor = 'green' if is_useful else 'grey'
+                gain_annotation = f"gain={gain:.4g}"
+                ax.annotate(gain_annotation,
+                            xy=(0.99, 0.95), xycoords='axes fraction',
+                            ha='right', va='top', fontsize=8,
+                            color=gcolor,
+                            bbox=dict(boxstyle='round,pad=0.2', fc='white', alpha=0.7))
+                subplot_title = f"Input: {csv_col}  ({'useful' if is_useful else 'near-zero gain'})"
+            else:
+                subplot_title = f"Input: {csv_col}"
+
             ax.set_ylabel(display_lbl, fontsize=7.5)
-            ax.set_title(f"Input: {csv_col}", fontsize=8)
+            ax.set_title(subplot_title, fontsize=8)
             ax.grid(True, alpha=0.4)
 
         axes[-1].set_xlabel("Time (s)")

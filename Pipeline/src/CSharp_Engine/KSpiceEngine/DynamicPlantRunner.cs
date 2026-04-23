@@ -49,6 +49,9 @@ namespace KSpiceEngine
                     inputEdges[to] = new List<(string, string)>();
                 inputEdges[to].Add((from, label));
             }
+
+            // Build physical KSpice adjacency for proxy signal resolution
+            var physicalNeighbors = BuildPhysicalAdjacency(models);
             
             // 5. Load CSV Dataset (Raw KSpice true output)
             var dataset = LoadCsvDataset(csvPath);
@@ -195,7 +198,7 @@ namespace KSpiceEngine
                 {
                     Console.WriteLine($"[Model] {id}: ASC Generic Identification...");
                     
-                    var inputCols = FindInputSignals(id, inputEdges, signalMap, dataset);
+                    var inputCols = FindInputSignals(id, inputEdges, signalMap, dataset, physicalNeighbors);
                     
                     if (inputCols.Count >= 3)
                     {
@@ -275,16 +278,101 @@ namespace KSpiceEngine
                 }
                 
                 // -----------------------------------------------------
-                //   C. Separator Volume Modeling (Integrators for Mass/Pressure/Level)
+                //   C1. Separator Pressure — self-regulating (PID-controlled in data)
+                //       Use Identify() + augment inputs with upstream boundary pressures
+                //       from each m_in source (these are the main physical driver).
                 // -----------------------------------------------------
-                else if ((state.EndsWith("Level") || state == "Pressure") && kspiceType.IndexOf("Separator", StringComparison.OrdinalIgnoreCase) >= 0)
+                else if (state == "Pressure" && kspiceType.IndexOf("Separator", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
-                    var inputCols = FindInputSignals(id, inputEdges, signalMap, dataset);
+                    var inputCols = FindInputSignals(id, inputEdges, signalMap, dataset, physicalNeighbors);
+
+                    // Augment: for every inflow source, add its upstream boundary pressure
+                    // if the signal map has it (avoids downstream ≈ separator pressure, which is circular).
+                    var addedCsvCols = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    foreach (var x in inputCols)
+                    {
+                        int pp = x.Item1.IndexOf('(');
+                        string rk = pp > 0 ? x.Item1.Substring(0, pp) : x.Item1;
+                        if (signalMap.ContainsKey(rk)) addedCsvCols.Add(signalMap[rk]);
+                    }
+                    if (inputEdges.ContainsKey(id))
+                    {
+                        foreach (var (fromNode, edgeLabel) in inputEdges[id])
+                        {
+                            if (!edgeLabel.Contains("m_in")) continue;
+                            int li = fromNode.LastIndexOf('_');
+                            if (li <= 0) continue;
+                            string fromComp = fromNode.Substring(0, li);
+                            string upKey = $"{fromComp}_UpstreamPressure";
+                            if (signalMap.ContainsKey(upKey))
+                            {
+                                string csvCol = signalMap[upKey];
+                                if (dataset.ContainsKey(csvCol) && !addedCsvCols.Contains(csvCol))
+                                {
+                                    inputCols.Add(($"{upKey}(press_upstream)", dataset[csvCol]));
+                                    addedCsvCols.Add(csvCol);
+                                }
+                            }
+                        }
+                    }
+
+                    Console.WriteLine($"[Model] {id}: UnitIdentifier.Identify (separator pressure, {inputCols.Count} inputs — flows + upstream pressures)");
                     if (inputCols.Count > 0)
                     {
-                        // Separate inflows (m_in, mass_in) from outflows (m_out, mass_out_drain).
-                        // Negate outflow data so IdentifyLinearDiff can use all-positive gains:
-                        //   dL/dt = gain_in * F_in + gain * (-F_out)  →  correct mass-balance sign
+                        try
+                        {
+                            var unitDataSet = BuildUnitDataSet(inputCols, Y_true, timeBase_s);
+                            var model = UnitIdentifier.Identify(ref unitDataSet, null, false);
+                            if (model.modelParameters.Fitting.WasAbleToIdentify && unitDataSet.Y_sim != null)
+                            {
+                                predictions[id] = unitDataSet.Y_sim;
+                                double fitScore = model.modelParameters.Fitting.FitScorePrc;
+                                Console.WriteLine($"[SUCCESS] {id}: FitScore={fitScore:F1}%, Tc={model.modelParameters.TimeConstant_s:F2}s");
+                                var mParams = new JObject
+                                {
+                                    ["ModelType"]      = "UnitIdentifier",
+                                    ["FitScore"]       = fitScore,
+                                    ["TimeConstant_s"] = model.modelParameters.TimeConstant_s,
+                                    ["Formula"]        = $"FirstOrder/Static MISO: {inputCols.Count} inputs (flows + upstream pressures)"
+                                };
+                                if (model.modelParameters.LinearGains != null)
+                                {
+                                    mParams["LinearGains"] = JArray.FromObject(model.modelParameters.LinearGains);
+                                    mParams["InputNames"]  = JArray.FromObject(inputCols.Select(x => x.Item1).ToArray());
+                                }
+                                identifiedParams[id] = mParams;
+                            }
+                            else
+                            {
+                                Console.WriteLine($"[WARNING] {id}: Identify failed for separator pressure.");
+                                predictions[id] = (double[])Y_true.Clone();
+                                identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = "Identify failed for separator pressure" };
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            predictions[id] = (double[])Y_true.Clone();
+                            identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = ex.Message };
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[WARNING] {id}: No inputs found for separator pressure.");
+                        predictions[id] = Enumerable.Repeat(0.0, numRows).ToArray();
+                        identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = "No input signals found in topology" };
+                    }
+                }
+
+                // -----------------------------------------------------
+                //   C2. Separator Level — pure integrator (mass balance)
+                // -----------------------------------------------------
+                else if (state.EndsWith("Level") && kspiceType.IndexOf("Separator", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    var inputCols = FindInputSignals(id, inputEdges, signalMap, dataset, physicalNeighbors);
+                    if (inputCols.Count > 0)
+                    {
+                        // Negate outflow data so all identified gains are positive:
+                        //   dL/dt = gain_in * F_in + gain_out * (-F_out)
                         var signedInputs = inputCols.Select(x =>
                         {
                             bool isOutflow = x.Item1.Contains("(m_out)") || x.Item1.Contains("(m_sum)") || x.Item1.Contains("(mass_out");
@@ -296,7 +384,8 @@ namespace KSpiceEngine
                             return x;
                         }).ToList();
 
-                        Console.WriteLine($"[Model] {id}: UnitIdentifier.IdentifyLinearDiff (Integrator) with {signedInputs.Count} inputs ({inputCols.Count(x => x.Item1.Contains("(m_out)") || x.Item1.Contains("(m_sum)") || x.Item1.Contains("(mass_out")) } outflows negated)");
+                        int nOut = inputCols.Count(x => x.Item1.Contains("(m_out)") || x.Item1.Contains("(m_sum)") || x.Item1.Contains("(mass_out"));
+                        Console.WriteLine($"[Model] {id}: UnitIdentifier.IdentifyLinearDiff (Integrator) with {signedInputs.Count} inputs ({nOut} outflows negated)");
                         try
                         {
                             var unitDataSet = BuildUnitDataSet(signedInputs, Y_true, timeBase_s);
@@ -304,7 +393,7 @@ namespace KSpiceEngine
 
                             if (!(model.modelParameters.Fitting.WasAbleToIdentify && unitDataSet.Y_sim != null))
                             {
-                                Console.WriteLine($"[WARNING] {id}: Integrator identification failed, copying actuals.");
+                                Console.WriteLine($"[WARNING] {id}: Integrator identification failed.");
                                 predictions[id] = (double[])Y_true.Clone();
                                 identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = "IdentifyLinearDiff failed" };
                                 continue;
@@ -319,10 +408,19 @@ namespace KSpiceEngine
                             predictions[id] = adjustedSim;
                             Console.WriteLine($"[SUCCESS] {id}: Integrator identified. FitScore={model.modelParameters.Fitting.FitScorePrc:F1}%");
 
-                            var mParams = new JObject();
-                            mParams["ModelType"] = "IdentifyLinearDiff";
-                            mParams["FitScore"] = model.modelParameters.Fitting.FitScorePrc;
-                            mParams["TimeConstant_s"] = model.modelParameters.TimeConstant_s;
+                            var mParams = new JObject
+                            {
+                                ["ModelType"]      = "IdentifyLinearDiff",
+                                ["FitScore"]       = model.modelParameters.Fitting.FitScorePrc,
+                                ["TimeConstant_s"] = model.modelParameters.TimeConstant_s,
+                                ["Formula"]        = "Integrator: dY/dt = sum(gain_i * input_i)  [outflows negated]"
+                            };
+                            if (model.modelParameters.LinearGains != null)
+                            {
+                                mParams["LinearGains"] = JArray.FromObject(model.modelParameters.LinearGains);
+                                // Store original (un-negated) input names so the plot can match them to CSV columns
+                                mParams["InputNames"] = JArray.FromObject(inputCols.Select(x => x.Item1).ToArray());
+                            }
                             identifiedParams[id] = mParams;
                         }
                         catch (Exception ex)
@@ -345,7 +443,7 @@ namespace KSpiceEngine
                 // -----------------------------------------------------
                 else if (state == "Temperature" && kspiceType.IndexOf("Separator", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
-                    var inputCols = FindInputSignals(id, inputEdges, signalMap, dataset);
+                    var inputCols = FindInputSignals(id, inputEdges, signalMap, dataset, physicalNeighbors);
                     Console.WriteLine($"[Model] {id}: IdentifyLinear (separator temperature, {inputCols.Count} inputs)");
 
                     if (inputCols.Count > 0)
@@ -359,11 +457,19 @@ namespace KSpiceEngine
                                 predictions[id] = unitDataSet.Y_sim;
                                 double fitScore = model.modelParameters.Fitting.FitScorePrc;
                                 Console.WriteLine($"[SUCCESS] {id}: FitScore={fitScore:F1}%");
-                                identifiedParams[id] = new JObject {
+                                var dParams = new JObject
+                                {
                                     ["ModelType"]      = "IdentifyLinear",
                                     ["FitScore"]       = fitScore,
-                                    ["TimeConstant_s"] = model.modelParameters.TimeConstant_s
+                                    ["TimeConstant_s"] = model.modelParameters.TimeConstant_s,
+                                    ["Formula"]        = "First-order linear MISO with time constant"
                                 };
+                                if (model.modelParameters.LinearGains != null)
+                                {
+                                    dParams["LinearGains"] = JArray.FromObject(model.modelParameters.LinearGains);
+                                    dParams["InputNames"]  = JArray.FromObject(inputCols.Select(x => x.Item1).ToArray());
+                                }
+                                identifiedParams[id] = dParams;
                             }
                             else
                             {
@@ -391,7 +497,7 @@ namespace KSpiceEngine
                 else
                 {
                     // Find all input signals from the topology edges
-                    var inputCols = FindInputSignals(id, inputEdges, signalMap, dataset);
+                    var inputCols = FindInputSignals(id, inputEdges, signalMap, dataset, physicalNeighbors);
                     var idInputs = inputCols;
 
                     if (idInputs.Count == 0)
@@ -425,13 +531,18 @@ namespace KSpiceEngine
                             double fitScore = model.modelParameters.Fitting.FitScorePrc;
                             Console.WriteLine($"[SUCCESS] {id}: Identified. FitScore={fitScore:F1}%, Tc={model.modelParameters.TimeConstant_s:F2}s");
 
-                            var modelParams = new JObject();
-                            modelParams["ModelType"] = "UnitIdentifier";
-                            modelParams["FitScore"] = fitScore;
-                            modelParams["TimeConstant_s"] = model.modelParameters.TimeConstant_s;
+                            var modelParams = new JObject
+                            {
+                                ["ModelType"]      = "UnitIdentifier",
+                                ["FitScore"]       = fitScore,
+                                ["TimeConstant_s"] = model.modelParameters.TimeConstant_s,
+                                ["Formula"]        = $"Dynamic MISO: {idInputs.Count} inputs, Tc={model.modelParameters.TimeConstant_s:F2}s"
+                            };
                             if (model.modelParameters.LinearGains != null)
+                            {
                                 modelParams["LinearGains"] = JArray.FromObject(model.modelParameters.LinearGains);
-                            modelParams["Formula"] = $"Dynamic MISO: {idInputs.Count} inputs, Tc={model.modelParameters.TimeConstant_s:F2}s";
+                                modelParams["InputNames"]  = JArray.FromObject(idInputs.Select(x => x.Item1).ToArray());
+                            }
                             identifiedParams[id] = modelParams;
                         }
                         else
@@ -463,53 +574,173 @@ namespace KSpiceEngine
         /// <summary>
         /// Find all input CSV columns for a given topology node by looking at edges pointing TO this node,
         /// then resolving each source node's signal mapping.
+        /// When a source has no direct CSV signal, performs a directional BFS through physical KSpice
+        /// adjacency to find the nearest series-connected component with the same state that IS mapped.
         /// </summary>
         private static List<(string name, double[] data)> FindInputSignals(
             string nodeId,
             Dictionary<string, List<(string fromNode, string label)>> inputEdges,
             Dictionary<string, string> signalMap,
-            Dictionary<string, double[]> dataset)
+            Dictionary<string, double[]> dataset,
+            Dictionary<string, HashSet<string>> physicalNeighbors)
         {
             var result = new List<(string, double[])>();
             var usedCols = new HashSet<string>();
-            
+
             if (!inputEdges.ContainsKey(nodeId))
                 return result;
-            
+
+            // Extract parent component (e.g. "23VA0001" from "23VA0001_Pressure")
+            // so proxy BFS won't walk back upstream into the node we're wiring.
+            int parentSplit = nodeId.LastIndexOf('_');
+            string parentComp = parentSplit > 0 ? nodeId.Substring(0, parentSplit) : null;
+
             foreach (var (fromNode, label) in inputEdges[nodeId])
             {
-                // The fromNode is a topology state like "23VA001_Pressure" — look for its signal mapping
+                string resolvedKey = null;
+
+                // 1. Direct lookup in signal map
                 if (signalMap.ContainsKey(fromNode))
                 {
-                    string csvCol = signalMap[fromNode];
-                    if (dataset.ContainsKey(csvCol) && !usedCols.Contains(csvCol))
-                    {
-                        result.Add(($"{fromNode}({label})", dataset[csvCol]));
-                        usedCols.Add(csvCol);
-                    }
+                    resolvedKey = fromNode;
                 }
                 else
                 {
-                    // Try to resolve the signal name directly from the fromNode components (IDs like 23VA001_TotalLevel)
                     int li = fromNode.LastIndexOf('_');
-                    if (li <= 0) continue;
-                    string fromComp = fromNode.Substring(0, li);
-                    string fromState = fromNode.Substring(li + 1);
-                    string altKey = $"{fromComp}_{fromState}";
-                    
-                    if (signalMap.ContainsKey(altKey))
+                    if (li > 0)
                     {
-                        string csvCol = signalMap[altKey];
-                        if (dataset.ContainsKey(csvCol) && !usedCols.Contains(csvCol))
+                        string fromComp  = fromNode.Substring(0, li);
+                        string fromState = fromNode.Substring(li + 1);
+                        string altKey    = $"{fromComp}_{fromState}";
+
+                        // 2. Rebuilt key (handles minor formatting differences)
+                        if (signalMap.ContainsKey(altKey))
                         {
-                            result.Add(($"{altKey}({label})", dataset[csvCol]));
-                            usedCols.Add(csvCol);
+                            resolvedKey = altKey;
+                        }
+                        else
+                        {
+                            // 3. Proxy: BFS downstream through physical KSpice wiring,
+                            //    excluding the upstream parent to enforce directionality.
+                            string proxyKey = FindProxySignal(fromComp, fromState, parentComp,
+                                                              physicalNeighbors, signalMap, dataset);
+                            if (proxyKey != null)
+                            {
+                                Console.WriteLine($"  [PROXY] {fromNode} has no CSV signal — using {proxyKey} as proxy (series path)");
+                                resolvedKey = proxyKey;
+                            }
+                            else
+                            {
+                                Console.WriteLine($"  [SKIP]  {fromNode} has no CSV signal and no proxy found");
+                            }
                         }
                     }
                 }
+
+                if (resolvedKey == null) continue;
+
+                string csvCol = signalMap[resolvedKey];
+                if (dataset.ContainsKey(csvCol) && !usedCols.Contains(csvCol))
+                {
+                    result.Add(($"{resolvedKey}({label})", dataset[csvCol]));
+                    usedCols.Add(csvCol);
+                }
             }
-            
+
             return result;
+        }
+
+        /// <summary>
+        /// BFS through physical KSpice adjacency starting from <paramref name="missingComp"/>,
+        /// excluding <paramref name="parentComp"/> to stay directional (downstream only).
+        /// Returns the signal map key of the nearest neighbour that has state <paramref name="stateSuffix"/>
+        /// and a CSV column, or null if none found within <paramref name="maxHops"/> hops.
+        /// </summary>
+        private static string FindProxySignal(
+            string missingComp,
+            string stateSuffix,
+            string parentComp,
+            Dictionary<string, HashSet<string>> physicalNeighbors,
+            Dictionary<string, string> signalMap,
+            Dictionary<string, double[]> dataset,
+            int maxHops = 8)
+        {
+            if (!physicalNeighbors.ContainsKey(missingComp)) return null;
+
+            var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { missingComp };
+            if (parentComp != null) visited.Add(parentComp); // block upstream direction
+
+            var queue = new Queue<(string comp, int depth)>();
+            queue.Enqueue((missingComp, 0));
+
+            while (queue.Count > 0)
+            {
+                var (comp, depth) = queue.Dequeue();
+                if (depth >= maxHops) continue;
+
+                if (!physicalNeighbors.ContainsKey(comp)) continue;
+                foreach (string neighbor in physicalNeighbors[comp])
+                {
+                    if (visited.Contains(neighbor)) continue;
+                    visited.Add(neighbor);
+
+                    string candidateKey = $"{neighbor}_{stateSuffix}";
+                    if (signalMap.ContainsKey(candidateKey) && dataset.ContainsKey(signalMap[candidateKey]))
+                        return candidateKey;
+
+                    queue.Enqueue((neighbor, depth + 1));
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Builds a bidirectional physical adjacency map from K-Spice stream connections.
+        /// Each node is a component name (normalised: _pf and _m suffixes stripped).
+        /// Only stream ports (Destination contains "Stream") are considered — control
+        /// signal wires are ignored.
+        /// </summary>
+        private static Dictionary<string, HashSet<string>> BuildPhysicalAdjacency(JArray models)
+        {
+            var adj = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+
+            string Normalize(string name)
+            {
+                if (name.EndsWith("_pf", StringComparison.OrdinalIgnoreCase))
+                    return name.Substring(0, name.Length - 3);
+                if (name.EndsWith("_m", StringComparison.OrdinalIgnoreCase))
+                    return name.Substring(0, name.Length - 2);
+                return name;
+            }
+
+            foreach (var model in models)
+            {
+                string rawName  = (string)model["Name"] ?? "";
+                string compName = Normalize(rawName);
+
+                var inputs = (JArray)model["Inputs"];
+                if (inputs == null || inputs.Count == 0) continue;
+
+                foreach (var inp in inputs)
+                {
+                    string dst = (string)inp["Destination"] ?? "";
+                    if (dst.IndexOf("Stream", StringComparison.OrdinalIgnoreCase) < 0) continue;
+
+                    string src = (string)inp["Source"] ?? "";
+                    int colonIdx = src.IndexOf(':');
+                    if (colonIdx <= 0) continue;
+
+                    string srcComp = Normalize(src.Substring(0, colonIdx));
+                    if (string.Equals(compName, srcComp, StringComparison.OrdinalIgnoreCase)) continue;
+
+                    if (!adj.ContainsKey(compName)) adj[compName] = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    if (!adj.ContainsKey(srcComp))  adj[srcComp]  = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    adj[compName].Add(srcComp);
+                    adj[srcComp].Add(compName);
+                }
+            }
+
+            return adj;
         }
         
         /// <summary>
