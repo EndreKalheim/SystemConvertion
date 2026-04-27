@@ -161,6 +161,12 @@ def plot_validation():
                 inputs_by_csv[sp_csv] = f"Setpoint: {sp_csv}"
             if meas_csv and meas_csv in df_raw.columns:
                 inputs_by_csv[meas_csv] = f"Measurement: {meas_csv}"
+        elif model_type == "ValvePhysicsModel":
+            in_names = p.get('InputNames', [])
+            if len(in_names) >= 3:
+                if in_names[0] and in_names[0] in df_raw.columns: inputs_by_csv[in_names[0]] = f"Inlet Pressure: {in_names[0]}"
+                if in_names[1] and in_names[1] in df_raw.columns: inputs_by_csv[in_names[1]] = f"Outlet Pressure: {in_names[1]}"
+                if in_names[2] and in_names[2] in df_raw.columns: inputs_by_csv[in_names[2]] = f"Valve Signal: {in_names[2]}"
 
         for edge_info in input_edges.get(model_id, []):
             src_node   = edge_info['from']

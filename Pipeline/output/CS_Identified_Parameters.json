@@ -5,18 +5,23 @@
   },
   "25HV0002_MassFlow": {
     "ModelType": "Fallback",
-    "Reason": "No input signals in topology"
+    "Reason": "Missing Pressure data for custom valve model"
   },
   "25ESV0001_MassFlow": {
-    "ModelType": "UnitIdentifier",
-    "FitScore": 31.343,
-    "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 1 inputs, Tc=0,00s",
-    "LinearGains": [
-      13.799
-    ],
+    "ModelType": "ValvePhysicsModel",
+    "FitScore": 100.0,
+    "Cv": 3000.0,
+    "DensityTuningFactor": 1.0,
+    "Formula": "Q = 1,0000 * 3000 * U * sqrt(max(0, P_in - P_out))",
     "InputNames": [
-      "23VA0001_Pressure(P_out)"
+      "25ESV0001_pf:InletPressure",
+      "25ESV0001_pf:OutletPressure",
+      "25ESV0001:Opening"
+    ],
+    "LinearGains": [
+      1.0,
+      -1.0,
+      1.0
     ]
   },
   "25ESV0001_Temperature": {
@@ -109,7 +114,7 @@
   },
   "23ESV0002_MassFlow": {
     "ModelType": "Fallback",
-    "Reason": "No input signals in topology"
+    "Reason": "Missing Pressure data for custom valve model"
   },
   "23KA0001_MassFlow": {
     "ModelType": "UnitIdentifier",
@@ -200,19 +205,20 @@
     ]
   },
   "23UV0001_MassFlow": {
-    "ModelType": "UnitIdentifier",
-    "FitScore": 98.6,
-    "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 3 inputs, Tc=0,00s",
-    "LinearGains": [
-      -8.2654,
-      -0.097534,
-      0.74366
-    ],
+    "ModelType": "ValvePhysicsModel",
+    "FitScore": 78.00356877162852,
+    "Cv": 400.0,
+    "DensityTuningFactor": 0.03618383983266045,
+    "Formula": "Q = 0,0362 * 400 * U * sqrt(max(0, P_in - P_out))",
     "InputNames": [
-      "23HX0001_Pressure(P_in)",
-      "23VA0001_Pressure(P_out)",
-      "23ASC0001_Control(U(t))"
+      "23UV0001_pf:InletStream.p",
+      "23UV0001_pf:OutletStream.p",
+      "23UV0001:LocalControlSignalIn"
+    ],
+    "LinearGains": [
+      1.0,
+      -1.0,
+      0.03618383983266045
     ]
   },
   "23UV0001_Temperature": {
@@ -232,15 +238,20 @@
     ]
   },
   "23ESV0005_MassFlow": {
-    "ModelType": "UnitIdentifier",
-    "FitScore": 78.68,
-    "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 1 inputs, Tc=0,00s",
-    "LinearGains": [
-      419.22
-    ],
+    "ModelType": "ValvePhysicsModel",
+    "FitScore": 98.77099581848145,
+    "Cv": 3000.0,
+    "DensityTuningFactor": 0.047486575452183356,
+    "Formula": "Q = 0,0475 * 3000 * U * sqrt(max(0, P_in - P_out))",
     "InputNames": [
-      "23HX0001_Pressure(P_in)"
+      "23ESV0005_pf:InletStream.p",
+      "23ESV0005_pf:OutletStream.p",
+      "Assumed_100%"
+    ],
+    "LinearGains": [
+      1.0,
+      -1.0,
+      0.047486575452183356
     ]
   },
   "23ESV0005_Temperature": {
@@ -300,17 +311,20 @@
     ]
   },
   "23LV0002_MassFlow": {
-    "ModelType": "UnitIdentifier",
-    "FitScore": 88.294,
-    "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 2 inputs, Tc=0,00s",
-    "LinearGains": [
-      0.86946,
-      2.4297
-    ],
+    "ModelType": "ValvePhysicsModel",
+    "FitScore": 97.46134256097854,
+    "Cv": 250.0,
+    "DensityTuningFactor": 0.19406330192715932,
+    "Formula": "Q = 0,1941 * 250 * U * sqrt(max(0, P_in - P_out))",
     "InputNames": [
-      "23PA0001_Pressure(P_in)",
-      "23LIC0002_Control(U(t))"
+      "23LV0002_pf:InletStream.p",
+      "23LV0002_pf:OutletStream.p",
+      "23LV0002:LocalControlSignalIn"
+    ],
+    "LinearGains": [
+      1.0,
+      -1.0,
+      0.19406330192715932
     ]
   },
   "23LV0002_Temperature": {
@@ -328,17 +342,20 @@
     ]
   },
   "23LV0001_MassFlow": {
-    "ModelType": "UnitIdentifier",
-    "FitScore": 71.944,
-    "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 2 inputs, Tc=0,00s",
-    "LinearGains": [
-      1.0674,
-      0.43606
-    ],
+    "ModelType": "ValvePhysicsModel",
+    "FitScore": 100.0,
+    "Cv": 100.0,
+    "DensityTuningFactor": 1.0,
+    "Formula": "Q = 1,0000 * 100 * U * sqrt(max(0, P_in - P_out))",
     "InputNames": [
-      "23VA0001_Pressure(P_in)",
-      "23LIC0001_Control(U(t))"
+      "23LV0001_pf:InletPressure",
+      "23LV0001_pf:OutletStream.p",
+      "23LV0001:Opening"
+    ],
+    "LinearGains": [
+      1.0,
+      -1.0,
+      1.0
     ]
   },
   "23LV0001_Temperature": {
@@ -472,12 +489,15 @@
     "SurgeProxy_a": 1.0888623588349529,
     "SurgeProxy_b": -59.98092922408487,
     "KickThreshold": -5.0,
+    "HoldThreshold": 3.71484375,
     "KickRate_PrcPerSec": 4.0,
-    "KickGain_PrcPerSecPerUnit": 1.6266975587162007,
-    "RampDown_PrcPerMin": 30.0,
-    "FitScore": 90.4816755147056,
+    "KickGain_PrcPerSecPerUnit": 1.048675537109375,
+    "RampDown_PrcPerMin": 0.0,
+    "RampDecay_Tau_s": 31.309814453125,
+    "SurgeMargin_LP_Tau_s": 0.0,
+    "FitScore": 95.17415775788466,
     "SurgeTruthSource": "K-Spice NormalizedFlow vs NormalizedAsymmetricLimit",
-    "Formula": "surge_distance = MF + 1,089·DP + -59,98;  in-surge ⇔ surge_distance < -5,0;  while in-surge: u += (4,00 + 1,627·max(0, -5,0−surge_distance)) %/s · dt;  while safe & u>0: u -= 30,0/60 %/s · dt",
+    "Formula": "surge_distance = MF + 1,089·DP + -59,98;  KICK if <-5,0: u += (4,00 + 1,049·max(0,-5,0−surge_distance)) %/s·dt;  HOLD if [-5,0,3,7]: u unchanged;  RAMP if >3,7: u -= (0,0/60 + u/31,3) %/s·dt",
     "Benchmark": [
       {
         "Architecture": "LinearOLS",
@@ -637,10 +657,13 @@
         "SurgeProxy_a": 1.0888623588349529,
         "SurgeProxy_b": -59.98092922408487,
         "KickThreshold": -5.0,
+        "HoldThreshold": 3.71484375,
         "KickRate_PrcPerSec": 4.0,
-        "KickGain_PrcPerSecPerUnit": 1.6266975587162007,
-        "RampDown_PrcPerMin": 30.0,
-        "FitScore": 90.4816755147056,
+        "KickGain_PrcPerSecPerUnit": 1.048675537109375,
+        "RampDown_PrcPerMin": 0.0,
+        "RampDecay_Tau_s": 31.309814453125,
+        "SurgeMargin_LP_Tau_s": 0.0,
+        "FitScore": 95.17415775788466,
         "SurgeTruthSource": "K-Spice NormalizedFlow vs NormalizedAsymmetricLimit"
       }
     ]

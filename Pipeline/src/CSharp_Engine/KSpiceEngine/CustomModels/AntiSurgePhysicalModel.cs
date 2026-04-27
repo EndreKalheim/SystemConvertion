@@ -42,13 +42,30 @@ namespace KSpiceEngine.CustomModels
         // Kick rate is the TSA PidAntiSurgeParams kickPrcPerSec (constant) plus an
         // optional K-Spice FastProportionalGain-style proportional term:
         //   rate = KickRate_PrcPerSec  +  KickGain · max(0, KickThreshold - surge_distance)
-        public double SurgeProxy_a            { get; set; } = 0.0;
-        public double SurgeProxy_b            { get; set; } = -35.0;
-        public double KickThreshold          { get; set; } = 0.0;
-        public double HoldThreshold          { get; set; } = 0.0;   // ≥ KickThreshold; defines hold band
-        public double KickRate_PrcPerSec      { get; set; } = 0.0;   // constant baseline kick
+        public double SurgeProxy_a              { get; set; } = 0.0;
+        public double SurgeProxy_b              { get; set; } = -35.0;
+        public double KickThreshold            { get; set; } = 0.0;
+        public double HoldThreshold            { get; set; } = 0.0;   // ≥ KickThreshold; defines hold band
+        public double KickRate_PrcPerSec        { get; set; } = 0.0;   // constant baseline kick
         public double KickGain_PrcPerSecPerUnit { get; set; } = 0.0; // proportional kick gain
-        public double RampDown_PrcPerMin      { get; set; } = 60.0;
+
+        // ── Ramp-down shape ────────────────────────────────────────────────
+        // Combined linear + exponential decay:
+        //   rate = (RampDown_PrcPerMin / 60)  +  uPrev / RampDecay_Tau_s
+        // Linear part = constant floor that ensures u always reaches 0.
+        // Exponential part = u-proportional, fast at high u and slow at low u
+        // (matches the K-Spice trace's curved decay: rapid 52→20 then slow 20→0).
+        // Set RampDecay_Tau_s = 0 to disable the exponential term (pure linear).
+        public double RampDown_PrcPerMin        { get; set; } = 60.0;
+        public double RampDecay_Tau_s           { get; set; } = 0.0;
+
+        // ── Surge-margin memory ────────────────────────────────────────────
+        // Optional first-order LP filter on the surge_distance signal. Gives
+        // the controller a "memory" of recent surge events: brief excursions
+        // out of the surge region don't immediately kill the held-open state.
+        // Effectively extends the HOLD band's *temporal* width. Tau in seconds.
+        // Set to 0 to use the raw surge_distance directly.
+        public double SurgeMargin_LP_Tau_s      { get; set; } = 0.0;
 
         // ── Output bounds ──────────────────────────────────────────────────
         public double UMax { get; set; } = 100.0;
@@ -74,6 +91,8 @@ namespace KSpiceEngine.CustomModels
         private double uPrev = 0.0;
         private double targetLP = 0.0;
         private bool lpInitialized = false;
+        private double surgeMarginLP = 0.0;
+        private bool surgeMarginLPInitialized = false;
 
         public AntiSurgePhysicalModel()
         {
@@ -110,6 +129,8 @@ namespace KSpiceEngine.CustomModels
                     KickRate_PrcPerSec        = this.modelParameters.KickRate_PrcPerSec,
                     KickGain_PrcPerSecPerUnit = this.modelParameters.KickGain_PrcPerSecPerUnit,
                     RampDown_PrcPerMin        = this.modelParameters.RampDown_PrcPerMin,
+                    RampDecay_Tau_s           = this.modelParameters.RampDecay_Tau_s,
+                    SurgeMargin_LP_Tau_s      = this.modelParameters.SurgeMargin_LP_Tau_s,
                     UMax                = this.modelParameters.UMax,
                     UMin                = this.modelParameters.UMin
                 }
@@ -151,7 +172,22 @@ namespace KSpiceEngine.CustomModels
                 // ── Surge proxy: distance from surge line ──────────────────
                 // surge_distance < KickThreshold ⇒ in-surge ⇒ kick the valve
                 double DP = P_out - P_in;
-                double surgeDistance = MassFlow + p.SurgeProxy_a * DP + p.SurgeProxy_b;
+                double surgeDistanceRaw = MassFlow + p.SurgeProxy_a * DP + p.SurgeProxy_b;
+
+                // Optional LP filter on surge margin — gives the controller
+                // a "memory" so brief excursions out of surge don't end the hold.
+                double surgeDistance;
+                if (p.SurgeMargin_LP_Tau_s > 1e-9)
+                {
+                    if (!surgeMarginLPInitialized) { surgeMarginLP = surgeDistanceRaw; surgeMarginLPInitialized = true; }
+                    double alpha = 1.0 - Math.Exp(-timeBase_s / p.SurgeMargin_LP_Tau_s);
+                    surgeMarginLP += alpha * (surgeDistanceRaw - surgeMarginLP);
+                    surgeDistance = surgeMarginLP;
+                }
+                else
+                {
+                    surgeDistance = surgeDistanceRaw;
+                }
 
                 if (surgeDistance < p.KickThreshold)
                 {
@@ -164,8 +200,14 @@ namespace KSpiceEngine.CustomModels
                 }
                 else if (surgeDistance > p.HoldThreshold && uPrev > p.UMin)
                 {
-                    // SAFE: rate-limited slow close.
-                    double rampPerSec = p.RampDown_PrcPerMin / 60.0;
+                    // SAFE: combined linear + exponential close.
+                    //   rate = constant_floor + uPrev / decay_tau
+                    // Linear floor ensures u eventually reaches 0; exponential
+                    // term makes early decay (high u) fast and tail (low u) slow,
+                    // matching the K-Spice trace shape.
+                    double linearRate = p.RampDown_PrcPerMin / 60.0;
+                    double expRate    = (p.RampDecay_Tau_s > 1e-9) ? uPrev / p.RampDecay_Tau_s : 0.0;
+                    double rampPerSec = linearRate + expRate;
                     uOut = uPrev - rampPerSec * timeBase_s;
                     if (uOut < p.UMin) uOut = p.UMin;
                 }
@@ -221,6 +263,7 @@ namespace KSpiceEngine.CustomModels
             uPrev = Math.Max(modelParameters.UMin, Math.Min(modelParameters.UMax, output));
             targetLP = uPrev;
             lpInitialized = true;
+            surgeMarginLPInitialized = false; // initialized lazily on first Iterate
         }
 
         public double? GetSteadyStateInput(double x0, int inputIdx=0, double[] givenInputValues=null) { return null; }
