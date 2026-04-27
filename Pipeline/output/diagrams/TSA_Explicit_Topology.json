@@ -1323,15 +1323,6 @@
       }
     },
     {
-      "from": "23LV0001_TotalLevel",
-      "to": "23LIC0001_Control",
-      "label": "y_meas",
-      "arrows": "to",
-      "font": {
-        "size": 8
-      }
-    },
-    {
       "from": "23VA0001_WaterLevel",
       "to": "23LIC0001_Control",
       "label": "y_meas",
@@ -1341,35 +1332,8 @@
       }
     },
     {
-      "from": "23LV0002_TotalLevel",
-      "to": "23LIC0002_Control",
-      "label": "y_meas",
-      "arrows": "to",
-      "font": {
-        "size": 8
-      }
-    },
-    {
       "from": "23VA0001_OilLevel",
       "to": "23LIC0002_Control",
-      "label": "y_meas",
-      "arrows": "to",
-      "font": {
-        "size": 8
-      }
-    },
-    {
-      "from": "23PIC0001_Pressure",
-      "to": "23PIC0001_Control",
-      "label": "y_meas",
-      "arrows": "to",
-      "font": {
-        "size": 8
-      }
-    },
-    {
-      "from": "23KA0001_Pressure",
-      "to": "23PIC0001_Control",
       "label": "y_meas",
       "arrows": "to",
       "font": {
@@ -1470,24 +1434,6 @@
       "from": "23HX0001_Temperature",
       "to": "23HX0001s_Temperature",
       "label": "T_cool",
-      "arrows": "to",
-      "font": {
-        "size": 8
-      }
-    },
-    {
-      "from": "23TV0003_Temperature",
-      "to": "23TIC0003_Control",
-      "label": "y_meas",
-      "arrows": "to",
-      "font": {
-        "size": 8
-      }
-    },
-    {
-      "from": "23HX0001_Temperature",
-      "to": "23TIC0003_Control",
-      "label": "y_meas",
       "arrows": "to",
       "font": {
         "size": 8

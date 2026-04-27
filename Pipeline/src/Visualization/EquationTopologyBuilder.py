@@ -261,7 +261,7 @@ def build_eq_topology():
                     p_lower = (port or '').lower()
 
                     if is_vol:
-                        # Level controllers: pick the right level state
+                        # Level/pressure/temperature controllers measure tank states
                         if 'LIC' in comp:
                             if 'water' in p_lower or 'heavy' in p_lower:
                                 add_edge(f"{u}_WaterLevel", cid, "y_meas")
@@ -274,11 +274,13 @@ def build_eq_topology():
                         if 'TIC' in comp:
                             add_edge(f"{u}_Temperature", cid, "y_meas")
                     else:
-                        if   'PIC' in comp: add_edge(f"{u}_Pressure",    cid, "y_meas")
-                        elif 'TIC' in comp: add_edge(f"{u}_Temperature", cid, "y_meas")
-                        elif 'LIC' in comp: add_edge(f"{u}_TotalLevel",  cid, "y_meas")
-                        elif 'ASC' in comp: add_edge(f"{u}_MassFlow",    cid, "y_meas")
-                        else:               add_edge(f"{u}_MassFlow",    cid, "y_meas")
+                        # Non-volume upstream: only ASC measures pipe flow.
+                        # LIC/PIC/TIC measurements always come from a volume,
+                        # so skip non-volume sources to avoid spurious y_meas
+                        # edges (e.g. compressor outlet pressure being routed
+                        # to a separator-pressure controller).
+                        if 'ASC' in comp:
+                            add_edge(f"{u}_MassFlow", cid, "y_meas")
 
             else:
                 # Literal state ID passed directly (e.g. "23KA0001_MassFlow" -> intra-component edge)

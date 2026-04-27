@@ -1,23 +1,79 @@
 using System;
+using System.Collections.Generic;
 using TimeSeriesAnalysis.Dynamic;
 
 namespace KSpiceEngine.CustomModels
 {
     public class AntiSurgeParameters : ModelParametersBaseClass
     {
-        public double Kp { get; set; } = 5.0;
-        public double Ti_s { get; set; } = 10.0;
-        public double FlowGain { get; set; } = 3.0;
-        public double SurgeGain1 { get; set; } = 15.0;
-        public double SurgeGain2 { get; set; } = -8.9;
-        public double SetpointMargin { get; set; } = 0.2;
+        // ── Architecture label / branch selector ───────────────────────────
+        //   "LinearOLS"  – static linear surge proxy + LP + asymmetric rate-limit
+        //                   (the safe baseline; fits the trace by curve-following).
+        //   "KickBased"  – TSA PidAntiSurgeParams-style controller:
+        //                   while in-surge, accumulate kickPrcPerSec·dt → fast open;
+        //                   while safe, ramp down at ffRampDownRatePrcPerMin.
+        //                   Captures *why* the valve opens and *when* it can close.
+        public string Architecture { get; set; } = "LinearOLS";
+
+        // ── Linear-OLS (architecture = LinearOLS) ───────────────────────────
+        //   target = Σ w_i · feature_i(P_in, P_out, MF). Vocabulary in
+        //   EvaluateFeature(): "P_in", "P_out", "MF", "DP", "MF2",
+        //   "DP_over_MF2", "Const".
+        public string[] FeatureNames   { get; set; }
+        public double[] FeatureWeights { get; set; }
+        public double LPFilter_Tau_s   { get; set; } = 0.0;
+        public double OpenTime_s       { get; set; } = 5.0;
+        public double CloseTime_s      { get; set; } = 60.0;
+
+        // ── Kick-based (architecture = KickBased) ──────────────────────────
+        // surge_distance = MF + SurgeProxy_a · DP + SurgeProxy_b   (DP = P_out-P_in)
+        //
+        // Three regimes via hysteresis (Schmitt trigger), KickThreshold ≤ HoldThreshold:
+        //   surge_distance < KickThreshold   →  IN-SURGE: kick the valve open
+        //   surge_distance > HoldThreshold   →  SAFE: ramp down (slow close)
+        //   between the two                  →  HOLD: u stays at u(k-1)
+        //
+        // The hold band reproduces the K-Spice held-open plateau: once kicked open,
+        // the operating point typically returns to a marginal region near the surge
+        // line (not yet far away enough to be "fully safe"), so the controller
+        // refuses to close. Only when the system has clearly recovered does the
+        // slow ramp-down begin.
+        //
+        // Kick rate is the TSA PidAntiSurgeParams kickPrcPerSec (constant) plus an
+        // optional K-Spice FastProportionalGain-style proportional term:
+        //   rate = KickRate_PrcPerSec  +  KickGain · max(0, KickThreshold - surge_distance)
+        public double SurgeProxy_a            { get; set; } = 0.0;
+        public double SurgeProxy_b            { get; set; } = -35.0;
+        public double KickThreshold          { get; set; } = 0.0;
+        public double HoldThreshold          { get; set; } = 0.0;   // ≥ KickThreshold; defines hold band
+        public double KickRate_PrcPerSec      { get; set; } = 0.0;   // constant baseline kick
+        public double KickGain_PrcPerSecPerUnit { get; set; } = 0.0; // proportional kick gain
+        public double RampDown_PrcPerMin      { get; set; } = 60.0;
+
+        // ── Output bounds ──────────────────────────────────────────────────
+        public double UMax { get; set; } = 100.0;
+        public double UMin { get; set; } = 0.0;
     }
 
+    /// <summary>
+    /// Anti-Surge Controller surrogate. Two architectures share the same
+    /// (P_in, P_out, MF) input contract; the runtime branch is chosen by
+    /// AntiSurgeParameters.Architecture.
+    ///
+    ///   "KickBased" (recommended): mimics TSA's PidAntiSurgeParams logic
+    ///     and the K-Spice GenericASC behavior — fast kick on surge entry,
+    ///     held-open while disturbed, slow ramp-down once recovered.
+    ///
+    ///   "LinearOLS": legacy static-linear-proxy + LP + rate-limit. Fits
+    ///     the trace numerically but the OLS weights tend to overfit
+    ///     P_out noise (huge cancelling weights), so it doesn't generalise.
+    /// </summary>
     public class AntiSurgePhysicalModel : ModelBaseClass, ISimulatableModel
     {
         public AntiSurgeParameters modelParameters = new AntiSurgeParameters();
-        private double integralError = 0.0;
         private double uPrev = 0.0;
+        private double targetLP = 0.0;
+        private bool lpInitialized = false;
 
         public AntiSurgePhysicalModel()
         {
@@ -32,66 +88,139 @@ namespace KSpiceEngine.CustomModels
         }
 
         public override int GetLengthOfInputVector() { return (this.ModelInputIDs != null) ? this.ModelInputIDs.Length : 0; }
-
         public override SignalType GetOutputSignalType() { return SignalType.Output_Y; }
         public bool IsModelSimulatable(out string explanationStr) { explanationStr = "OK"; return true; }
-        public ISimulatableModel Clone(string cloneID) 
-        { 
-            return new AntiSurgePhysicalModel(cloneID, (string[])this.ModelInputIDs.Clone(), this.outputID) 
-            { 
-                 modelParameters = new AntiSurgeParameters() 
-                 {
-                     Kp = this.modelParameters.Kp,
-                     Ti_s = this.modelParameters.Ti_s,
-                     FlowGain = this.modelParameters.FlowGain,
-                     SurgeGain1 = this.modelParameters.SurgeGain1,
-                     SurgeGain2 = this.modelParameters.SurgeGain2,
-                     SetpointMargin = this.modelParameters.SetpointMargin
-                 }
+
+        public ISimulatableModel Clone(string cloneID)
+        {
+            return new AntiSurgePhysicalModel(cloneID, (string[])this.ModelInputIDs.Clone(), this.outputID)
+            {
+                modelParameters = new AntiSurgeParameters()
+                {
+                    Architecture        = this.modelParameters.Architecture,
+                    FeatureNames        = (string[])this.modelParameters.FeatureNames?.Clone(),
+                    FeatureWeights      = (double[])this.modelParameters.FeatureWeights?.Clone(),
+                    LPFilter_Tau_s      = this.modelParameters.LPFilter_Tau_s,
+                    OpenTime_s          = this.modelParameters.OpenTime_s,
+                    CloseTime_s         = this.modelParameters.CloseTime_s,
+                    SurgeProxy_a              = this.modelParameters.SurgeProxy_a,
+                    SurgeProxy_b              = this.modelParameters.SurgeProxy_b,
+                    KickThreshold            = this.modelParameters.KickThreshold,
+                    HoldThreshold            = this.modelParameters.HoldThreshold,
+                    KickRate_PrcPerSec        = this.modelParameters.KickRate_PrcPerSec,
+                    KickGain_PrcPerSecPerUnit = this.modelParameters.KickGain_PrcPerSecPerUnit,
+                    RampDown_PrcPerMin        = this.modelParameters.RampDown_PrcPerMin,
+                    UMax                = this.modelParameters.UMax,
+                    UMin                = this.modelParameters.UMin
+                }
             };
+        }
+
+        public static double EvaluateFeature(string name, double P_in, double P_out, double MF)
+        {
+            switch (name)
+            {
+                case "P_in":        return P_in;
+                case "P_out":       return P_out;
+                case "MF":          return MF;
+                case "DP":          return P_out - P_in;
+                case "MF2":         return MF * MF;
+                case "DP_over_MF2": return (P_out - P_in) / Math.Max(MF * MF, 1.0);
+                case "Const":       return 1.0;
+                default:
+                    throw new ArgumentException($"Unknown ASC feature '{name}'");
+            }
         }
 
         public double[] Iterate(double[] inputsU, double timeBase_s, double badDataID = -9999)
         {
             if (inputsU == null || inputsU.Length < 3) return new double[] { badDataID };
-            
-            double P_in = inputsU[0];
-            double P_out = inputsU[1];
+
+            double P_in     = inputsU[0];
+            double P_out    = inputsU[1];
             double MassFlow = inputsU[2];
-            
+
             if (P_in == badDataID || P_out == badDataID || MassFlow == badDataID || P_in <= 0.1)
                 return new double[] { uPrev };
 
-            double pr = P_out / P_in;
-            double surgeLimit = modelParameters.SurgeGain1 * pr + modelParameters.SurgeGain2;
-            double normFlow = MassFlow * modelParameters.FlowGain / Math.Sqrt(P_in);
-            double setpoint = surgeLimit * (1.0 + modelParameters.SetpointMargin);
-            double error = setpoint - normFlow;
+            var p = modelParameters;
+            double uOut;
 
-            double dT = timeBase_s;
-            double integralIncrement = error * dT;
-            
-            if ((uPrev >= 100 && error > 0) || (uPrev <= 0 && error < 0))
-            {}
-            else { integralError += integralIncrement; }
+            if (p.Architecture == "KickBased")
+            {
+                // ── Surge proxy: distance from surge line ──────────────────
+                // surge_distance < KickThreshold ⇒ in-surge ⇒ kick the valve
+                double DP = P_out - P_in;
+                double surgeDistance = MassFlow + p.SurgeProxy_a * DP + p.SurgeProxy_b;
 
-            double P_term = modelParameters.Kp * error;
-            double I_term = (modelParameters.Kp / modelParameters.Ti_s) * integralError;
-            
-            double uOut = P_term + I_term;
-            if (uOut > 100) uOut = 100;
-            if (uOut < 0) uOut = 0;
-            
+                if (surgeDistance < p.KickThreshold)
+                {
+                    // IN-SURGE: kick. Constant rate plus optional proportional term.
+                    double err = p.KickThreshold - surgeDistance; // > 0 inside surge
+                    double kickRatePrcPerSec = p.KickRate_PrcPerSec
+                                             + p.KickGain_PrcPerSecPerUnit * err;
+                    uOut = uPrev + kickRatePrcPerSec * timeBase_s;
+                    if (uOut > p.UMax) uOut = p.UMax;
+                }
+                else if (surgeDistance > p.HoldThreshold && uPrev > p.UMin)
+                {
+                    // SAFE: rate-limited slow close.
+                    double rampPerSec = p.RampDown_PrcPerMin / 60.0;
+                    uOut = uPrev - rampPerSec * timeBase_s;
+                    if (uOut < p.UMin) uOut = p.UMin;
+                }
+                else
+                {
+                    // HOLD band: operating point still in marginal region — refuse
+                    // to close further. Reproduces the K-Spice held-open plateau.
+                    uOut = uPrev;
+                }
+            }
+            else // LinearOLS (default fallback)
+            {
+                if (p.FeatureNames == null || p.FeatureWeights == null
+                    || p.FeatureNames.Length != p.FeatureWeights.Length)
+                    return new double[] { uPrev };
+
+                // 1. Static linear surge proxy
+                double target = 0.0;
+                for (int i = 0; i < p.FeatureNames.Length; i++)
+                    target += p.FeatureWeights[i] * EvaluateFeature(p.FeatureNames[i], P_in, P_out, MassFlow);
+                if (target > p.UMax) target = p.UMax;
+                if (target < p.UMin) target = p.UMin;
+
+                // 2. Optional first-order low-pass on the target
+                double targetSmooth;
+                if (p.LPFilter_Tau_s > 1e-9)
+                {
+                    if (!lpInitialized) { targetLP = target; lpInitialized = true; }
+                    double alpha = 1.0 - Math.Exp(-timeBase_s / p.LPFilter_Tau_s);
+                    targetLP = targetLP + alpha * (target - targetLP);
+                    targetSmooth = targetLP;
+                }
+                else { targetSmooth = target; }
+
+                // 3. Asymmetric rate-limited follower
+                double openRate  = (p.UMax - p.UMin) / Math.Max(1e-6, p.OpenTime_s);
+                double closeRate = (p.UMax - p.UMin) / Math.Max(1e-6, p.CloseTime_s);
+                double change = targetSmooth - uPrev;
+                if (change > 0)
+                    uOut = uPrev + Math.Min(change, openRate  * timeBase_s);
+                else
+                    uOut = uPrev - Math.Min(-change, closeRate * timeBase_s);
+                if (uOut > p.UMax) uOut = p.UMax;
+                if (uOut < p.UMin) uOut = p.UMin;
+            }
+
             uPrev = uOut;
             return new double[] { Math.Round(uOut, 4) };
         }
 
         public void WarmStart(double[] inputs, double output)
         {
-            uPrev = output;
-            if (modelParameters.Kp != 0 && modelParameters.Ti_s > 0) {
-                 integralError = output / (modelParameters.Kp / modelParameters.Ti_s);
-            }
+            uPrev = Math.Max(modelParameters.UMin, Math.Min(modelParameters.UMax, output));
+            targetLP = uPrev;
+            lpInitialized = true;
         }
 
         public double? GetSteadyStateInput(double x0, int inputIdx=0, double[] givenInputValues=null) { return null; }

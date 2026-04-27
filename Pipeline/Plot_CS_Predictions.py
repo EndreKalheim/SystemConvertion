@@ -148,9 +148,31 @@ def plot_validation():
         parent_comp = model_id[:_pi] if _pi > 0 else None
 
         inputs_by_csv = {}
+
+        # For controllers (PID), always inject Setpoint + Measurement first so
+        # every controller plot shows the exact two signals fed to PidIdentifier
+        # — independent of whatever y_meas edges happen to exist in the topology.
+        # This unifies the visual layout across LIC/PIC/TIC and lets you verify
+        # that identification is using the right signals.
+        if model_type == "PID":
+            sp_csv   = signal_map.get(f"{comp}_Setpoint")
+            meas_csv = signal_map.get(f"{comp}_Measurement")
+            if sp_csv and sp_csv in df_raw.columns:
+                inputs_by_csv[sp_csv] = f"Setpoint: {sp_csv}"
+            if meas_csv and meas_csv in df_raw.columns:
+                inputs_by_csv[meas_csv] = f"Measurement: {meas_csv}"
+
         for edge_info in input_edges.get(model_id, []):
             src_node   = edge_info['from']
             edge_label = edge_info['label']
+
+            # For PIDs, skip topology y_meas edges — the canonical measurement
+            # signal (the one actually fed to PidIdentifier) is already shown
+            # via SignalMapping above. Topology y_meas can point to a different
+            # internal state signal and would just clutter the plot.
+            if model_type == "PID" and edge_label == "y_meas":
+                continue
+
             csv_col    = signal_map.get(src_node) or signal_map.get(src_node.replace('_pf', ''))
 
             if not (csv_col and csv_col in df_raw.columns):

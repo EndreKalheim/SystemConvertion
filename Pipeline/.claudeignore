@@ -1,0 +1,52 @@
+# .claudeignore
+#
+# Paths Claude should skip when answering FEATURE questions about this pipeline.
+# These files are generated outputs, build artifacts, caches, logs, or large
+# binary/data files whose contents do not change feature behaviour.
+#
+# Claude Code does not enforce this file automatically — it is a manual
+# reference. Claude reads it at session start and avoids globbing/grepping
+# inside these paths unless a task explicitly requires it (e.g. debugging a
+# specific generated PNG, inspecting raw KSpice CSV).
+#
+# WHAT *IS* RELEVANT (do NOT add to this list):
+#   src/                                   — all Python and C# source
+#   Plot_CS_Predictions.py, run.py         — top-level orchestrators
+#   data/extracted/KSpiceSystemMap.json    — parsed model definition
+#   output/diagrams/SignalMapping.json     — signal-name lookup
+#   output/diagrams/TSA_Explicit_Topology.json — wired topology used by plotter
+#   output/CS_Identified_Parameters.json   — identification results
+#   output/diagrams/TSA_Equations.json     — equation list driving topology
+#   ../../TimeSeriesAnalysis-master/       — TSA library reference (Identify*, PidIdentifier, PidController…)
+# ===========================================================================
+
+# --- Generated visual outputs (regenerated every visualize phase) ----------
+output/validation_plots/
+output/diagrams/*.html
+
+# --- Generated CSVs (regenerated every simulate phase) ---------------------
+output/CS_Predictions.csv
+
+# --- C# build artifacts ----------------------------------------------------
+src/CSharp_Engine/**/bin/
+src/CSharp_Engine/**/obj/
+
+# --- Python caches ---------------------------------------------------------
+**/__pycache__/
+*.pyc
+
+# --- Logs ------------------------------------------------------------------
+*.log
+build_output*.log
+
+# --- Raw simulation data (large CSVs — content rarely needed for features) -
+data/raw/*.csv
+
+# --- IDE / VCS noise -------------------------------------------------------
+.vs/
+.vscode/
+.idea/
+
+# --- External references — read ONLY when the user explicitly asks ---------
+# C:/dev/kspice-old/                  — old greybox pipeline
+# C:/dev/GREYBOX_PIPELINE_OVERVIEW.md — old pipeline overview document
