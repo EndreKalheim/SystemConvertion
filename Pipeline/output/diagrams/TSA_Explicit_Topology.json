@@ -233,7 +233,7 @@
     },
     {
       "id": "23HX0001_Temperature",
-      "label": "23HX0001\n(Temperature)\n\nEq: T_out = f(T_in, T_cool, F)",
+      "label": "23HX0001\n(Temperature)\n\nEq: T_out = f(T_in, T_cool, F, m_partner)",
       "color": "#f3a683",
       "shape": "box",
       "group": "23HX0001",
@@ -497,7 +497,7 @@
     },
     {
       "id": "23HX0001s_Temperature",
-      "label": "23HX0001s\n(Temperature)\n\nEq: T_out = f(T_in, T_cool, F)",
+      "label": "23HX0001s\n(Temperature)\n\nEq: T_out = f(T_in, T_cool, F, m_partner)",
       "color": "#f3a683",
       "shape": "box",
       "group": "23HX0001s",
@@ -527,6 +527,30 @@
         "multi": "html",
         "size": 11
       }
+    },
+    {
+      "id": "23LIC0001:Measurement",
+      "label": "23LIC0001:Measurement",
+      "shape": "box",
+      "color": "#EAD1DC"
+    },
+    {
+      "id": "23LIC0002:Measurement",
+      "label": "23LIC0002:Measurement",
+      "shape": "box",
+      "color": "#EAD1DC"
+    },
+    {
+      "id": "23PIC0001:Measurement",
+      "label": "23PIC0001:Measurement",
+      "shape": "box",
+      "color": "#EAD1DC"
+    },
+    {
+      "id": "23TIC0003:Measurement",
+      "label": "23TIC0003:Measurement",
+      "shape": "box",
+      "color": "#EAD1DC"
     }
   ],
   "edges": [
@@ -1026,6 +1050,15 @@
       }
     },
     {
+      "from": "23HX0001s_MassFlow",
+      "to": "23HX0001_Temperature",
+      "label": "m_partner",
+      "arrows": "to",
+      "font": {
+        "size": 8
+      }
+    },
+    {
       "from": "23HX0001_Pressure",
       "to": "23UV0001_MassFlow",
       "label": "P_in",
@@ -1323,7 +1356,7 @@
       }
     },
     {
-      "from": "23VA0001_WaterLevel",
+      "from": "23LIC0001:Measurement",
       "to": "23LIC0001_Control",
       "label": "y_meas",
       "arrows": "to",
@@ -1332,7 +1365,7 @@
       }
     },
     {
-      "from": "23VA0001_OilLevel",
+      "from": "23LIC0002:Measurement",
       "to": "23LIC0002_Control",
       "label": "y_meas",
       "arrows": "to",
@@ -1341,7 +1374,7 @@
       }
     },
     {
-      "from": "23VA0001_Pressure",
+      "from": "23PIC0001:Measurement",
       "to": "23PIC0001_Control",
       "label": "y_meas",
       "arrows": "to",
@@ -1434,6 +1467,24 @@
       "from": "23HX0001_Temperature",
       "to": "23HX0001s_Temperature",
       "label": "T_cool",
+      "arrows": "to",
+      "font": {
+        "size": 8
+      }
+    },
+    {
+      "from": "23HX0001_MassFlow",
+      "to": "23HX0001s_Temperature",
+      "label": "m_partner",
+      "arrows": "to",
+      "font": {
+        "size": 8
+      }
+    },
+    {
+      "from": "23TIC0003:Measurement",
+      "to": "23TIC0003_Control",
+      "label": "y_meas",
       "arrows": "to",
       "font": {
         "size": 8

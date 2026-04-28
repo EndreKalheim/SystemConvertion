@@ -36,6 +36,7 @@ namespace KSpiceEngine
                     || nLow.EndsWith("_m")
                     || nLow.EndsWith("_view")
                     || nLow.StartsWith("pv")
+                    || nLow.StartsWith("pf_")
                     || nLow.StartsWith("network-")
                     || nLow.Contains("fe0"))
                     continue;
@@ -82,9 +83,9 @@ namespace KSpiceEngine
                 }
                 else if (ktype.Contains("HeatExchanger"))
                 {
-                    AddState("MassFlow",    "F = sum(m_downstream)",                 new[] { "DOWNSTREAM_FLOW_SUM" });
-                    AddState("Pressure",    "P_out = P_in - dP(F)",                  new[] { "UPSTREAM_PRESSURE", $"{baseName}_MassFlow" });
-                    AddState("Temperature", "T_out = f(T_in, T_cool, F)",            new[] { "UPSTREAM_TEMP", $"{baseName}_MassFlow", "COOLING_TEMP" });
+                    AddState("MassFlow",    "F = sum(m_downstream)",                          new[] { "DOWNSTREAM_FLOW_SUM" });
+                    AddState("Pressure",    "P_out = P_in - dP(F)",                           new[] { "UPSTREAM_PRESSURE", $"{baseName}_MassFlow" });
+                    AddState("Temperature", "T_out = f(T_in, T_cool, F, m_partner)",          new[] { "UPSTREAM_TEMP", $"{baseName}_MassFlow", "COOLING_TEMP", "PARTNER_FLOW" });
                 }
                 else if (ktype.Contains("ControlValve") || ktype.Contains("PipeFlow"))
                 {

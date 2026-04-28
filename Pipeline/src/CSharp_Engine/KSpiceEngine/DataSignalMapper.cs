@@ -114,6 +114,23 @@ namespace KSpiceEngine
             return source;
         }
 
+        private static string TraceValveControlSignal(JObject systemMap, string valveName)
+        {
+            var models = (JArray)systemMap["Models"];
+            var valve = models.FirstOrDefault(m => string.Equals((string)m["Name"], valveName, StringComparison.OrdinalIgnoreCase));
+            if (valve == null) return null;
+
+            var inputs = (JArray)valve["Inputs"];
+            if (inputs == null) return null;
+
+            var compInput = inputs.FirstOrDefault(i => ((string)i["Destination"]).Equals("LocalControlSignalIn", StringComparison.OrdinalIgnoreCase) || ((string)i["Destination"]).Equals("TargetPosition", StringComparison.OrdinalIgnoreCase));
+            if (compInput != null)
+            {
+                return (string)compInput["Source"];
+            }
+            return null;
+        }
+
         private static string FindBestMatch(List<string> headers, string comp, string stateType, JObject systemMap)
         {
             string compUpper = comp.ToUpper();
@@ -169,18 +186,20 @@ namespace KSpiceEngine
                     $"{compUpper}:NormalizedFlowSetpoint"
                 });
             } else if (stateType == "Measurement") {
-                // Determine true physical measurement target from KSpiceSystemMap.json
-                string physicalTarget = TracePhysicalMeasurement(systemMap, compUpper);
-                if (physicalTarget != null)
-                {
-                    candidates.Add(physicalTarget);
-                }
-
+                // For exact PID identification, prefer the controller's direct measurement port
+                // over the traced physical target to capture transmitter lag/filtering correctly.
                 candidates.AddRange(new[] { 
                     $"{compUpper}:Measurement",
                     $"{compUpper}:InletPressureMeasurement",
                     $"{compUpper}:NormalizedFlow"
                 });
+
+                // Determine true physical measurement target from KSpiceSystemMap.json as fallback
+                string physicalTarget = TracePhysicalMeasurement(systemMap, compUpper);
+                if (physicalTarget != null)
+                {
+                    candidates.Add(physicalTarget);
+                }
             } else if (stateType == "DownstreamPressure") {
                 candidates.AddRange(new[] { 
                     $"{compUpper}_pf:OutletPressure",
@@ -203,6 +222,12 @@ namespace KSpiceEngine
                     $"{compUpper}:TargetPosition",
                     $"{compUpper}_m:LocalInput"
                 });
+
+                string valveControlSrc = TraceValveControlSignal(systemMap, compUpper);
+                if (valveControlSrc != null)
+                {
+                    candidates.Add(valveControlSrc);
+                }
             }
 
             foreach (var c in candidates)

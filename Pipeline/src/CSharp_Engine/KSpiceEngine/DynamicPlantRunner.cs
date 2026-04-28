@@ -23,7 +23,11 @@ namespace KSpiceEngine
             var compToType = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             foreach (var model in models)
             {
-                var rawName = ((string)model["Name"]).Replace("_pf", "", StringComparison.OrdinalIgnoreCase);
+                var name = (string)model["Name"];
+                bool isPipeSuffix = name.EndsWith("_pf", StringComparison.OrdinalIgnoreCase);
+                var rawName = name.Replace("_pf", "", StringComparison.OrdinalIgnoreCase);
+                if (isPipeSuffix && compToType.ContainsKey(rawName))
+                    continue;
                 compToType[rawName] = (string)model["KSpiceType"];
             }
             
@@ -820,7 +824,9 @@ namespace KSpiceEngine
                         string ktype = compToType.ContainsKey(srcComp) ? compToType[srcComp] : "";
                         bool isGasEquip = ktype.IndexOf("Compressor", StringComparison.OrdinalIgnoreCase) >= 0
                                        || ktype.IndexOf("PressureSafety", StringComparison.OrdinalIgnoreCase) >= 0
-                                       || ktype.IndexOf("SafetyValve", StringComparison.OrdinalIgnoreCase) >= 0;
+                                       || ktype.IndexOf("SafetyValve", StringComparison.OrdinalIgnoreCase) >= 0
+                                       || srcComp.IndexOf("ESV", StringComparison.OrdinalIgnoreCase) >= 0
+                                       || srcComp.IndexOf("UV", StringComparison.OrdinalIgnoreCase) >= 0;
                         if (!isGasEquip) Console.WriteLine($"  [FILTER] Excluding liquid outflow {sigKey} from gas pressure model {id}");
                         return isGasEquip;
                     }).ToList();
@@ -1002,7 +1008,12 @@ namespace KSpiceEngine
                     string[] pOutCands = { $"{pfComp}:OutletStream.p", $"{pfComp}:OutletPressure", signalMap.ContainsKey($"{compBase}_DownstreamPressure") ? signalMap[$"{compBase}_DownstreamPressure"] : null };
                     // Prefer the analog modulating signal; Opening is a discrete state flag in K-Spice
                     // (true only when position > RunningLightOpenPosition), not a 0-100% control input.
-                    string[] uCands = { $"{compBase}:LocalControlSignalIn", $"{compBase}:TargetPosition", $"{compBase}:Opening" };
+                    string[] uCands = { 
+                        signalMap.ContainsKey($"{compBase}_ControlSignal") ? signalMap[$"{compBase}_ControlSignal"] : null,
+                        $"{compBase}:LocalControlSignalIn", 
+                        $"{compBase}:TargetPosition", 
+                        $"{compBase}:Opening" 
+                    };
 
                     string pInCol = null, pOutCol = null, uCol = null;
 

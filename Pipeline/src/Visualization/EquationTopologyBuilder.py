@@ -21,7 +21,11 @@ def build_eq_topology():
         n = name.lower()
         if any(t in ktype for t in ignore_types): return True
         if n.endswith('_m') or n.endswith('_view'): return True
-        if n.startswith('pv') or n.startswith('network-'): return True
+        # pv_* (PipeVolume) and pf_* (standalone PipeFlow) are routing components — make
+        # them transparent so the BFS walks past them to the actual upstream/downstream
+        # equipment (compressors, valves, separators). Without this, a pipe between
+        # VA0001 and KA0001 would block the gas-outflow edge.
+        if n.startswith('pv') or n.startswith('pf_') or n.startswith('network-'): return True
         if 'fe0' in n or 'fit0' in n or 'tit0' in n or 'pit0' in n: return True
         return False
 
@@ -238,6 +242,28 @@ def build_eq_topology():
                     if 'Temperature' in port:
                         add_edge(f"{u}_Temperature", cid, "T_cool")
 
+            elif inp == "PARTNER_FLOW":
+                # A heat-exchanger side's outlet temperature depends on how much hot/cold
+                # stream the partner side is pushing through (Q ~ m_partner * Cp * dT).
+                # The partner is identified generically: a non-self component connected
+                # via a thermal-coupling port (Wall/Temperature/Heat/Conductance) that
+                # has its own MassFlow equation. Works for any K-Spice HX pair regardless
+                # of naming convention because the link is encoded in K-Spice's own
+                # Inputs[].Source references.
+                thermal_tokens = ('Wall', 'Temperature', 'Heat', 'Conductance', 'Profile')
+                seen_partners = set()
+                for u, port in raw_ins.get(comp, []):
+                    if u == comp or u in seen_partners:
+                        continue
+                    if u not in base_types:
+                        continue
+                    if not any(tok in port for tok in thermal_tokens):
+                        continue
+                    if f"{u}_MassFlow" not in equation_ids:
+                        continue
+                    add_edge(f"{u}_MassFlow", cid, "m_partner")
+                    seen_partners.add(u)
+
             elif inp == "LOCAL_CONTROL":
                 for u, _ in up_comps:
                     kt = base_types.get(u, '')
@@ -255,32 +281,38 @@ def build_eq_topology():
                     add_edge(f"{n}_Pressure", cid, "y_pres")
 
             elif inp == "MEASURED_STATE":
-                for u, port in up_comps:
-                    kt      = base_types.get(u, '')
-                    is_vol  = 'Separator' in kt or 'Tank' in kt
-                    p_lower = (port or '').lower()
+                kt = base_types.get(comp.split('_')[0], '')
+                if 'Control' in kt and 'ASC' not in comp:
+                    # K-Spice generic controllers have an explicit Measurement mapped to CSV
+                    comp_bare = comp.split('_')[0]
+                    meas_id = f"{comp_bare}:Measurement"
+                    add_edge(meas_id, cid, "y_meas")
+                    # Optionally add a visual node so the graph renders nicely
+                    if meas_id not in equation_ids:
+                        tsa_states.append({"id": meas_id, "label": meas_id, "shape": "box", "color": "#EAD1DC"})
+                        equation_ids.add(meas_id)
+                else:
+                    for u, port in up_comps:
+                        u_kt    = base_types.get(u, '')
+                        is_vol  = 'Separator' in u_kt or 'Tank' in u_kt
+                        p_lower = (port or '').lower()
 
-                    if is_vol:
-                        # Level/pressure/temperature controllers measure tank states
-                        if 'LIC' in comp:
-                            if 'water' in p_lower or 'heavy' in p_lower:
-                                add_edge(f"{u}_WaterLevel", cid, "y_meas")
-                            elif 'oil' in p_lower or 'light' in p_lower or 'overflow' in p_lower:
-                                add_edge(f"{u}_OilLevel",   cid, "y_meas")
-                            else:
-                                add_edge(f"{u}_TotalLevel", cid, "y_meas")
-                        if 'PIC' in comp:
-                            add_edge(f"{u}_Pressure",    cid, "y_meas")
-                        if 'TIC' in comp:
-                            add_edge(f"{u}_Temperature", cid, "y_meas")
-                    else:
-                        # Non-volume upstream: only ASC measures pipe flow.
-                        # LIC/PIC/TIC measurements always come from a volume,
-                        # so skip non-volume sources to avoid spurious y_meas
-                        # edges (e.g. compressor outlet pressure being routed
-                        # to a separator-pressure controller).
-                        if 'ASC' in comp:
-                            add_edge(f"{u}_MassFlow", cid, "y_meas")
+                        if is_vol:
+                            # Fallback logic
+                            if 'LIC' in comp:
+                                if 'water' in p_lower or 'heavy' in p_lower:
+                                    add_edge(f"{u}_WaterLevel", cid, "y_meas")
+                                elif 'oil' in p_lower or 'light' in p_lower or 'overflow' in p_lower:
+                                    add_edge(f"{u}_OilLevel",   cid, "y_meas")
+                                else:
+                                    add_edge(f"{u}_TotalLevel", cid, "y_meas")
+                            if 'PIC' in comp:
+                                add_edge(f"{u}_Pressure",    cid, "y_meas")
+                            if 'TIC' in comp:
+                                add_edge(f"{u}_Temperature", cid, "y_meas")
+                        else:
+                            if 'ASC' in comp:
+                                add_edge(f"{u}_MassFlow", cid, "y_meas")
 
             else:
                 # Literal state ID passed directly (e.g. "23KA0001_MassFlow" -> intra-component edge)

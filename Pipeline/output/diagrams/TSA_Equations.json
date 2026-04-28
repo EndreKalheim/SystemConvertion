@@ -284,11 +284,12 @@
     "ID": "23HX0001_Temperature",
     "Component": "23HX0001",
     "State": "Temperature",
-    "Formula": "T_out = f(T_in, T_cool, F)",
+    "Formula": "T_out = f(T_in, T_cool, F, m_partner)",
     "Inputs": [
       "UPSTREAM_TEMP",
       "23HX0001_MassFlow",
-      "COOLING_TEMP"
+      "COOLING_TEMP",
+      "PARTNER_FLOW"
     ],
     "Role": "FlowEquipment"
   },
@@ -549,11 +550,12 @@
     "ID": "23HX0001s_Temperature",
     "Component": "23HX0001s",
     "State": "Temperature",
-    "Formula": "T_out = f(T_in, T_cool, F)",
+    "Formula": "T_out = f(T_in, T_cool, F, m_partner)",
     "Inputs": [
       "UPSTREAM_TEMP",
       "23HX0001s_MassFlow",
-      "COOLING_TEMP"
+      "COOLING_TEMP",
+      "PARTNER_FLOW"
     ],
     "Role": "FlowEquipment"
   },

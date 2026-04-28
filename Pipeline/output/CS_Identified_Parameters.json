@@ -1,7 +1,7 @@
 {
   "25HV0001_MassFlow": {
     "ModelType": "Fallback",
-    "Reason": "No input signals in topology"
+    "Reason": "Missing Pressure data for custom valve model"
   },
   "25HV0002_MassFlow": {
     "ModelType": "Fallback",
@@ -191,18 +191,20 @@
   },
   "23HX0001_Temperature": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 79.838,
-    "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 3 inputs, Tc=0,00s",
+    "FitScore": 88.74,
+    "TimeConstant_s": 0.79643,
+    "Formula": "Dynamic MISO: 4 inputs, Tc=0,80s",
     "LinearGains": [
-      -0.47991,
-      0.19207,
-      1.0695
+      -0.088401,
+      0.32983,
+      0.58102,
+      -0.4763
     ],
     "InputNames": [
       "23KA0001_Temperature(T_in)",
       "23HX0001_MassFlow(local_var)",
-      "23HX0001s_Temperature(T_cool)"
+      "23HX0001s_Temperature(T_cool)",
+      "23HX0001s_MassFlow(m_partner)"
     ]
   },
   "23UV0001_MassFlow": {
@@ -379,10 +381,10 @@
   },
   "23LIC0001_Control": {
     "ModelType": "PID",
-    "Kp": -0.199,
-    "Ti_s": 47.35,
+    "Kp": -0.2,
+    "Ti_s": 59.99,
     "Td_s": 0.0,
-    "FitScore": 94.2792301223926,
+    "FitScore": 99.99999791778255,
     "Formula": "Incremental PI (TSA PidController, data-identified): u(k) = u(k-1) + Kp*((e(k)-e(k-1)) + dt/Ti * e(k)),  e = SP - PV"
   },
   "23LIC0002_Control": {
@@ -395,24 +397,28 @@
   },
   "23PIC0001_Control": {
     "ModelType": "PID",
-    "Kp": -1.754,
-    "Ti_s": 4.636,
+    "Kp": -1.666,
+    "Ti_s": 5.001,
     "Td_s": 0.0,
-    "FitScore": 99.21909618396009,
+    "FitScore": 99.99987998465807,
     "Formula": "Incremental PI (TSA PidController, data-identified): u(k) = u(k-1) + Kp*((e(k)-e(k-1)) + dt/Ti * e(k)),  e = SP - PV"
   },
   "23TV0003_MassFlow": {
-    "ModelType": "UnitIdentifier",
-    "FitScore": 99.178,
-    "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 2 inputs, Tc=0,00s",
-    "LinearGains": [
-      0.0,
-      1.5849
-    ],
+    "ModelType": "ValvePhysicsModel",
+    "FitScore": 99.89695836895758,
+    "Cv": 300.0,
+    "DensityTuningFactor": 0.23736915646380613,
+    "Formula": "Q = 0,2374 * 300 * U * sqrt(max(0, P_in - P_out))",
     "InputNames": [
-      "23HX0001s_Pressure(P_in)",
-      "23TIC0003_Control(U(t))"
+      "23TV0003_pf:OutletStream.p"
+    ],
+    "LinearGains": [
+      -1.0
+    ],
+    "SimInputs": [
+      "23TV0003_pf:InletStream.p",
+      "23TV0003_pf:OutletStream.p",
+      "23TIC0003:ControllerOutput"
     ]
   },
   "23TV0003_Temperature": {
@@ -466,26 +472,28 @@
   },
   "23HX0001s_Temperature": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 59.678,
-    "TimeConstant_s": 75.27,
-    "Formula": "Dynamic MISO: 3 inputs, Tc=75,27s",
+    "FitScore": 86.003,
+    "TimeConstant_s": 12.001,
+    "Formula": "Dynamic MISO: 4 inputs, Tc=12,00s",
     "LinearGains": [
-      -2.5444E-13,
-      -2.5495,
-      2.6011
+      -5.0066E-15,
+      0.41906,
+      2.2229,
+      -0.61024
     ],
     "InputNames": [
       "23COLD0001_Temperature(T_in)",
       "23HX0001s_MassFlow(local_var)",
-      "23HX0001_Temperature(T_cool)"
+      "23HX0001_Temperature(T_cool)",
+      "23HX0001_MassFlow(m_partner)"
     ]
   },
   "23TIC0003_Control": {
     "ModelType": "PID",
-    "Kp": -0.1303,
-    "Ti_s": 12.86,
+    "Kp": -0.3327,
+    "Ti_s": 29.98,
     "Td_s": 0.0,
-    "FitScore": 87.1765630213441,
+    "FitScore": 99.99948950721401,
     "Formula": "Incremental PI (TSA PidController, data-identified): u(k) = u(k-1) + Kp*((e(k)-e(k-1)) + dt/Ti * e(k)),  e = SP - PV"
   },
   "23ASC0001_Control": {
