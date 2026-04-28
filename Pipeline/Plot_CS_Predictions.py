@@ -162,11 +162,13 @@ def plot_validation():
             if meas_csv and meas_csv in df_raw.columns:
                 inputs_by_csv[meas_csv] = f"Measurement: {meas_csv}"
         elif model_type == "ValvePhysicsModel":
-            in_names = p.get('InputNames', [])
-            if len(in_names) >= 3:
-                if in_names[0] and in_names[0] in df_raw.columns: inputs_by_csv[in_names[0]] = f"Inlet Pressure: {in_names[0]}"
-                if in_names[1] and in_names[1] in df_raw.columns: inputs_by_csv[in_names[1]] = f"Outlet Pressure: {in_names[1]}"
-                if in_names[2] and in_names[2] in df_raw.columns: inputs_by_csv[in_names[2]] = f"Valve Signal: {in_names[2]}"
+            # ValvePhysicsModel only contributes the local pipe outlet pressure as a unique
+            # signal — P_in (upstream comp) and U(t) (controller output) come from the
+            # topology edge iteration below.
+            for in_name in p.get('InputNames', []):
+                if in_name and in_name in df_raw.columns and in_name not in inputs_by_csv:
+                    label = "Outlet Pressure" if in_name.endswith("OutletStream.p") or in_name.endswith("OutletPressure") else in_name
+                    inputs_by_csv[in_name] = f"{label}: {in_name}"
 
         for edge_info in input_edges.get(model_id, []):
             src_node   = edge_info['from']
@@ -191,8 +193,8 @@ def plot_validation():
                         phys_adj, signal_map, df_raw.columns
                     )
                     if proxy_key:
-                        print(f"  [PROXY] {src_node} → {proxy_key}")
-                        src_node = f"{src_node} [proxy→{proxy_key}]"
+                        print(f"  [PROXY] {src_node} -> {proxy_key}")
+                        src_node = f"{src_node} [proxy->{proxy_key}]"
 
             if csv_col and csv_col in df_raw.columns:
                 display = f"{edge_label}: {src_node}"

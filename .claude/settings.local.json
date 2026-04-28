@@ -10,7 +10,8 @@
       "WebFetch(domain:equinor.github.io)",
       "WebSearch",
       "Bash(python3 *)",
-      "Bash(PYTHONIOENCODING=utf-8 python Plot_CS_Predictions.py)"
+      "Bash(PYTHONIOENCODING=utf-8 python Plot_CS_Predictions.py)",
+      "Bash(awk *)"
     ]
   }
 }

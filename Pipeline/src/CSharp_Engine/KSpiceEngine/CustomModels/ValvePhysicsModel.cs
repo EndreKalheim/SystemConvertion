@@ -50,7 +50,7 @@ namespace KSpiceEngine.CustomModels
             };
         }
 
-        // Inputs expected: P_in, P_out, U (0..100)
+        // Inputs expected: P_in, P_out, U (0..100 or 0..1)
         public double[] Iterate(double[] inputsU, double timeBase_s, double badDataID = -9999)
         {
             if (inputsU == null || inputsU.Length < 3) return new double[] { badDataID };
@@ -59,22 +59,27 @@ namespace KSpiceEngine.CustomModels
             double pOut = inputsU[1];
             double u = inputsU[2];
 
-            if (pIn == badDataID || pOut == badDataID || u == badDataID)
+            // Treat NaN and the bad-data sentinel uniformly as "no data" → no flow.
+            if (double.IsNaN(pIn) || double.IsNaN(pOut) || double.IsNaN(u) ||
+                pIn == badDataID || pOut == badDataID || u == badDataID)
             {
-                return new double[] { 0 }; 
+                return new double[] { 0 };
             }
 
-            // Normalize U from 0-100% to 0-1
-            double uNormalized = u;
-            if (uNormalized > 1.0) uNormalized /= 100.0;
+            // K-Spice control signals are always on a 0-100 % scale, including small values
+            // like 0.6 that mean 0.6 % (not 60 %). Always normalise by 100 — the previous
+            // "if (u > 1) u /= 100" heuristic mis-scaled near-closed samples by 100x.
+            double uNormalized = u / 100.0;
             if (uNormalized < 0) uNormalized = 0;
+            if (uNormalized > 1.0) uNormalized = 1.0;
 
+            // Reverse flow is not modelled; clamp dP to keep sqrt real.
             double deltaP = pIn - pOut;
-            if (deltaP < 0) deltaP = 0; // Prevent imaginary roots; reverse flow not supported
+            if (deltaP < 0) deltaP = 0;
 
             // MassFlow = Cv * U * sqrt(dP) * tuning_factor
             double flow = modelParameters.Cv * uNormalized * Math.Sqrt(deltaP) * modelParameters.DensityTuningFactor;
-            
+
             return new double[] { flow };
         }
     }

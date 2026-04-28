@@ -9,19 +9,20 @@
   },
   "25ESV0001_MassFlow": {
     "ModelType": "ValvePhysicsModel",
-    "FitScore": 100.0,
+    "FitScore": -100.0,
     "Cv": 3000.0,
     "DensityTuningFactor": 1.0,
     "Formula": "Q = 1,0000 * 3000 * U * sqrt(max(0, P_in - P_out))",
     "InputNames": [
-      "25ESV0001_pf:InletPressure",
-      "25ESV0001_pf:OutletPressure",
-      "25ESV0001:Opening"
+      "25ESV0001_pf:OutletStream.p"
     ],
     "LinearGains": [
-      1.0,
-      -1.0,
-      1.0
+      -1.0
+    ],
+    "SimInputs": [
+      "25ESV0001_pf:InletPressure",
+      "25ESV0001_pf:OutletStream.p",
+      "25ESV0001:Opening"
     ]
   },
   "25ESV0001_Temperature": {
@@ -206,19 +207,20 @@
   },
   "23UV0001_MassFlow": {
     "ModelType": "ValvePhysicsModel",
-    "FitScore": 78.00356877162852,
+    "FitScore": 99.92779741919134,
     "Cv": 400.0,
-    "DensityTuningFactor": 0.03618383983266045,
-    "Formula": "Q = 0,0362 * 400 * U * sqrt(max(0, P_in - P_out))",
+    "DensityTuningFactor": 0.04157791441469101,
+    "Formula": "Q = 0,0416 * 400 * U * sqrt(max(0, P_in - P_out))",
     "InputNames": [
+      "23UV0001_pf:OutletStream.p"
+    ],
+    "LinearGains": [
+      -1.0
+    ],
+    "SimInputs": [
       "23UV0001_pf:InletStream.p",
       "23UV0001_pf:OutletStream.p",
       "23UV0001:LocalControlSignalIn"
-    ],
-    "LinearGains": [
-      1.0,
-      -1.0,
-      0.03618383983266045
     ]
   },
   "23UV0001_Temperature": {
@@ -244,14 +246,15 @@
     "DensityTuningFactor": 0.047486575452183356,
     "Formula": "Q = 0,0475 * 3000 * U * sqrt(max(0, P_in - P_out))",
     "InputNames": [
+      "23ESV0005_pf:OutletStream.p"
+    ],
+    "LinearGains": [
+      -1.0
+    ],
+    "SimInputs": [
       "23ESV0005_pf:InletStream.p",
       "23ESV0005_pf:OutletStream.p",
       "Assumed_100%"
-    ],
-    "LinearGains": [
-      1.0,
-      -1.0,
-      0.047486575452183356
     ]
   },
   "23ESV0005_Temperature": {
@@ -317,14 +320,15 @@
     "DensityTuningFactor": 0.19406330192715932,
     "Formula": "Q = 0,1941 * 250 * U * sqrt(max(0, P_in - P_out))",
     "InputNames": [
+      "23LV0002_pf:OutletStream.p"
+    ],
+    "LinearGains": [
+      -1.0
+    ],
+    "SimInputs": [
       "23LV0002_pf:InletStream.p",
       "23LV0002_pf:OutletStream.p",
       "23LV0002:LocalControlSignalIn"
-    ],
-    "LinearGains": [
-      1.0,
-      -1.0,
-      0.19406330192715932
     ]
   },
   "23LV0002_Temperature": {
@@ -343,19 +347,20 @@
   },
   "23LV0001_MassFlow": {
     "ModelType": "ValvePhysicsModel",
-    "FitScore": 100.0,
+    "FitScore": 89.41413567083771,
     "Cv": 100.0,
-    "DensityTuningFactor": 1.0,
-    "Formula": "Q = 1,0000 * 100 * U * sqrt(max(0, P_in - P_out))",
+    "DensityTuningFactor": 0.11554507268068309,
+    "Formula": "Q = 0,1155 * 100 * U * sqrt(max(0, P_in - P_out))",
     "InputNames": [
-      "23LV0001_pf:InletPressure",
-      "23LV0001_pf:OutletStream.p",
-      "23LV0001:Opening"
+      "23LV0001_pf:OutletStream.p"
     ],
     "LinearGains": [
-      1.0,
-      -1.0,
-      1.0
+      -1.0
+    ],
+    "SimInputs": [
+      "23LV0001_pf:InletStream.p",
+      "23LV0001_pf:OutletStream.p",
+      "23LV0001:LocalControlSignalIn"
     ]
   },
   "23LV0001_Temperature": {

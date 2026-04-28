@@ -998,9 +998,11 @@ namespace KSpiceEngine
                     double[] pOut = null;
                     double[] uData = null;
 
-                    string[] pInCands = { $"{pfComp}:InletPressure", $"{pfComp}:InletStream.p", signalMap.ContainsKey($"{compBase}_pf_PressureIn") ? signalMap[$"{compBase}_pf_PressureIn"] : null };
-                    string[] pOutCands = { $"{pfComp}:OutletPressure", $"{pfComp}:OutletStream.p", signalMap.ContainsKey($"{compBase}_pf_PressureOut") ? signalMap[$"{compBase}_pf_PressureOut"] : null };
-                    string[] uCands = { $"{compBase}:Opening", $"{compBase}:LocalControlSignalIn", $"{compBase}:TargetPosition" };
+                    string[] pInCands = { $"{pfComp}:InletStream.p", $"{pfComp}:InletPressure", signalMap.ContainsKey($"{compBase}_UpstreamPressure") ? signalMap[$"{compBase}_UpstreamPressure"] : null };
+                    string[] pOutCands = { $"{pfComp}:OutletStream.p", $"{pfComp}:OutletPressure", signalMap.ContainsKey($"{compBase}_DownstreamPressure") ? signalMap[$"{compBase}_DownstreamPressure"] : null };
+                    // Prefer the analog modulating signal; Opening is a discrete state flag in K-Spice
+                    // (true only when position > RunningLightOpenPosition), not a 0-100% control input.
+                    string[] uCands = { $"{compBase}:LocalControlSignalIn", $"{compBase}:TargetPosition", $"{compBase}:Opening" };
 
                     string pInCol = null, pOutCol = null, uCol = null;
 
@@ -1025,39 +1027,70 @@ namespace KSpiceEngine
                         int safeRows = Math.Min(numRows, Math.Min(Y_true.Length, Math.Min(pIn.Length, Math.Min(pOut.Length, uData.Length))));
                         
                         double sumYF = 0, sumFF = 0;
+                        int validSamples = 0;
                         double[] feature = new double[safeRows];
                         for (int i = 0; i < safeRows; i++)
                         {
-                            double uVal = uData[i]; if (uVal > 1.0) uVal /= 100.0; if (uVal < 0) uVal = 0;
+                            if (double.IsNaN(Y_true[i]) || double.IsNaN(pIn[i]) || double.IsNaN(pOut[i]) || double.IsNaN(uData[i]))
+                                continue;
+
+                            // Always treat U as a percent — see ValvePhysicsModel.Iterate for rationale.
+                            double uVal = uData[i] / 100.0;
+                            if (uVal < 0) uVal = 0;
+                            if (uVal > 1.0) uVal = 1.0;
                             double dP = pIn[i] - pOut[i];
                             if (dP < 0) dP = 0;
-    
+
                             feature[i] = cv * uVal * Math.Sqrt(dP);
                             sumYF += Y_true[i] * feature[i];
                             sumFF += feature[i] * feature[i];
+                            validSamples++;
                         }
-    
+
+                        if (validSamples == 0)
+                        {
+                            Console.WriteLine($"[WARNING] {id}: No valid samples for regression (all NaN). Falling back.");
+                            predictions[id] = (double[])Y_true.Clone();
+                            identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = "All-NaN inputs for valve regression" };
+                            continue;
+                        }
+
                         // Fit scaling factor K
                         double tuningFactor = sumFF > 1e-9 ? sumYF / sumFF : 1.0;
-    
+
                         // 4. Simulate the result
                         var valveModel = new KSpiceEngine.CustomModels.ValvePhysicsModel(id, new string[]{ pInCol, pOutCol, uCol }, id);
                         valveModel.modelParameters.Cv = cv;
                         valveModel.modelParameters.DensityTuningFactor = tuningFactor;
-                        
+
                         double[] Y_pred = new double[numRows];
                         double sumSqErr = 0;
                         double sumTotSq = 0;
-                        double meanTrue = Y_true.Average();
-                        
+                        // Mean of valid (non-NaN) Y_true samples — robust to ingest gaps.
+                        double sumTrue = 0; int meanCount = 0;
+                        for (int i = 0; i < Y_true.Length; i++)
+                        {
+                            if (!double.IsNaN(Y_true[i])) { sumTrue += Y_true[i]; meanCount++; }
+                        }
+                        double meanTrue = meanCount > 0 ? sumTrue / meanCount : 0;
+
+                        int scoredSamples = 0;
                         for (int i = 0; i < safeRows; i++)
                         {
+                            if (double.IsNaN(pIn[i]) || double.IsNaN(pOut[i]) || double.IsNaN(uData[i]))
+                            {
+                                Y_pred[i] = double.NaN;
+                                continue;
+                            }
                             Y_pred[i] = valveModel.Iterate(new double[]{ pIn[i], pOut[i], uData[i] }, timeBase_s)[0];
+                            if (double.IsNaN(Y_true[i])) continue;
                             double res = Y_true[i] - Y_pred[i];
                             sumSqErr += res * res;
+                            scoredSamples++;
                         }
                         for (int i = 0; i < Y_true.Length; i++)
                         {
+                            if (double.IsNaN(Y_true[i])) continue;
                             double dm = Y_true[i] - meanTrue;
                             sumTotSq += dm * dm;
                         }
@@ -1067,6 +1100,10 @@ namespace KSpiceEngine
                         predictions[id] = Y_pred;
                         Console.WriteLine($"[SUCCESS] {id}: ValvePhysicsModel identified! FitScore={fitScore:F1}% (Cv={cv}, TuningFactor={tuningFactor:F6})");
                         
+                        // The plotter receives the topology-resolved P_in (upstream component
+                        // pressure) and U(t) (controller output) automatically via topology edges,
+                        // so InputNames only carries the local pipe outlet pressure — the one
+                        // signal the topology cannot supply (no downstream-component edge).
                         var modelParams = new JObject
                         {
                             ["ModelType"]      = "ValvePhysicsModel",
@@ -1074,13 +1111,11 @@ namespace KSpiceEngine
                             ["Cv"]             = cv,
                             ["DensityTuningFactor"] = tuningFactor,
                             ["Formula"]        = $"Q = {tuningFactor:F4} * {cv} * U * sqrt(max(0, P_in - P_out))",
-                            ["InputNames"]     = new JArray { pInCol, pOutCol, uCol }
+                            ["InputNames"]     = new JArray { pOutCol },
+                            ["LinearGains"]    = new JArray { -1.0 },
+                            ["SimInputs"]      = new JArray { pInCol, pOutCol, uCol }
                         };
-                        
-                        // For the valve model we also inject linear gains logic so it looks complete 
-                        // in Plot_CS_Predictions, though it works fine without it! We use Dummy weights.
-                        modelParams["LinearGains"] = new JArray { 1.0, -1.0, tuningFactor }; 
-                        
+
                         identifiedParams[id] = modelParams;
                     }
                     else
@@ -1473,24 +1508,29 @@ namespace KSpiceEngine
         private static Dictionary<string, double[]> LoadCsvDataset(string path)
         {
             var data = new Dictionary<string, List<double>>();
-            var lines = File.ReadAllLines(path);
+            var lines = File.ReadAllLines(path).Where(l => !string.IsNullOrWhiteSpace(l)).ToArray();
             var headers = lines[0].Split(',').Select(h => h.Trim()).ToList();
-            
+
             foreach (var h in headers) data[h] = new List<double>();
-            
+
             for (int i = 1; i < lines.Length; i++)
             {
                 var vals = lines[i].Split(',');
-                for (int j = 0; j < vals.Length; j++)
+                for (int j = 0; j < headers.Count; j++)
                 {
-                    if (j < headers.Count)
+                    double v = double.NaN;
+                    if (j < vals.Length)
                     {
-                        if (double.TryParse(vals[j], System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double d))
-                            data[headers[j]].Add(d);
+                        var cell = vals[j].Trim();
+                        if (cell.Equals("true", StringComparison.OrdinalIgnoreCase)) v = 1.0;
+                        else if (cell.Equals("false", StringComparison.OrdinalIgnoreCase)) v = 0.0;
+                        else double.TryParse(cell, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out v);
                     }
+                    // Always append so all columns stay aligned (length == row count).
+                    data[headers[j]].Add(v);
                 }
             }
-            
+
             return data.ToDictionary(kv => kv.Key, kv => kv.Value.ToArray());
         }
 
