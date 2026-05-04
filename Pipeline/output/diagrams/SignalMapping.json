@@ -73,5 +73,7 @@
   "23TIC0003_Control": "23TIC0003:ControllerOutput",
   "23TIC0003_Setpoint": "23TIC0003:InternalSetpoint",
   "23TIC0003_Measurement": "23TIC0003:Measurement",
-  "23ASC0001_Control": "23ASC0001:Output"
+  "23ASC0001_Control": "23ASC0001:Output",
+  "23KA0001_Speed": "23KA0001:Speed",
+  "23PA0001_Speed": "23PA0001:Speed"
 }

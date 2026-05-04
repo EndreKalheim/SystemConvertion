@@ -228,9 +228,10 @@
     "ID": "23KA0001_MassFlow",
     "Component": "23KA0001",
     "State": "MassFlow",
-    "Formula": "F = sum(m_downstream)",
+    "Formula": "F = f(N, P_sep)",
     "Inputs": [
-      "DOWNSTREAM_FLOW_SUM"
+      "UPSTREAM_PRESSURE",
+      "LOCAL_CONTROL"
     ],
     "Role": "FlowEquipment"
   },
@@ -240,7 +241,7 @@
     "State": "Pressure",
     "Formula": "P_out = P_in + Head(F, N)",
     "Inputs": [
-      "UPSTREAM_PRESSURE",
+      "SUCTION_PRESSURE",
       "23KA0001_MassFlow",
       "LOCAL_CONTROL"
     ],
@@ -260,6 +261,16 @@
     "Role": "FlowEquipment"
   },
   {
+    "ID": "23KA0001_Speed",
+    "Component": "23KA0001",
+    "State": "Speed",
+    "Formula": "N = f(speed controller output)",
+    "Inputs": [
+      "LOCAL_CONTROL"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
     "ID": "23HX0001_MassFlow",
     "Component": "23HX0001",
     "State": "MassFlow",
@@ -273,10 +284,9 @@
     "ID": "23HX0001_Pressure",
     "Component": "23HX0001",
     "State": "Pressure",
-    "Formula": "P_out = P_in - dP(F)",
+    "Formula": "P_out ≈ P_in  (small HX dP ignored)",
     "Inputs": [
-      "UPSTREAM_PRESSURE",
-      "23HX0001_MassFlow"
+      "UPSTREAM_PRESSURE"
     ],
     "Role": "Volume"
   },
@@ -369,9 +379,10 @@
     "ID": "23PA0001_MassFlow",
     "Component": "23PA0001",
     "State": "MassFlow",
-    "Formula": "F = sum(m_downstream)",
+    "Formula": "F = f(F_ds, P_sep)",
     "Inputs": [
-      "DOWNSTREAM_FLOW_SUM"
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_FLOW"
     ],
     "Role": "FlowEquipment"
   },
@@ -381,9 +392,9 @@
     "State": "Pressure",
     "Formula": "P_out = P_in + Head(F, N)",
     "Inputs": [
-      "UPSTREAM_PRESSURE",
-      "23PA0001_MassFlow",
-      "LOCAL_CONTROL"
+      "SUCTION_PRESSURE",
+      "LOCAL_CONTROL",
+      "PUMP_SPEED"
     ],
     "Role": "Volume"
   },
@@ -391,11 +402,22 @@
     "ID": "23PA0001_Temperature",
     "Component": "23PA0001",
     "State": "Temperature",
-    "Formula": "T_out = T_in * (P_out/P_in)^((k-1)/k)",
+    "Formula": "T_out = f(T_in, P_out, P_in)",
     "Inputs": [
       "UPSTREAM_TEMP",
       "23PA0001_Pressure",
       "UPSTREAM_PRESSURE"
+    ],
+    "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23PA0001_Speed",
+    "Component": "23PA0001",
+    "State": "Speed",
+    "Formula": "N = f(P_sep, F_ds) motor torque balance",
+    "Inputs": [
+      "UPSTREAM_PRESSURE",
+      "DOWNSTREAM_FLOW"
     ],
     "Role": "FlowEquipment"
   },
@@ -455,7 +477,8 @@
     "Inputs": [
       "MEASURED_STATE"
     ],
-    "Role": "Controller"
+    "Role": "Controller",
+    "ControllerType": "PID"
   },
   {
     "ID": "23LIC0002_Control",
@@ -465,7 +488,8 @@
     "Inputs": [
       "MEASURED_STATE"
     ],
-    "Role": "Controller"
+    "Role": "Controller",
+    "ControllerType": "PID"
   },
   {
     "ID": "23PIC0001_Control",
@@ -475,7 +499,8 @@
     "Inputs": [
       "MEASURED_STATE"
     ],
-    "Role": "Controller"
+    "Role": "Controller",
+    "ControllerType": "PID"
   },
   {
     "ID": "23TV0003_MassFlow",
@@ -539,10 +564,9 @@
     "ID": "23HX0001s_Pressure",
     "Component": "23HX0001s",
     "State": "Pressure",
-    "Formula": "P_out = P_in - dP(F)",
+    "Formula": "P_out ≈ P_in  (small HX dP ignored)",
     "Inputs": [
-      "UPSTREAM_PRESSURE",
-      "23HX0001s_MassFlow"
+      "UPSTREAM_PRESSURE"
     ],
     "Role": "Volume"
   },
@@ -567,7 +591,8 @@
     "Inputs": [
       "MEASURED_STATE"
     ],
-    "Role": "Controller"
+    "Role": "Controller",
+    "ControllerType": "PID"
   },
   {
     "ID": "23ASC0001_Control",
@@ -578,6 +603,7 @@
       "MEASURED_FLOW",
       "MEASURED_PRESSURE"
     ],
-    "Role": "Controller"
+    "Role": "Controller",
+    "ControllerType": "ASC"
   }
 ]

@@ -35,22 +35,43 @@
     ],
     "InputNames": [
       "23VA0001_Pressure(P_out)"
+    ],
+    "Bias": 41.737,
+    "U0": [
+      27.615
+    ],
+    "UNorm": [
+      1.0
+    ],
+    "Curvatures": [
+      "NaN"
     ]
   },
   "23VA0001_Pressure": {
-    "ModelType": "IdentifyLinear",
+    "ModelType": "UnitIdentifier_SignedFlows",
     "FitScore": 61.056,
     "TimeConstant_s": 36.017,
-    "Formula": "Static Linear MISO: 3 gas-relevant inputs (inflows + gas outflows)",
+    "Formula": "Pressure(t) = LP(Bias + sum(gain_i * F_i), Tc)  [outflows pre-negated in evaluation]",
     "LinearGains": [
       0.46783,
       1.617,
-      -1.5453
+      1.5453
     ],
     "InputNames": [
       "25ESV0001_MassFlow(m_in)",
       "23UV0001_MassFlow(m_in)",
       "23KA0001_MassFlow(m_out)"
+    ],
+    "Bias": 27.494,
+    "U0": [
+      139.95,
+      12.456,
+      -49.064
+    ],
+    "UNorm": [
+      1.0,
+      1.0,
+      1.0
     ]
   },
   "23VA0001_WaterLevel": {
@@ -69,6 +90,25 @@
       "23UV0001_MassFlow(m_in)",
       "23PA0001_MassFlow(m_out)",
       "23LV0001_MassFlow(m_out)"
+    ],
+    "Bias": 556.58,
+    "U0": [
+      16896.0,
+      2912.5,
+      -10594.0,
+      -3497.7
+    ],
+    "UNorm": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Curvatures": [
+      "NaN",
+      "NaN",
+      "NaN",
+      "NaN"
     ]
   },
   "23VA0001_TotalLevel": {
@@ -87,6 +127,25 @@
       "23UV0001_MassFlow(m_in)",
       "23PA0001_MassFlow(m_out)",
       "23LV0001_MassFlow(m_out)"
+    ],
+    "Bias": 564.05,
+    "U0": [
+      16896.0,
+      2912.5,
+      -10594.0,
+      -3497.7
+    ],
+    "UNorm": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Curvatures": [
+      "NaN",
+      "NaN",
+      "NaN",
+      "NaN"
     ]
   },
   "23VA0001_Temperature": {
@@ -111,6 +170,25 @@
       "23PA0001_MassFlow(m_out)",
       "23LV0001_MassFlow(m_out)",
       "23KA0001_MassFlow(m_out)"
+    ],
+    "Bias": 41.497,
+    "U0": [
+      139.95,
+      12.456,
+      41.737,
+      32.921,
+      76.689,
+      26.02,
+      49.064
+    ],
+    "UNorm": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
     ]
   },
   "23ESV0002_MassFlow": {
@@ -119,14 +197,29 @@
   },
   "23KA0001_MassFlow": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 99.999,
+    "FitScore": 67.345,
     "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 1 inputs, Tc=0,00s",
+    "Formula": "Dynamic MISO: 2 inputs, Tc=0,00s",
     "LinearGains": [
-      1.0
+      4.5803,
+      1.7807
     ],
     "InputNames": [
-      "23HX0001_MassFlow(m_sum)"
+      "23VA0001_Pressure(P_in)",
+      "23PIC0001_Control(U(t))"
+    ],
+    "Bias": 49.065,
+    "U0": [
+      27.615,
+      69.003
+    ],
+    "UNorm": [
+      1.0,
+      1.0
+    ],
+    "Curvatures": [
+      "NaN",
+      "NaN"
     ]
   },
   "23KA0001_Pressure": {
@@ -143,6 +236,22 @@
       "23VA0001_Pressure(P_in)",
       "23KA0001_MassFlow(local_var)",
       "23PIC0001_Control(U(t))"
+    ],
+    "Bias": 46.27,
+    "U0": [
+      27.615,
+      49.064,
+      69.003
+    ],
+    "UNorm": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Curvatures": [
+      "NaN",
+      "NaN",
+      "NaN"
     ]
   },
   "23KA0001_Temperature": {
@@ -159,6 +268,39 @@
       "23VA0001_Temperature(T_in)",
       "23KA0001_Pressure(local_var)",
       "23VA0001_Pressure(P_in)"
+    ],
+    "Bias": 81.989,
+    "U0": [
+      41.527,
+      46.27,
+      27.615
+    ],
+    "UNorm": [
+      1.0,
+      1.0,
+      1.0
+    ]
+  },
+  "23KA0001_Speed": {
+    "ModelType": "UnitIdentifier",
+    "FitScore": 89.88,
+    "TimeConstant_s": 0.0,
+    "Formula": "Dynamic MISO: 1 inputs, Tc=0,00s",
+    "LinearGains": [
+      84.874
+    ],
+    "InputNames": [
+      "23PIC0001_Control(U(t))"
+    ],
+    "Bias": 6526.0,
+    "U0": [
+      69.003
+    ],
+    "UNorm": [
+      1.0
+    ],
+    "Curvatures": [
+      "NaN"
     ]
   },
   "23HX0001_MassFlow": {
@@ -173,20 +315,41 @@
     "InputNames": [
       "23UV0001_MassFlow(m_sum)",
       "23ESV0005_MassFlow(m_sum)"
+    ],
+    "Bias": 49.064,
+    "U0": [
+      12.456,
+      36.607
+    ],
+    "UNorm": [
+      1.0,
+      1.0
+    ],
+    "Curvatures": [
+      "NaN",
+      "NaN"
     ]
   },
   "23HX0001_Pressure": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 86.217,
+    "FitScore": 68.464,
     "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 2 inputs, Tc=0,00s",
+    "Formula": "Dynamic MISO: 1 inputs, Tc=0,00s",
     "LinearGains": [
-      1.0924,
-      -0.0028967
+      0.6867
     ],
     "InputNames": [
-      "23KA0001_Pressure(P_in)",
-      "23HX0001_MassFlow(local_var)"
+      "23KA0001_Pressure(P_in)"
+    ],
+    "Bias": 46.215,
+    "U0": [
+      46.27
+    ],
+    "UNorm": [
+      1.0
+    ],
+    "Curvatures": [
+      "NaN"
     ]
   },
   "23HX0001_Temperature": {
@@ -205,6 +368,19 @@
       "23HX0001_MassFlow(local_var)",
       "23HX0001s_Temperature(T_cool)",
       "23HX0001s_MassFlow(m_partner)"
+    ],
+    "Bias": 45.276,
+    "U0": [
+      81.981,
+      49.064,
+      69.768,
+      20.129
+    ],
+    "UNorm": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
     ]
   },
   "23UV0001_MassFlow": {
@@ -239,6 +415,22 @@
       "23HX0001_Temperature(T_in)",
       "23HX0001_Pressure(P_in)",
       "23VA0001_Pressure(P_out)"
+    ],
+    "Bias": 32.922,
+    "U0": [
+      45.279,
+      46.215,
+      27.615
+    ],
+    "UNorm": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Curvatures": [
+      "NaN",
+      "NaN",
+      "NaN"
     ]
   },
   "23ESV0005_MassFlow": {
@@ -271,32 +463,73 @@
     "InputNames": [
       "23HX0001_Temperature(T_in)",
       "23HX0001_Pressure(P_in)"
+    ],
+    "Bias": 45.029,
+    "U0": [
+      45.279,
+      46.215
+    ],
+    "UNorm": [
+      1.0,
+      1.0
+    ],
+    "Curvatures": [
+      "NaN",
+      "NaN"
     ]
   },
   "23PA0001_MassFlow": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 97.522,
+    "FitScore": 97.273,
     "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 1 inputs, Tc=0,00s",
+    "Formula": "Dynamic MISO: 2 inputs, Tc=0,00s",
     "LinearGains": [
-      1.0024
+      0.049374,
+      1.0011
     ],
     "InputNames": [
-      "23LV0002_MassFlow(m_sum)"
+      "23VA0001_Pressure(P_in)",
+      "23LV0002_MassFlow(m_out)"
+    ],
+    "Bias": 76.689,
+    "U0": [
+      27.615,
+      76.7
+    ],
+    "UNorm": [
+      1.0,
+      1.0
+    ],
+    "Curvatures": [
+      "NaN",
+      "NaN"
     ]
   },
   "23PA0001_Pressure": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 51.152,
+    "FitScore": 76.633,
     "TimeConstant_s": 0.0,
     "Formula": "Dynamic MISO: 2 inputs, Tc=0,00s",
     "LinearGains": [
-      1.6493,
-      0.17601
+      1.1588,
+      -1.2558
     ],
     "InputNames": [
       "23VA0001_Pressure(P_in)",
-      "23PA0001_MassFlow(local_var)"
+      "23PA0001_Speed(speed)"
+    ],
+    "Bias": 54.78,
+    "U0": [
+      27.615,
+      3580.8
+    ],
+    "UNorm": [
+      1.0,
+      1.0
+    ],
+    "Curvatures": [
+      "NaN",
+      "NaN"
     ]
   },
   "23PA0001_Temperature": {
@@ -313,6 +546,49 @@
       "23VA0001_Temperature(T_in)",
       "23PA0001_Pressure(local_var)",
       "23VA0001_Pressure(P_in)"
+    ],
+    "Bias": 46.114,
+    "U0": [
+      41.527,
+      54.748,
+      27.615
+    ],
+    "UNorm": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Curvatures": [
+      "NaN",
+      "NaN",
+      "NaN"
+    ]
+  },
+  "23PA0001_Speed": {
+    "ModelType": "UnitIdentifier",
+    "FitScore": 63.723,
+    "TimeConstant_s": 0.0,
+    "Formula": "Dynamic MISO: 2 inputs, Tc=0,00s",
+    "LinearGains": [
+      -0.31186,
+      -0.15966
+    ],
+    "InputNames": [
+      "23VA0001_Pressure(P_in)",
+      "23LV0002_MassFlow(m_out)"
+    ],
+    "Bias": 3580.8,
+    "U0": [
+      27.615,
+      76.7
+    ],
+    "UNorm": [
+      1.0,
+      1.0
+    ],
+    "Curvatures": [
+      "NaN",
+      "NaN"
     ]
   },
   "23LV0002_MassFlow": {
@@ -345,6 +621,15 @@
     "InputNames": [
       "23PA0001_Temperature(T_in)",
       "23PA0001_Pressure(P_in)"
+    ],
+    "Bias": 45.349,
+    "U0": [
+      46.114,
+      54.748
+    ],
+    "UNorm": [
+      1.0,
+      1.0
     ]
   },
   "23LV0001_MassFlow": {
@@ -377,6 +662,15 @@
     "InputNames": [
       "23VA0001_Temperature(T_in)",
       "23VA0001_Pressure(P_in)"
+    ],
+    "Bias": 41.657,
+    "U0": [
+      41.527,
+      27.615
+    ],
+    "UNorm": [
+      1.0,
+      1.0
     ]
   },
   "23LIC0001_Control": {
@@ -433,6 +727,15 @@
     "InputNames": [
       "23HX0001s_Temperature(T_in)",
       "23HX0001s_Pressure(P_in)"
+    ],
+    "Bias": 69.792,
+    "U0": [
+      69.768,
+      9.01
+    ],
+    "UNorm": [
+      1.0,
+      1.0
     ]
   },
   "23COLD0001_MassFlow": {
@@ -454,21 +757,21 @@
     ],
     "InputNames": [
       "23TV0003_MassFlow(m_sum)"
+    ],
+    "Bias": 20.129,
+    "U0": [
+      20.129
+    ],
+    "UNorm": [
+      1.0
+    ],
+    "Curvatures": [
+      "NaN"
     ]
   },
   "23HX0001s_Pressure": {
-    "ModelType": "UnitIdentifier",
-    "FitScore": -151.88,
-    "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 2 inputs, Tc=0,00s",
-    "LinearGains": [
-      0.0,
-      -1.5104E-14
-    ],
-    "InputNames": [
-      "23COLD0001_Pressure(P_in)",
-      "23HX0001s_MassFlow(local_var)"
-    ]
+    "ModelType": "Fallback",
+    "Reason": "UnitIdentifier could not identify"
   },
   "23HX0001s_Temperature": {
     "ModelType": "UnitIdentifier",
@@ -486,6 +789,19 @@
       "23HX0001s_MassFlow(local_var)",
       "23HX0001_Temperature(T_cool)",
       "23HX0001_MassFlow(m_partner)"
+    ],
+    "Bias": 69.678,
+    "U0": [
+      15.0,
+      20.129,
+      45.279,
+      49.064
+    ],
+    "UNorm": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
     ]
   },
   "23TIC0003_Control": {
@@ -499,18 +815,19 @@
   "23ASC0001_Control": {
     "ModelType": "AntiSurgePhysicalModel",
     "Architecture": "KickBased",
-    "SurgeProxy_a": 1.0888623588349529,
-    "SurgeProxy_b": -59.98092922408487,
-    "KickThreshold": -5.0,
-    "HoldThreshold": 3.71484375,
-    "KickRate_PrcPerSec": 4.0,
-    "KickGain_PrcPerSecPerUnit": 1.048675537109375,
-    "RampDown_PrcPerMin": 0.0,
-    "RampDecay_Tau_s": 31.309814453125,
+    "SurgeProxy_MF_Coeff": 0.09925745131947462,
+    "SurgeProxy_a": 0.09383401813192958,
+    "SurgeProxy_b": -5.665499213447267,
+    "KickThreshold": -0.5,
+    "HoldThreshold": 0.75,
+    "KickRate_PrcPerSec": 6.0,
+    "KickGain_PrcPerSecPerUnit": 0.9453125,
+    "RampDown_PrcPerMin": 3.4375,
+    "RampDecay_Tau_s": 29.375,
     "SurgeMargin_LP_Tau_s": 0.0,
-    "FitScore": 95.17415775788466,
+    "FitScore": 91.9380850743377,
     "SurgeTruthSource": "K-Spice NormalizedFlow vs NormalizedAsymmetricLimit",
-    "Formula": "surge_distance = MF + 1,089·DP + -59,98;  KICK if <-5,0: u += (4,00 + 1,049·max(0,-5,0−surge_distance)) %/s·dt;  HOLD if [-5,0,3,7]: u unchanged;  RAMP if >3,7: u -= (0,0/60 + u/31,3) %/s·dt",
+    "Formula": "surge_distance = 0,0993·MF + 0,0938·DP + -5,6655;  KICK if <-0,50: u += (6,00 + 0,945·max(0,-0,50−surge_distance)) %/s·dt;  HOLD if [-0,50,0,75]: u unchanged;  RAMP if >0,75: u -= (3,4/60 + u/29,4) %/s·dt",
     "Benchmark": [
       {
         "Architecture": "LinearOLS",
@@ -667,16 +984,17 @@
       },
       {
         "Architecture": "KickBased",
-        "SurgeProxy_a": 1.0888623588349529,
-        "SurgeProxy_b": -59.98092922408487,
-        "KickThreshold": -5.0,
-        "HoldThreshold": 3.71484375,
-        "KickRate_PrcPerSec": 4.0,
-        "KickGain_PrcPerSecPerUnit": 1.048675537109375,
-        "RampDown_PrcPerMin": 0.0,
-        "RampDecay_Tau_s": 31.309814453125,
+        "SurgeProxy_MF_Coeff": 0.09925745131947462,
+        "SurgeProxy_a": 0.09383401813192958,
+        "SurgeProxy_b": -5.665499213447267,
+        "KickThreshold": -0.5,
+        "HoldThreshold": 0.75,
+        "KickRate_PrcPerSec": 6.0,
+        "KickGain_PrcPerSecPerUnit": 0.9453125,
+        "RampDown_PrcPerMin": 3.4375,
+        "RampDecay_Tau_s": 29.375,
         "SurgeMargin_LP_Tau_s": 0.0,
-        "FitScore": 95.17415775788466,
+        "FitScore": 91.9380850743377,
         "SurgeTruthSource": "K-Spice NormalizedFlow vs NormalizedAsymmetricLimit"
       }
     ]

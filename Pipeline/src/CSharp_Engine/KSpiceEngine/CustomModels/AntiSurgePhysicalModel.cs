@@ -26,22 +26,22 @@ namespace KSpiceEngine.CustomModels
         public double CloseTime_s      { get; set; } = 60.0;
 
         // ── Kick-based (architecture = KickBased) ──────────────────────────
-        // surge_distance = MF + SurgeProxy_a · DP + SurgeProxy_b   (DP = P_out-P_in)
+        // surge_distance = SurgeProxy_MF_Coeff·MF + SurgeProxy_a·DP + SurgeProxy_b  (DP=P_out-P_in)
+        //
+        // The three regression coefficients are stored normalised (divided by the
+        // std-dev of the surge distance over training), so the surge distance is
+        // always in O(1) units regardless of which physical variable dominates the
+        // surge margin.  KickThreshold = 0 separates in-surge (< 0) from safe (≥ 0).
         //
         // Three regimes via hysteresis (Schmitt trigger), KickThreshold ≤ HoldThreshold:
         //   surge_distance < KickThreshold   →  IN-SURGE: kick the valve open
         //   surge_distance > HoldThreshold   →  SAFE: ramp down (slow close)
         //   between the two                  →  HOLD: u stays at u(k-1)
         //
-        // The hold band reproduces the K-Spice held-open plateau: once kicked open,
-        // the operating point typically returns to a marginal region near the surge
-        // line (not yet far away enough to be "fully safe"), so the controller
-        // refuses to close. Only when the system has clearly recovered does the
-        // slow ramp-down begin.
-        //
         // Kick rate is the TSA PidAntiSurgeParams kickPrcPerSec (constant) plus an
         // optional K-Spice FastProportionalGain-style proportional term:
         //   rate = KickRate_PrcPerSec  +  KickGain · max(0, KickThreshold - surge_distance)
+        public double SurgeProxy_MF_Coeff       { get; set; } = 1.0;  // coefficient on MassFlow (default 1 = legacy)
         public double SurgeProxy_a              { get; set; } = 0.0;
         public double SurgeProxy_b              { get; set; } = -35.0;
         public double KickThreshold            { get; set; } = 0.0;
@@ -122,6 +122,7 @@ namespace KSpiceEngine.CustomModels
                     LPFilter_Tau_s      = this.modelParameters.LPFilter_Tau_s,
                     OpenTime_s          = this.modelParameters.OpenTime_s,
                     CloseTime_s         = this.modelParameters.CloseTime_s,
+                    SurgeProxy_MF_Coeff       = this.modelParameters.SurgeProxy_MF_Coeff,
                     SurgeProxy_a              = this.modelParameters.SurgeProxy_a,
                     SurgeProxy_b              = this.modelParameters.SurgeProxy_b,
                     KickThreshold            = this.modelParameters.KickThreshold,
@@ -172,7 +173,7 @@ namespace KSpiceEngine.CustomModels
                 // ── Surge proxy: distance from surge line ──────────────────
                 // surge_distance < KickThreshold ⇒ in-surge ⇒ kick the valve
                 double DP = P_out - P_in;
-                double surgeDistanceRaw = MassFlow + p.SurgeProxy_a * DP + p.SurgeProxy_b;
+                double surgeDistanceRaw = p.SurgeProxy_MF_Coeff * MassFlow + p.SurgeProxy_a * DP + p.SurgeProxy_b;
 
                 // Optional LP filter on surge margin — gives the controller
                 // a "memory" so brief excursions out of surge don't end the hold.

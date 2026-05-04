@@ -1,6 +1,7 @@
 import os
 import glob
 import json
+import argparse
 from collections import deque
 import pandas as pd
 import numpy as np
@@ -64,15 +65,41 @@ def _find_proxy_signal(missing_comp, state_suffix, parent_comp, adj, signal_map,
     return None, None
 
 
-def plot_validation():
+def plot_validation(predictions_csv=None, kspice_csv=None, out_dir=None):
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    predictions_csv = os.path.join(base_dir, "output", "CS_Predictions.csv")
-    kspice_csv      = os.path.join(base_dir, "data", "raw", "KspiceSim.csv")
+    if predictions_csv is None:
+        predictions_csv = os.path.join(base_dir, "output", "CS_Predictions.csv")
+    if kspice_csv is None:
+        kspice_csv = os.path.join(base_dir, "data", "raw", "KspiceSim.csv")
+    if out_dir is None:
+        out_dir = os.path.join(base_dir, "output", "validation_plots")
     mapping_json    = os.path.join(base_dir, "output", "diagrams", "SignalMapping.json")
     params_json     = os.path.join(base_dir, "output", "CS_Identified_Parameters.json")
     topology_json   = os.path.join(base_dir, "output", "diagrams", "TSA_Explicit_Topology.json")
     system_map_json = os.path.join(base_dir, "data", "extracted", "KSpiceSystemMap.json")
-    out_dir         = os.path.join(base_dir, "output", "validation_plots")
+
+    # Optional sidecar fit-scores file. Written by OpenLoopTestRunner / ClosedLoopRunner
+    # next to their predictions CSV. When present, plot titles show the test/closed-loop
+    # fit instead of the training fit (which would otherwise be misleading on test data).
+    # Sidecar naming: predictions "CS_Predictions_<Tag>.csv" → fits "<Tag>_FitScores.json".
+    fits_label, override_fits = None, {}
+    pred_dir, pred_file = os.path.split(predictions_csv)
+    sidecar = None
+    if pred_file.startswith("CS_Predictions_") and pred_file.endswith(".csv"):
+        tag = pred_file[len("CS_Predictions_"):-len(".csv")]
+        if tag:
+            sidecar = os.path.join(pred_dir, f"{tag}_FitScores.json")
+            # Friendly label for the plot title — covers TestSet, ClosedLoop, ClosedLoop_Train.
+            if   tag == "TestSet":           fits_label = "Test-set fit"
+            elif tag == "ClosedLoop":        fits_label = "Closed-loop fit (test data)"
+            elif tag == "ClosedLoop_Train":  fits_label = "Closed-loop fit (training data)"
+            else:                            fits_label = f"{tag} fit"
+    if sidecar and os.path.exists(sidecar):
+        try:
+            with open(sidecar) as f:
+                override_fits = json.load(f)
+        except Exception:
+            override_fits = {}
 
     # ── Clean up old plots so stale files never accumulate ───────────────────
     if os.path.exists(out_dir):
@@ -222,8 +249,15 @@ def plot_validation():
                     gain_by_csv[csv_c] = igain
 
         # ── Build title ───────────────────────────────────────────────────────
-        fit_score = p.get('FitScore')
-        fit_str   = f"  |  Fit: {fit_score:.1f}%" if fit_score is not None else ""
+        # Prefer the test/closed-loop fit when a sidecar JSON has it — those scores
+        # describe the actual experiment being plotted; the training fit on the
+        # params JSON would be misleading.
+        if model_id in override_fits:
+            fit_score = override_fits[model_id]
+            fit_str   = f"  |  {fits_label}: {fit_score:.1f}%"
+        else:
+            fit_score = p.get('FitScore')
+            fit_str   = f"  |  Fit: {fit_score:.1f}%" if fit_score is not None else ""
         tc        = p.get('TimeConstant_s')
         tc_str    = f"  Tc={tc:.2f}s" if tc is not None else ""
         formula   = p.get('Formula', '')
@@ -301,4 +335,9 @@ def plot_validation():
 
 
 if __name__ == "__main__":
-    plot_validation()
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--predictions', help='CS_Predictions CSV path (default: output/CS_Predictions.csv)')
+    ap.add_argument('--rawcsv',      help='Raw KSpice CSV with input signals (default: data/raw/KspiceSim.csv)')
+    ap.add_argument('--outdir',      help='Output directory for validation plots (default: output/validation_plots)')
+    a = ap.parse_args()
+    plot_validation(predictions_csv=a.predictions, kspice_csv=a.rawcsv, out_dir=a.outdir)

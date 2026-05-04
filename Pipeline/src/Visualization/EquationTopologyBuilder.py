@@ -8,10 +8,16 @@ def build_eq_topology():
     out_html  = os.path.normpath(os.path.join(base, 'output', 'diagrams', 'System_TSA_State_Topology.html'))
     out_json  = os.path.normpath(os.path.join(base, 'output', 'diagrams', 'TSA_Explicit_Topology.json'))
 
+    sig_map_path = os.path.normpath(os.path.join(base, 'output', 'diagrams', 'SignalMapping.json'))
+
     with open(eq_path,  'r', encoding='utf-8') as f:
         equations = json.load(f)
     with open(map_path, 'r', encoding='utf-8') as f:
         kspice_data = json.load(f)
+    signal_map = {}
+    if os.path.exists(sig_map_path):
+        with open(sig_map_path, 'r', encoding='utf-8') as f:
+            signal_map = json.load(f)
 
     # ── Build raw connection graph (traverse through noise) ──────────────────
 
@@ -158,8 +164,16 @@ def build_eq_topology():
 
     equation_ids = {e['ID'] for e in equations}
 
-    def find_nearest_state(start_comp, target_state, traverse_upstream):
-        """BFS over the component graph; returns component names that model target_state."""
+    def find_nearest_state(start_comp, target_state, traverse_upstream,
+                           pass_through_types=None, skip_comps=None):
+        """BFS over the component graph; returns component names that model target_state.
+
+        pass_through_types: list of KSpiceType substrings to skip rather than stop at.
+        skip_comps: list of name substrings; any component whose name contains one of
+            these strings is excluded from the BFS entirely (not visited, not returned).
+            Used by SUCTION_PRESSURE to block anti-surge recirculation paths (UV valves)
+            that would otherwise lead back to the discharge-side pressure.
+        """
         found = []
         visited = set()
         queue   = [start_comp]
@@ -167,10 +181,18 @@ def build_eq_topology():
             curr = queue.pop(0)
             if curr in visited:
                 continue
+            # Skip components whose name matches a skip pattern.
+            if skip_comps and curr != start_comp:
+                if any(s.upper() in curr.upper() for s in skip_comps):
+                    continue
             visited.add(curr)
             if curr != start_comp and f"{curr}_{target_state}" in equation_ids:
-                found.append(curr)
-                continue   # stop going further along this branch
+                curr_ktype = base_types.get(curr, '')
+                if pass_through_types and any(pt in curr_ktype for pt in pass_through_types):
+                    pass  # don't stop; continue BFS through this component type
+                else:
+                    found.append(curr)
+                    continue   # stop going further along this branch
             if traverse_upstream:
                 nexts = [u for u, _ in get_upstream(curr, flow_only=True)]
             else:
@@ -216,6 +238,15 @@ def build_eq_topology():
                 for n in find_nearest_state(comp, 'MassFlow', False):
                     add_edge(f"{n}_MassFlow", cid, "m_out")
 
+            elif inp == "DOWNSTREAM_EXPORT_FLOW":
+                # Like DOWNSTREAM_FLOW but traverses PAST compressors/pumps to find
+                # the true export valve. Used for separator gas pressure: the compressor
+                # total flow includes recirculation (UV0001), so the real gas-export
+                # signal is the downstream valve (ESV0005), not the compressor suction.
+                for n in find_nearest_state(comp, 'MassFlow', False,
+                                            pass_through_types=['Compressor', 'Pump']):
+                    add_edge(f"{n}_MassFlow", cid, "m_out")
+
             elif inp == "DOWNSTREAM_FLOW_SUM":
                 for n in find_nearest_state(comp, 'MassFlow', False):
                     add_edge(f"{n}_MassFlow", cid, "m_sum")
@@ -227,6 +258,14 @@ def build_eq_topology():
 
             elif inp == "UPSTREAM_PRESSURE":
                 for n in find_nearest_state(comp, 'Pressure', True):
+                    add_edge(f"{n}_Pressure", cid, "P_in")
+
+            elif inp == "SUCTION_PRESSURE":
+                # Like UPSTREAM_PRESSURE but skips anti-surge / recirculation valves
+                # (UV-named components) so the BFS only follows the main suction path
+                # from the separator to the compressor inlet — blocking the discharge-side
+                # path that would otherwise find HX0001_Pressure (circular for P_out model).
+                for n in find_nearest_state(comp, 'Pressure', True, skip_comps=['UV', 'ASC']):
                     add_edge(f"{n}_Pressure", cid, "P_in")
 
             elif inp == "DOWNSTREAM_PRESSURE":
@@ -267,8 +306,26 @@ def build_eq_topology():
             elif inp == "LOCAL_CONTROL":
                 for u, _ in up_comps:
                     kt = base_types.get(u, '')
-                    if 'Control' in kt or 'ASC' in kt:
+                    if ('Control' in kt or 'ASC' in kt) and f"{u}_Control" in equation_ids:
                         add_edge(f"{u}_Control", cid, "U(t)")
+                # Note: no downstream-controller fallback for pumps here.
+                # Pump flow is captured by DOWNSTREAM_FLOW; the downstream valve's level
+                # controller (LIC) is not a causal driver of pump speed or flow.
+
+            elif inp == "PUMP_SPEED":
+                # Wire the pump's Speed state as an input to its Pressure equation.
+                # If a Speed equation was generated by KSpiceModelFactory (the normal
+                # case now that pumps always get a Speed state), speed_key is already
+                # in equation_ids and we just add the edge.  Only falls back to a
+                # boundary node when no Speed CSV column exists in the signal map.
+                speed_key = f"{comp}_Speed"
+                if speed_key in signal_map:
+                    if speed_key not in equation_ids:
+                        tsa_states.append({"id": speed_key,
+                                           "label": f"{comp}\n(Speed)\n[boundary]",
+                                           "shape": "box", "color": "#D9EAD3"})
+                        equation_ids.add(speed_key)
+                    add_edge(speed_key, cid, "speed")
 
             elif inp == "MEASURED_FLOW":
                 for n in find_nearest_state(comp, 'MassFlow', True)[:1]:

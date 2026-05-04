@@ -33,6 +33,10 @@ SRC_PARSER   = os.path.join(HERE, 'src', 'Parser', 'KSpiceParser.py')
 
 MAP_JSON     = os.path.join(DATA_EXT, 'KSpiceSystemMap.json')
 DEFAULT_CSV  = os.path.join(DATA_RAW,  'KspiceSim.csv')
+# Held-out test CSV (lives one level above Pipeline/). Used by the testset and
+# closedloop phases — same plant, different operating trajectory, never seen
+# during identification. Override with --testcsv.
+DEFAULT_TEST_CSV = os.path.abspath(os.path.join(HERE, '..', 'KspiceSimTestdata.csv'))
 
 
 # ---------------------------------------------------------------------------
@@ -157,11 +161,70 @@ def phase_visualize():
     _run([sys.executable, os.path.join(HERE, 'Plot_CS_Predictions.py')])
 
 
+def phase_testset(test_csv):
+    """Test 2 — apply frozen identified models to a held-out CSV (open-loop)."""
+    print("\n-- Phase 6 | Test set (frozen models on held-out CSV) ---------")
+    if not test_csv or not os.path.exists(test_csv):
+        print(f"  [SKIP] Test CSV not found: {test_csv}")
+        return
+    cmd = ['dotnet', 'run', '--project', CSHARP_PROJ, '--',
+           '--mode', 'testset',
+           '--map', MAP_JSON,
+           '--testcsv', test_csv]
+    _run(cmd)
+    # Plot test-set predictions to a separate folder
+    _run([sys.executable, os.path.join(HERE, 'Plot_CS_Predictions.py'),
+          '--predictions', os.path.join(HERE, 'output', 'CS_Predictions_TestSet.csv'),
+          '--rawcsv',      test_csv,
+          '--outdir',      os.path.join(HERE, 'output', 'validation_plots_testset')])
+
+
+def phase_closedloop(test_csv):
+    """Test 1 — closed-loop simulation on the held-out CSV (or training CSV if none)."""
+    print("\n-- Phase 7 | Closed-loop simulation ---------------------------")
+    csv_for_run = test_csv if test_csv and os.path.exists(test_csv) else None
+    cmd = ['dotnet', 'run', '--project', CSHARP_PROJ, '--',
+           '--mode', 'closedloop',
+           '--map', MAP_JSON]
+    if csv_for_run:
+        cmd += ['--testcsv', csv_for_run]
+    _run(cmd)
+    # Plot closed-loop predictions to a separate folder
+    raw_csv = csv_for_run or DEFAULT_CSV
+    _run([sys.executable, os.path.join(HERE, 'Plot_CS_Predictions.py'),
+          '--predictions', os.path.join(HERE, 'output', 'CS_Predictions_ClosedLoop.csv'),
+          '--rawcsv',      raw_csv,
+          '--outdir',      os.path.join(HERE, 'output', 'validation_plots_closedloop')])
+
+
+def phase_closedloop_train(csv_path):
+    """Test 3 — closed-loop simulation driven by the TRAINING CSV. Same machinery
+    as phase_closedloop, but writes to *_Train suffixed files so the user can
+    compare closed-loop performance on training vs held-out trajectories side by
+    side. Models are still the frozen identified params from phase 4."""
+    print("\n-- Phase 8 | Closed-loop simulation (training data) -----------")
+    if not csv_path or not os.path.exists(csv_path):
+        print(f"  [SKIP] Training CSV not found: {csv_path}")
+        return
+    cmd = ['dotnet', 'run', '--project', CSHARP_PROJ, '--',
+           '--mode', 'closedloop',
+           '--map', MAP_JSON,
+           '--csv', csv_path,
+           # No --testcsv — the C# runner falls through to --csv (training).
+           '--suffix', '_Train']
+    _run(cmd)
+    _run([sys.executable, os.path.join(HERE, 'Plot_CS_Predictions.py'),
+          '--predictions', os.path.join(HERE, 'output', 'CS_Predictions_ClosedLoop_Train.csv'),
+          '--rawcsv',      csv_path,
+          '--outdir',      os.path.join(HERE, 'output', 'validation_plots_closedloop_train')])
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
-PHASE_CHOICES = ['all', 'extract', 'equations', 'topology', 'simulate', 'visualize']
+PHASE_CHOICES = ['all', 'extract', 'equations', 'topology', 'simulate', 'visualize',
+                 'testset', 'closedloop', 'closedloop-train']
 
 
 def main():
@@ -174,8 +237,13 @@ def main():
                    help='Partial name of .mdl file in kspicefiles/ (e.g. "Rev3B")')
     p.add_argument('--csv',
                    help='Path to KSpice simulation CSV (default: data/raw/KspiceSim.csv)')
+    p.add_argument('--testcsv',
+                   help='Path to held-out test CSV used by testset/closedloop phases '
+                        f'(default: {DEFAULT_TEST_CSV})')
     p.add_argument('--phase', choices=PHASE_CHOICES, default='all',
-                   help='Which phase to run (default: all)')
+                   help='Which phase to run (default: all). The "all" option runs the '
+                        'original five phases only — use --phase testset / closedloop '
+                        'explicitly to run validation tests.')
     p.add_argument('--list', action='store_true',
                    help='List available models and exit')
     args = p.parse_args()
@@ -191,6 +259,7 @@ def main():
     csv_path = pick_csv(args.csv, mdl)
     if csv_path:
         print(f"  CSV    : {os.path.basename(csv_path)}")
+    test_csv = args.testcsv or (DEFAULT_TEST_CSV if os.path.exists(DEFAULT_TEST_CSV) else None)
 
     ph       = args.phase
     run_all  = (ph == 'all')
@@ -201,6 +270,9 @@ def main():
         if run_all or ph == 'topology':   phase_topology()
         if run_all or ph == 'simulate':   phase_simulate(csv_path)
         if run_all or ph == 'visualize':  phase_visualize()
+        if ph == 'testset':               phase_testset(test_csv)
+        if ph == 'closedloop':            phase_closedloop(test_csv)
+        if ph == 'closedloop-train':      phase_closedloop_train(csv_path)
     except subprocess.CalledProcessError as e:
         sys.exit(f"\n[ERROR] Phase failed (exit code {e.returncode}). See output above.")
 

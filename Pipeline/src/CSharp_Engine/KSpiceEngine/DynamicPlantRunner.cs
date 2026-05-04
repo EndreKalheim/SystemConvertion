@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
@@ -70,11 +70,12 @@ namespace KSpiceEngine
             foreach (var eq in equations)
             {
                 string id = (string)eq.ID;
-                string comp = (string)eq.Component;
-                string state = (string)eq.State;
-                string role = (string)eq.Role;
-                string formula = (string)eq.Formula;
-                
+                string comp           = (string)eq.Component;
+                string state          = (string)eq.State;
+                string role           = (string)eq.Role;
+                string formula        = (string)eq.Formula;
+                string controllerType = (string)eq.ControllerType ?? "";  // "PID" | "ASC" | ""
+
                 string kspiceType = compToType.ContainsKey(comp) ? compToType[comp] : "Unknown";
                 
                 string mapKey = $"{comp}_{state}";
@@ -110,7 +111,7 @@ namespace KSpiceEngine
                 //   output trace recovers the right magnitude AND sign in one
                 //   step, the same approach the old greybox pipeline used.
                 // -----------------------------------------------------
-                if (role == "Controller" && !comp.StartsWith("23ASC"))
+                if (role == "Controller" && controllerType == "PID")
                 {
                     string measMapKey = $"{comp}_Measurement";
                     string spMapKey = $"{comp}_Setpoint";
@@ -234,7 +235,7 @@ namespace KSpiceEngine
                 // -----------------------------------------------------
                 //   B. Anti-Surge Controller Modeling (ASC)
                 // -----------------------------------------------------
-                else if (role == "Controller" && kspiceType == "GenericASC")
+                else if (role == "Controller" && controllerType == "ASC")
                 {
                     Console.WriteLine($"[Model] {id}: ASC Generic Identification...");
                     
@@ -244,7 +245,15 @@ namespace KSpiceEngine
                     {
                         try
                         {
-                            double[] flow = null, press1 = null, press2 = null, pIn = null, pOut = null;
+                            double[] flow = null, pIn = null, pOut = null;
+                            string   flowName = null, pInName = null, pOutName = null;
+                            // Collect ALL pressure candidates; pick suction (lowest mean) as
+                            // pIn and discharge (highest mean) as pOut.  A simple press1/press2
+                            // pair assignment would silently drop the third signal when there
+                            // are three pressure inputs (e.g. VA0001+KA0001+HX0001), causing
+                            // the two discharge-side pressures to be picked (tiny DP ≈ 0.2 bar)
+                            // instead of the correct suction↔discharge pair (DP ≈ 24 bar).
+                            var pressCands = new List<(double[] data, string name, double mean)>();
                             foreach (var col in inputCols)
                             {
                                 var n = col.name;
@@ -255,30 +264,63 @@ namespace KSpiceEngine
                                       n.IndexOf("Performance", StringComparison.OrdinalIgnoreCase) >= 0)))
                                 {
                                     if (flow == null || n.IndexOf("FlowDP", StringComparison.OrdinalIgnoreCase) >= 0)
-                                        flow = col.data;
+                                    { flow = col.data; flowName = col.name; }
                                     continue;
                                 }
                                 if (n.IndexOf("InletPressure", StringComparison.OrdinalIgnoreCase) >= 0)
                                 {
-                                    press1 = col.data;
+                                    // Explicit K-Spice inlet-pressure signal: insert at front
+                                    double m = col.data.Average();
+                                    pressCands.Insert(0, (col.data, col.name, m));
                                     continue;
                                 }
                                 if (n.IndexOf("OutletPressure", StringComparison.OrdinalIgnoreCase) >= 0)
                                 {
-                                    press2 = col.data;
+                                    double m = col.data.Average();
+                                    pressCands.Add((col.data, col.name, m));
                                     continue;
                                 }
                                 if (col.name.Contains("Flow") || col.name.Contains("Mass"))
                                 {
-                                    if (flow == null) flow = col.data;
+                                    if (flow == null) { flow = col.data; flowName = col.name; }
                                 }
-                                else if (press1 == null) press1 = col.data;
-                                else press2 = col.data;
+                                else
+                                {
+                                    double m = col.data.Average();
+                                    pressCands.Add((col.data, col.name, m));
+                                }
                             }
-                            if (press1 != null && press2 != null) {
-                                if (press1[0] < press2[0]) { pIn = press1; pOut = press2; }
-                                else { pIn = press2; pOut = press1; }
+                            if (pressCands.Count >= 2)
+                            {
+                                // pIn = lowest mean pressure (suction side), pOut = highest (discharge)
+                                var sorted = pressCands.OrderBy(p => p.mean).ToList();
+                                pIn    = sorted[0].data; pInName  = sorted[0].name;
+                                pOut   = sorted[sorted.Count - 1].data; pOutName = sorted[sorted.Count - 1].name;
                             }
+                            else if (pressCands.Count == 1)
+                            {
+                                pIn = pressCands[0].data; pInName = pressCands[0].name;
+                            }
+
+                            // ── Resolve predicted arrays (close the identification loop) ────────
+                            // By the time the ASC is identified, upstream compressor/separator
+                            // models are already fitted and their predictions are in the dict.
+                            // Using those predicted signals instead of K-Spice truth means the
+                            // surge proxy and all threshold parameters are calibrated in the
+                            // same coordinate system the ASC will actually see in closed-loop.
+                            // Falls back to K-Spice CSV for signals not yet predicted (boundaries).
+                            double[] TryGetPred(string colName)
+                            {
+                                if (colName == null) return null;
+                                int paren = colName.IndexOf('(');
+                                string key = paren > 0 ? colName.Substring(0, paren).Trim() : colName.Trim();
+                                return predictions.TryGetValue(key, out var pred) && pred != null ? pred : null;
+                            }
+                            double[] pIn_pred   = TryGetPred(pInName)   ?? pIn;
+                            double[] pOut_pred  = TryGetPred(pOutName)  ?? pOut;
+                            double[] flow_pred  = TryGetPred(flowName)  ?? flow;
+                            bool usingPredicted = (pIn_pred != pIn || pOut_pred != pOut || flow_pred != flow);
+                            Console.WriteLine($"[Model] {id}:   ASC inputs: pIn={pInName}, pOut={pOutName}, flow={flowName}  (predicted override: {usingPredicted})");
                             
                             if (pIn != null && pOut != null && flow != null)
                             {
@@ -427,8 +469,8 @@ namespace KSpiceEngine
                                     // identification; runtime model uses raw P_in/P_out/MF only).
                                     // Fallback: derive from rising velocity of Y_true.
                                     bool[] inSurge = new bool[M];
-                                    string nfKey   = "23ASC0001:NormalizedFlow";
-                                    string nasKey  = "23ASC0001:NormalizedAsymmetricLimit";
+                                    string nfKey   = $"{comp}:NormalizedFlow";
+                                    string nasKey  = $"{comp}:NormalizedAsymmetricLimit";
                                     bool haveKspiceSurge = dataset.ContainsKey(nfKey) && dataset.ContainsKey(nasKey);
                                     if (haveKspiceSurge)
                                     {
@@ -465,13 +507,17 @@ namespace KSpiceEngine
 
                                     if (haveKspiceSurge)
                                     {
-                                        double[] nfArr  = dataset["23ASC0001:NormalizedFlow"];
-                                        double[] nasArr = dataset["23ASC0001:NormalizedAsymmetricLimit"];
+                                        // Regress predicted features against K-Spice surge margin target.
+                                        // Using pIn_pred/pOut_pred/flow_pred (predicted signals) as the
+                                        // feature matrix means the fitted a,b are calibrated to the same
+                                        // coordinate system the ASC will see at runtime in closed-loop.
+                                        double[] nfArr  = dataset[nfKey];
+                                        double[] nasArr = dataset[nasKey];
                                         for (int i = 0; i < M; i++)
                                         {
                                             double margin = nfArr[i] - nasArr[i];
-                                            double DP_i = pOut[i] - pIn[i];
-                                            double[] row = { flow[i], DP_i, 1.0 };
+                                            double DP_i = pOut_pred[i] - pIn_pred[i];
+                                            double[] row = { flow_pred[i], DP_i, 1.0 };
                                             for (int p = 0; p < 3; p++)
                                             {
                                                 Xty[p] += row[p] * margin;
@@ -487,8 +533,8 @@ namespace KSpiceEngine
                                         {
                                             double t = inSurge[i] ? -1.0 : +1.0;
                                             double w = inSurge[i] ? wSurge : wSafe;
-                                            double DP_i = pOut[i] - pIn[i];
-                                            double[] row = { flow[i], DP_i, 1.0 };
+                                            double DP_i = pOut_pred[i] - pIn_pred[i];
+                                            double[] row = { flow_pred[i], DP_i, 1.0 };
                                             for (int p = 0; p < 3; p++)
                                             {
                                                 Xty[p] += w * row[p] * t;
@@ -499,16 +545,31 @@ namespace KSpiceEngine
                                     for (int p = 0; p < 3; p++) XtX[p, p] += 1e-9;
                                     double[] beta = SolveLinearSystem(XtX, Xty, 3);
 
-                                    double surgeProxy_a = 0.0, surgeProxy_b = -35.0, kickThreshold = 0.0;
-                                    if (beta != null && nSurgeSamples > 5 && nSafeSamples > 5 && Math.Abs(beta[0]) > 1e-6)
+                                    double surgeProxy_mf = 1.0, surgeProxy_a = 0.0, surgeProxy_b = -35.0, kickThreshold = 0.0;
+                                    if (beta != null && nSurgeSamples > 5 && nSafeSamples > 5)
                                     {
-                                        // Fitted hyperplane: β0·MF + β1·DP + β2 = 0 separates safe(+) / surge(-)
-                                        // Convention used by the model: surge_distance = MF + a·DP + b,
-                                        // surge ⇔ surge_distance < 0.  Divide through by β0 and flip
-                                        // sign so the target=+1 (safe) side gives positive distance.
-                                        double sgn = beta[0] >= 0 ? 1.0 : -1.0;
-                                        surgeProxy_a = sgn * beta[1] / Math.Abs(beta[0]);
-                                        surgeProxy_b = sgn * beta[2] / Math.Abs(beta[0]);
+                                        // Store all three regression coefficients directly; normalise
+                                        // by the std-dev of the raw surge distances so the model
+                                        // output is always O(1) regardless of which physical variable
+                                        // dominates the surge margin.
+                                        //
+                                        // The regression target (NF-NAS or binary ±1) is negative for
+                                        // in-surge and positive for safe, so the raw regression output
+                                        // already has the correct sign convention: SD < 0 → in-surge.
+                                        // No sign flip needed (unlike the old /beta[0] normalisation).
+                                        double sumSd = 0, sumSd2 = 0;
+                                        for (int i = 0; i < M; i++)
+                                        {
+                                            double DP_i = pOut_pred[i] - pIn_pred[i];
+                                            double sd = beta[0] * flow_pred[i] + beta[1] * DP_i + beta[2];
+                                            sumSd += sd; sumSd2 += sd * sd;
+                                        }
+                                        double meanSd = sumSd / M;
+                                        double stdSd  = Math.Sqrt(Math.Max(1e-12, sumSd2 / M - meanSd * meanSd));
+                                        double scale  = Math.Max(1e-6, stdSd);
+                                        surgeProxy_mf = beta[0] / scale;
+                                        surgeProxy_a  = beta[1] / scale;
+                                        surgeProxy_b  = beta[2] / scale;
                                         kickThreshold = 0.0;
                                     }
 
@@ -555,7 +616,7 @@ namespace KSpiceEngine
                                     {
                                         if (inSurge[i])
                                         {
-                                            double sd = flow[i] + surgeProxy_a * (pOut[i] - pIn[i]) + surgeProxy_b;
+                                            double sd = surgeProxy_mf * flow_pred[i] + surgeProxy_a * (pOut_pred[i] - pIn_pred[i]) + surgeProxy_b;
                                             if (sd < kickThreshold) { meanSurgeDepth += (kickThreshold - sd); nDepthSamples++; }
                                         }
                                     }
@@ -577,8 +638,10 @@ namespace KSpiceEngine
                                     // linear+exponential. Smaller tau = faster initial decay,
                                     // longer tail. Range covers strong → mild exponential.
                                     double[] tauRampGrid  = { 0.0, 30.0, 60.0, 100.0, 200.0 };
-                                    double[] thrGrid      = { -7.0, -5.0, -3.0, 0.0 };
-                                    double[] holdDeltas   = { 3.0, 5.0, 8.0, 12.0, 20.0, 30.0 };
+                                    // Surge distances are normalised to unit std-dev, so
+                                    // typical in-surge values are O(0.5-2) below threshold.
+                                    double[] thrGrid      = { -2.0, -1.0, -0.5, 0.0 };
+                                    double[] holdDeltas   = { 0.5, 1.0, 1.5, 2.0, 3.0, 5.0 };
                                     // SurgeMargin_LP_Tau_s: 0 = use raw margin; >0 adds memory so
                                     // brief excursions out of surge don't end the hold prematurely.
                                     // Wider tau ⇒ longer effective hold.
@@ -599,6 +662,7 @@ namespace KSpiceEngine
                                         var m2 = new KSpiceEngine.CustomModels.AntiSurgePhysicalModel(id,
                                             new string[]{"P_in", "P_out", "Flow"}, id);
                                         m2.modelParameters.Architecture              = "KickBased";
+                                        m2.modelParameters.SurgeProxy_MF_Coeff       = surgeProxy_mf;
                                         m2.modelParameters.SurgeProxy_a              = surgeProxy_a;
                                         m2.modelParameters.SurgeProxy_b              = surgeProxy_b;
                                         m2.modelParameters.KickThreshold             = kThr;
@@ -613,7 +677,7 @@ namespace KSpiceEngine
                                         double[] ySim = new double[M];
                                         for (int i = 0; i < M; i++)
                                         {
-                                            double y = m2.Iterate(new double[]{ pIn[i], pOut[i], flow[i] }, timeBase_s)[0];
+                                            double y = m2.Iterate(new double[]{ pIn_pred[i], pOut_pred[i], flow_pred[i] }, timeBase_s)[0];
                                             ySim[i] = y;
                                             if (y > peakSim) peakSim = y;
                                             double r = Y_true[i] - y; sse2 += r * r;
@@ -718,11 +782,12 @@ namespace KSpiceEngine
 
                                     string surgeSrc = haveKspiceSurge ? "K-Spice NormalizedFlow vs NormalizedAsymmetricLimit"
                                                                        : "Y_true rising-velocity heuristic";
-                                    Console.WriteLine($"[Model] {id}:   KickBased final    fit={bestKickFit,6:F2}%  surge_dist=MF+{surgeProxy_a:F3}·DP+{surgeProxy_b:F2}, kThr={bestThr:F1}, holdThr={bestHoldThr:F1}, kr={bestKickRate:F2}%/s, kg={bestKickGain:F3}/unit, ramp={bestRamp:F1}%/min, τ_decay={bestRampTau:F1}s, τ_marg={bestMargLP:F1}s");
+                                    Console.WriteLine($"[Model] {id}:   KickBased final    fit={bestKickFit,6:F2}%  surge_dist={surgeProxy_mf:F4}·MF+{surgeProxy_a:F4}·DP+{surgeProxy_b:F4}, kThr={bestThr:F2}, holdThr={bestHoldThr:F2}, kr={bestKickRate:F2}%/s, kg={bestKickGain:F3}/unit, ramp={bestRamp:F1}%/min, τ_decay={bestRampTau:F1}s, τ_marg={bestMargLP:F1}s");
 
                                     benchmark.Add(new JObject
                                     {
                                         ["Architecture"]               = "KickBased",
+                                        ["SurgeProxy_MF_Coeff"]        = surgeProxy_mf,
                                         ["SurgeProxy_a"]               = surgeProxy_a,
                                         ["SurgeProxy_b"]               = surgeProxy_b,
                                         ["KickThreshold"]              = bestThr,
@@ -736,12 +801,13 @@ namespace KSpiceEngine
                                         ["SurgeTruthSource"]           = surgeSrc
                                     });
 
-                                    // Prefer KickBased over the OLS curve-fits as long as it's
-                                    // within 5pp of the best — physics-based behaviour matters
-                                    // more than the last few percentage points of trace fit
-                                    // (the OLS solution is dominated by P_out noise correlation
-                                    // and won't generalise to other operating conditions).
-                                    if (bestKickFit > bestFit - 5.0)
+                                    // Prefer KickBased over the OLS curve-fits whenever it achieves
+                                    // a positive fit (> 0%). Physics-based surge detection is
+                                    // essential for correct closed-loop behavior: OLS curve-fits
+                                    // output non-zero even in safe conditions (they regress the
+                                    // steady-state trace, not just surge events), causing false
+                                    // kicks and eventual closed-loop divergence.
+                                    if (bestKickFit > 0.0)
                                     {
                                         bestFit = bestKickFit;
                                         bestY   = yKick;
@@ -749,6 +815,7 @@ namespace KSpiceEngine
                                         {
                                             ["ModelType"]                  = "AntiSurgePhysicalModel",
                                             ["Architecture"]               = "KickBased",
+                                            ["SurgeProxy_MF_Coeff"]        = surgeProxy_mf,
                                             ["SurgeProxy_a"]               = surgeProxy_a,
                                             ["SurgeProxy_b"]               = surgeProxy_b,
                                             ["KickThreshold"]              = bestThr,
@@ -760,7 +827,7 @@ namespace KSpiceEngine
                                             ["SurgeMargin_LP_Tau_s"]       = bestMargLP,
                                             ["FitScore"]                   = bestKickFit,
                                             ["SurgeTruthSource"]           = surgeSrc,
-                                            ["Formula"]                    = $"surge_distance = MF + {surgeProxy_a:F3}·DP + {surgeProxy_b:F2}" + (bestMargLP > 0 ? $", LP-filtered (τ={bestMargLP:F1}s)" : "") + $";  KICK if <{bestThr:F1}: u += ({bestKickRate:F2} + {bestKickGain:F3}·max(0,{bestThr:F1}−surge_distance)) %/s·dt;  HOLD if [{bestThr:F1},{bestHoldThr:F1}]: u unchanged;  RAMP if >{bestHoldThr:F1}: u -= ({bestRamp:F1}/60" + (bestRampTau > 0 ? $" + u/{bestRampTau:F1}" : "") + ") %/s·dt"
+                                            ["Formula"]                    = $"surge_distance = {surgeProxy_mf:F4}·MF + {surgeProxy_a:F4}·DP + {surgeProxy_b:F4}" + (bestMargLP > 0 ? $", LP-filtered (τ={bestMargLP:F1}s)" : "") + $";  KICK if <{bestThr:F2}: u += ({bestKickRate:F2} + {bestKickGain:F3}·max(0,{bestThr:F2}−surge_distance)) %/s·dt;  HOLD if [{bestThr:F2},{bestHoldThr:F2}]: u unchanged;  RAMP if >{bestHoldThr:F2}: u -= ({bestRamp:F1}/60" + (bestRampTau > 0 ? $" + u/{bestRampTau:F1}" : "") + ") %/s·dt"
                                         };
                                     }
                                 }
@@ -798,83 +865,294 @@ namespace KSpiceEngine
                     }
                 }
                 
+
                 // -----------------------------------------------------
-                //   C1. Separator Pressure — PID-controlled, static linear model.
-                //       Gas pressure is driven by gas flows only. Liquid outflows
-                //       (level valves, liquid pumps) have no causal effect on gas-
-                //       phase pressure, so they are filtered out, the same way
-                //       compressor gas outflows are filtered from liquid level models.
-                //       IdentifyLinear avoids the Tc=0 degenerate case that Identify
-                //       produces when the signal has very low variance (tight PID).
+                //   C1. Separator/Tank Pressure — integrated mass balance
+                //
+                //   Gas pressure obeys dP/dt = k*(m_in - m_out). Three strategies
+                //   are tried and the one with the highest training fit is chosen:
+                //
+                //   A) IdentifyLinear on per-stream integrated flows (linear gains)
+                //   B) Identify (curvature) on per-stream integrated flows (captures
+                //      nonlinear compressibility: pressure drops faster per kg as
+                //      total gas content decreases)
+                //   C) NetMassBalance: single gain on the integrated net flow
+                //      (sum m_in – sum m_out). Fewer parameters, more robust when
+                //      individual flow signals are noisy or correlated.
                 // -----------------------------------------------------
-                else if (state == "Pressure" && kspiceType.IndexOf("Separator", StringComparison.OrdinalIgnoreCase) >= 0)
+                else if (state == "Pressure" && (
+                    kspiceType.IndexOf("Separator", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    kspiceType.IndexOf("Tank",      StringComparison.OrdinalIgnoreCase) >= 0))
                 {
                     var inputCols = FindInputSignals(id, inputEdges, signalMap, dataset, physicalNeighbors);
+                    
+                    // QUICK FIX: Gas pressure is dominated by gas flow. Liquid mass flows (which are huge due to high density)
+                    // create massive multicollinearity and closed-loop oscillation if included in the gas pressure integrator.
+                    if (id == "23VA0001_Pressure")
+                    {
+                        inputCols = inputCols.Where(c => !c.Item1.Contains("23PA0001_MassFlow") && !c.Item1.Contains("23LV0001_MassFlow") && !c.Item1.Contains("23LV0002_MassFlow")).ToList();
+                        Console.WriteLine($"  [FILTER] Excluding liquid outflows from {id} to prevent regression oscillation.");
+                    }
 
-                    // Keep all inflows (multi-phase, contain gas) and gas-handling outflows.
-                    // Exclude liquid-only outflows (level control valves, liquid pumps)
-                    // because they don't affect gas-phase pressure.
-                    inputCols = inputCols.Where(x => {
-                        bool isOutflow = x.Item1.Contains("(m_out)") || x.Item1.Contains("(m_sum)");
-                        if (!isOutflow) return true;
-                        int paren = x.Item1.IndexOf('(');
-                        string sigKey = paren > 0 ? x.Item1.Substring(0, paren) : x.Item1;
-                        int lastUs = sigKey.LastIndexOf('_');
-                        string srcComp = lastUs > 0 ? sigKey.Substring(0, lastUs) : sigKey;
-                        string ktype = compToType.ContainsKey(srcComp) ? compToType[srcComp] : "";
-                        bool isGasEquip = ktype.IndexOf("Compressor", StringComparison.OrdinalIgnoreCase) >= 0
-                                       || ktype.IndexOf("PressureSafety", StringComparison.OrdinalIgnoreCase) >= 0
-                                       || ktype.IndexOf("SafetyValve", StringComparison.OrdinalIgnoreCase) >= 0
-                                       || srcComp.IndexOf("ESV", StringComparison.OrdinalIgnoreCase) >= 0
-                                       || srcComp.IndexOf("UV", StringComparison.OrdinalIgnoreCase) >= 0;
-                        if (!isGasEquip) Console.WriteLine($"  [FILTER] Excluding liquid outflow {sigKey} from gas pressure model {id}");
-                        return isGasEquip;
-                    }).ToList();
-
-                    Console.WriteLine($"[Model] {id}: IdentifyLinear (separator pressure, {inputCols.Count} gas-relevant inputs)");
                     if (inputCols.Count > 0)
                     {
+                        // Negate outflow signals so all identified gains are positive.
+                        var signedInputs = inputCols.Select(x =>
+                        {
+                            bool isOutflow = x.Item1.Contains("(m_out)") || x.Item1.Contains("(m_sum)");
+                            if (isOutflow)
+                            {
+                                double[] neg = x.Item2.Select(v => -v).ToArray();
+                                return ($"{x.Item1}_neg", neg);
+                            }
+                            return x;
+                        }).ToList();
+
+                        // Integrate each signed flow: accum_i(t) = ∫ F_signed_i dt
+                        var integratedInputs = signedInputs.Select(x =>
+                        {
+                            double[] integ = new double[x.Item2.Length];
+                            integ[0] = 0.0;
+                            for (int j = 1; j < x.Item2.Length; j++)
+                                integ[j] = integ[j - 1] + x.Item2[j] * timeBase_s;
+                            return ($"Int_{x.Item1}", integ);
+                        }).ToList();
+
+                        int nOut = inputCols.Count(x => x.Item1.Contains("(m_out)") || x.Item1.Contains("(m_sum)"));
+                        Console.WriteLine($"[Model] {id}: Trying 3 pressure strategies, {integratedInputs.Count} inputs ({nOut} outflows negated)");
+
+                        var strategyResults = new List<(double[] ySim, double fitScore, string name, JObject mParams)>();
+
                         try
                         {
-                            var unitDataSet = BuildUnitDataSet(inputCols, Y_true, timeBase_s);
-                            var model = UnitIdentifier.IdentifyLinear(ref unitDataSet, null, false);
-                            if (model.modelParameters.Fitting.WasAbleToIdentify && unitDataSet.Y_sim != null)
+                            // ── A) IdentifyLinear — linear per-stream gains ──────────────
                             {
-                                predictions[id] = unitDataSet.Y_sim;
-                                double fitScore = model.modelParameters.Fitting.FitScorePrc;
-                                Console.WriteLine($"[SUCCESS] {id}: FitScore={fitScore:F1}%");
-                                var mParams = new JObject
+                                var ds = BuildUnitDataSet(integratedInputs, Y_true, timeBase_s);
+                                var m  = UnitIdentifier.IdentifyLinear(ref ds, null, false);
+                                if (m.modelParameters.Fitting.WasAbleToIdentify && ds.Y_sim != null)
                                 {
-                                    ["ModelType"]      = "IdentifyLinear",
-                                    ["FitScore"]       = fitScore,
-                                    ["TimeConstant_s"] = model.modelParameters.TimeConstant_s,
-                                    ["Formula"]        = $"Static Linear MISO: {inputCols.Count} gas-relevant inputs (inflows + gas outflows)"
-                                };
-                                if (model.modelParameters.LinearGains != null)
-                                {
-                                    mParams["LinearGains"] = JArray.FromObject(model.modelParameters.LinearGains);
-                                    mParams["InputNames"]  = JArray.FromObject(inputCols.Select(x => x.Item1).ToArray());
+                                    double fit = m.modelParameters.Fitting.FitScorePrc;
+                                    var p = new JObject
+                                    {
+                                        ["ModelType"]      = "IdentifyLinear_IntegratedFlow",
+                                        ["FitScore"]       = fit,
+                                        ["TimeConstant_s"] = m.modelParameters.TimeConstant_s,
+                                        ["Formula"]        = "Pressure(t) = Bias + sum(gain_i * integral(input_i * dt))  [outflows negated]"
+                                    };
+                                    if (m.modelParameters.LinearGains != null)
+                                    {
+                                        p["LinearGains"] = JArray.FromObject(m.modelParameters.LinearGains);
+                                        p["InputNames"]  = JArray.FromObject(inputCols.Select(x => x.Item1).ToArray());
+                                    }
+                                    AttachUnitParams(p, m.modelParameters);
+                                    Console.WriteLine($"[Model] {id}:   A) IdentifyLinear          fit={fit:F1}%");
+                                    strategyResults.Add((ds.Y_sim, fit, "IdentifyLinear", p));
                                 }
-                                identifiedParams[id] = mParams;
+                            }
+
+                            // ── B) Identify with curvature — nonlinear compressibility ───
+                            {
+                                var ds = BuildUnitDataSet(integratedInputs, Y_true, timeBase_s);
+                                var m  = UnitIdentifier.Identify(ref ds, null, false);
+                                if (m.modelParameters.Fitting.WasAbleToIdentify && ds.Y_sim != null)
+                                {
+                                    double fit = m.modelParameters.Fitting.FitScorePrc;
+                                    var p = new JObject
+                                    {
+                                        ["ModelType"]      = "IdentifyLinear_IntegratedFlow",
+                                        ["FitScore"]       = fit,
+                                        ["TimeConstant_s"] = m.modelParameters.TimeConstant_s,
+                                        ["Formula"]        = "Pressure(t) = Bias + sum(gain_i * integral(input_i*dt) + curv_i*(integral-U0_i)^2/UNorm_i)  [outflows negated]"
+                                    };
+                                    if (m.modelParameters.LinearGains != null)
+                                    {
+                                        p["LinearGains"] = JArray.FromObject(m.modelParameters.LinearGains);
+                                        p["InputNames"]  = JArray.FromObject(inputCols.Select(x => x.Item1).ToArray());
+                                    }
+                                    AttachUnitParams(p, m.modelParameters);
+                                    Console.WriteLine($"[Model] {id}:   B) Identify(curvature)     fit={fit:F1}%");
+                                    strategyResults.Add((ds.Y_sim, fit, "Identify+curvature", p));
+                                }
+                            }
+
+                            // ── C) NetMassBalance — single gain on net integrated flow ───
+                            {
+                                int N = signedInputs[0].Item2.Length;
+                                double[] netFlow = new double[N];
+                                for (int j = 0; j < N; j++)
+                                    foreach (var s in signedInputs) netFlow[j] += s.Item2[j];
+                                double[] netInteg = new double[N];
+                                for (int j = 1; j < N; j++)
+                                    netInteg[j] = netInteg[j - 1] + netFlow[j] * timeBase_s;
+                                var netInputs = new List<(string, double[])> { ("NetFlow(m_net)", netInteg) };
+                                var ds = BuildUnitDataSet(netInputs, Y_true, timeBase_s);
+                                var m  = UnitIdentifier.IdentifyLinear(ref ds, null, false);
+                                if (m.modelParameters.Fitting.WasAbleToIdentify && ds.Y_sim != null &&
+                                    m.modelParameters.LinearGains?.Length > 0)
+                                {
+                                    double fit  = m.modelParameters.Fitting.FitScorePrc;
+                                    double gain = m.modelParameters.LinearGains[0];
+                                    var p = new JObject
+                                    {
+                                        ["ModelType"] = "NetMassBalance",
+                                        ["FitScore"]  = fit,
+                                        ["Gain"]      = gain,
+                                        ["InputNames"] = JArray.FromObject(inputCols.Select(x => x.Item1).ToArray()),
+                                        ["Formula"]   = "Pressure(t) = y(0) + Gain * integral(net_flow * dt)  [net = sum m_in - sum m_out]"
+                                    };
+                                    AttachUnitParams(p, m.modelParameters);
+                                    Console.WriteLine($"[Model] {id}:   C) NetMassBalance           fit={fit:F1}%  gain={gain:G4}");
+                                    strategyResults.Add((ds.Y_sim, fit, "NetMassBalance", p));
+                                }
+                            }
+
+                            // ── D) IdentifyLinear, excluding high-error (surge) indices ──
+                            // Detects time steps where the pressure changes unusually fast
+                            // (5× the median rate) and excludes them from the OLS so that
+                            // the regression is not biased by the surge excursion.
+                            {
+                                int N = Y_true.Length;
+                                // Compute absolute rate of pressure change
+                                var rates = new double[N];
+                                for (int j = 1; j < N; j++)
+                                    rates[j] = Math.Abs(Y_true[j] - Y_true[j - 1]);
+                                var sortedRates = rates.OrderBy(r => r).ToArray();
+                                double median = sortedRates[N / 2];
+                                double surgeThreshold = median * 5.0;
+
+                                var excl = new List<int>();
+                                for (int j = 0; j < N; j++)
+                                    if (rates[j] > surgeThreshold) excl.Add(j);
+
+                                if (excl.Count > 0 && excl.Count < N * 0.4)
+                                {
+                                    var ds = BuildUnitDataSet(integratedInputs, Y_true, timeBase_s);
+                                    ds.IndicesToIgnore = excl;
+                                    var m = UnitIdentifier.IdentifyLinear(ref ds, null, false);
+                                    if (m.modelParameters.Fitting.WasAbleToIdentify && ds.Y_sim != null)
+                                    {
+                                        double fit = m.modelParameters.Fitting.FitScorePrc;
+                                        var p = new JObject
+                                        {
+                                            ["ModelType"]      = "IdentifyLinear_IntegratedFlow",
+                                            ["FitScore"]       = fit,
+                                            ["TimeConstant_s"] = m.modelParameters.TimeConstant_s,
+                                            ["Formula"]        = "Pressure(t) = Bias + sum(gain_i * integral(input_i * dt))  [surge indices excluded from fit]"
+                                        };
+                                        if (m.modelParameters.LinearGains != null)
+                                        {
+                                            p["LinearGains"] = JArray.FromObject(m.modelParameters.LinearGains);
+                                            p["InputNames"]  = JArray.FromObject(inputCols.Select(x => x.Item1).ToArray());
+                                        }
+                                        AttachUnitParams(p, m.modelParameters);
+                                        Console.WriteLine($"[Model] {id}:   D) IdentifyLinear(excl {excl.Count} surge pts) fit={fit:F1}%");
+                                        strategyResults.Add((ds.Y_sim, fit, "IdentifyLinear-surgeFree", p));
+                                    }
+                                }
+                            }
+
+                            // ── E) UnitIdentifier on net signed flow (single stable input) ─
+                            // Sum all signed inputs (outflows pre-negated) into one F_net.
+                            // Fit P(t) = LP(Bias + gain * F_net, Tc) on this single variable.
+                            // Avoids the ±K / ∓K multicollinearity that per-stream OLS produces
+                            // when two flows (e.g. compressor + bypass valve) are correlated —
+                            // large opposing gains amplify prediction errors in closed-loop.
+                            // No integration → no drift accumulation.  Tc naturally found by
+                            // UnitIdentifier; should recover the old ~38 s time constant.
+                            {
+                                int N2 = signedInputs[0].Item2.Length;
+                                double[] netRaw = new double[N2];
+                                for (int j = 0; j < N2; j++)
+                                    foreach (var s in signedInputs) netRaw[j] += s.Item2[j];
+                                var netInput = new List<(string, double[])> { ("NetFlow_signed", netRaw) };
+                                var ds = BuildUnitDataSet(netInput, Y_true, timeBase_s);
+                                var m  = UnitIdentifier.IdentifyLinear(ref ds, null, false);
+                                if (m.modelParameters.Fitting.WasAbleToIdentify && ds.Y_sim != null)
+                                {
+                                    double fit        = m.modelParameters.Fitting.FitScorePrc;
+                                    double singleGain = m.modelParameters.LinearGains?.Length > 0
+                                                        ? m.modelParameters.LinearGains[0] : 0.0;
+                                    var p = new JObject
+                                    {
+                                        ["ModelType"]      = "UnitIdentifier_NetSignedFlow",
+                                        ["FitScore"]       = fit,
+                                        ["TimeConstant_s"] = m.modelParameters.TimeConstant_s,
+                                        ["Formula"]        = $"Pressure(t) = LP(Bias + gain*F_net, Tc={m.modelParameters.TimeConstant_s:F1}s)  [F_net = Σm_in − Σm_out, single gain]"
+                                    };
+                                    p["LinearGains"] = JArray.FromObject(new[] { singleGain });
+                                    p["InputNames"]  = JArray.FromObject(inputCols.Select(x => x.Item1).ToArray());
+                                    AttachUnitParams(p, m.modelParameters);
+                                    Console.WriteLine($"[Model] {id}:   E) UnitIdent(net signed flow)   fit={fit:F1}%  Tc={m.modelParameters.TimeConstant_s:F1}s  gain={singleGain:G4}");
+                                    strategyResults.Add((ds.Y_sim, fit, "IdentifyLinear-rawFlows", p));
+                                }
+                            }
+
+                            // ── F) UnitIdentifier on raw signed flows (per-stream gains, leaky integrator)
+                            // This is the classic "GreyBox" approach the user requested.
+                            // Evaluator maps this to "UnitIdentifier_SignedFlows" so outflows are negated at eval,
+                            // but each stream gets its own proportional weight.
+                            {
+                                var ds = BuildUnitDataSet(signedInputs, Y_true, timeBase_s);
+                                // Identify non-integrated raw flows: dP/dt = LP( w_i*flow_i, Tc )
+                                var m = UnitIdentifier.IdentifyLinear(ref ds, null, false);
+                                if (m.modelParameters.Fitting.WasAbleToIdentify && ds.Y_sim != null)
+                                {
+                                    double fit = m.modelParameters.Fitting.FitScorePrc;
+                                    var p = new JObject
+                                    {
+                                        ["ModelType"]      = "UnitIdentifier_SignedFlows",
+                                        ["FitScore"]       = fit,
+                                        ["TimeConstant_s"] = m.modelParameters.TimeConstant_s,
+                                        ["Formula"]        = "Pressure(t) = LP(Bias + sum(gain_i * F_i), Tc)  [outflows pre-negated in evaluation]"
+                                    };
+                                    if (m.modelParameters.LinearGains != null)
+                                    {
+                                        p["LinearGains"] = JArray.FromObject(m.modelParameters.LinearGains);
+                                        p["InputNames"]  = JArray.FromObject(inputCols.Select(x => x.Item1).ToArray());
+                                    }
+                                    AttachUnitParams(p, m.modelParameters);
+                                    Console.WriteLine($"[Model] {id}:   F) UnitIdent(raw signed flows) fit={fit:F1}% Tc={m.modelParameters.TimeConstant_s:F1}s");
+                                    strategyResults.Add((ds.Y_sim, fit, "UnitIdent-SignedFlows", p));
+                                }
+                            }
+
+                            if (strategyResults.Count == 0)
+                            {
+                                Console.WriteLine($"[WARNING] {id}: All pressure strategies failed.");
+                                predictions[id] = (double[])Y_true.Clone();
+                                identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = "All pressure strategies failed" };
+                                continue;
+                            }
+
+                            // The user explicitly prefers the UnitIdentifier on raw signed flows (F) for 23VA0001
+                            var stratF = strategyResults.FirstOrDefault(r => r.name == "UnitIdent-SignedFlows");
+                            (double[] ySim, double fitScore, string name, JObject mParams) best;
+                            
+                            if (id == "23VA0001_Pressure" && stratF.name != null && stratF.fitScore >= 20.0)
+                            {
+                                best = stratF;
+                                Console.WriteLine($"[Model] {id}: Preferring Strategy F (UnitIdent-SignedFlows) fit={stratF.fitScore:F1}% as requested by user.");
                             }
                             else
                             {
-                                Console.WriteLine($"[WARNING] {id}: IdentifyLinear failed for separator pressure.");
-                                predictions[id] = (double[])Y_true.Clone();
-                                identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = "IdentifyLinear failed for separator pressure" };
+                                best = strategyResults.OrderByDescending(r => r.fitScore).First();
                             }
+                            Console.WriteLine($"[SUCCESS] {id}: Best={best.name}, FitScore={best.fitScore:F1}%");
+                            predictions[id]     = best.ySim;
+                            identifiedParams[id] = best.mParams;
                         }
                         catch (Exception ex)
                         {
+                            Console.WriteLine($"[WARNING] {id}: Pressure identification exception: {ex.Message}");
                             predictions[id] = (double[])Y_true.Clone();
                             identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = ex.Message };
                         }
                     }
                     else
                     {
-                        Console.WriteLine($"[WARNING] {id}: No gas-relevant inputs found for separator pressure.");
+                        Console.WriteLine($"[WARNING] {id}: No inputs found for separator pressure.");
                         predictions[id] = Enumerable.Repeat(0.0, numRows).ToArray();
-                        identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = "No gas-relevant input signals found in topology" };
+                        identifiedParams[id] = new JObject { ["ModelType"] = "Fallback", ["Reason"] = "No input signals found in topology" };
                     }
                 }
 
@@ -961,6 +1239,7 @@ namespace KSpiceEngine
                                 // Store original (un-negated, un-integrated) names so the plot matches CSV columns
                                 mParams["InputNames"] = JArray.FromObject(inputCols.Select(x => x.Item1).ToArray());
                             }
+                            AttachUnitParams(mParams, model.modelParameters);
                             identifiedParams[id] = mParams;
                         }
                         catch (Exception ex)
@@ -1168,6 +1447,7 @@ namespace KSpiceEngine
                                     dParams["LinearGains"] = JArray.FromObject(model.modelParameters.LinearGains);
                                     dParams["InputNames"]  = JArray.FromObject(inputCols.Select(x => x.Item1).ToArray());
                                 }
+                                AttachUnitParams(dParams, model.modelParameters);
                                 identifiedParams[id] = dParams;
                             }
                             else
@@ -1242,6 +1522,7 @@ namespace KSpiceEngine
                                 modelParams["LinearGains"] = JArray.FromObject(model.modelParameters.LinearGains);
                                 modelParams["InputNames"]  = JArray.FromObject(idInputs.Select(x => x.Item1).ToArray());
                             }
+                            AttachUnitParams(modelParams, model.modelParameters);
                             identifiedParams[id] = modelParams;
                         }
                         else
@@ -1270,6 +1551,21 @@ namespace KSpiceEngine
             Console.WriteLine($"[SUCCESS] Identified Parameters Written to {paramsOutPath}");
         }
         
+        /// <summary>
+        /// Save the bias / U0 / UNorm / curvature numbers from a TSA UnitParameters
+        /// alongside the LinearGains we already serialise. These are needed when the
+        /// model has to be re-applied to a different dataset (Tests 1 & 2) — gains
+        /// alone don't carry the operating-point offset.
+        /// </summary>
+        private static void AttachUnitParams(JObject target, TimeSeriesAnalysis.Dynamic.UnitParameters p)
+        {
+            if (p == null) return;
+            target["Bias"] = p.Bias;
+            if (p.U0 != null)         target["U0"]         = JArray.FromObject(p.U0);
+            if (p.UNorm != null)      target["UNorm"]      = JArray.FromObject(p.UNorm);
+            if (p.Curvatures != null) target["Curvatures"] = JArray.FromObject(p.Curvatures);
+        }
+
         /// <summary>
         /// Solve A·x = b for x by Gaussian elimination with partial pivoting.
         /// Returns null if A is singular. Used by the ASC linear-proxy fit.
@@ -1324,7 +1620,7 @@ namespace KSpiceEngine
         /// When a source has no direct CSV signal, performs a directional BFS through physical KSpice
         /// adjacency to find the nearest series-connected component with the same state that IS mapped.
         /// </summary>
-        private static List<(string name, double[] data)> FindInputSignals(
+        internal static List<(string name, double[] data)> FindInputSignals(
             string nodeId,
             Dictionary<string, List<(string fromNode, string label)>> inputEdges,
             Dictionary<string, string> signalMap,
@@ -1447,7 +1743,7 @@ namespace KSpiceEngine
         /// Only stream ports (Destination contains "Stream") are considered — control
         /// signal wires are ignored.
         /// </summary>
-        private static Dictionary<string, HashSet<string>> BuildPhysicalAdjacency(JArray models)
+        internal static Dictionary<string, HashSet<string>> BuildPhysicalAdjacency(JArray models)
         {
             var adj = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
 
@@ -1516,7 +1812,7 @@ namespace KSpiceEngine
             return unitDataSet;
         }
 
-        private static Dictionary<string, double[]> LoadCsvDataset(string path)
+        internal static Dictionary<string, double[]> LoadCsvDataset(string path)
         {
             var data = new Dictionary<string, List<double>>();
             var lines = File.ReadAllLines(path).Where(l => !string.IsNullOrWhiteSpace(l)).ToArray();
@@ -1545,7 +1841,7 @@ namespace KSpiceEngine
             return data.ToDictionary(kv => kv.Key, kv => kv.Value.ToArray());
         }
 
-        private static void WriteValidationCsv(Dictionary<string, double[]> dataset, Dictionary<string, double[]> predictions, Dictionary<string, string> signalMap, string path)
+        internal static void WriteValidationCsv(Dictionary<string, double[]> dataset, Dictionary<string, double[]> predictions, Dictionary<string, string> signalMap, string path)
         {
             var outputLines = new List<string>();
             int rows = dataset.First().Value.Length;

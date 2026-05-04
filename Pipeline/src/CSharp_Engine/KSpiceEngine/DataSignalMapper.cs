@@ -20,20 +20,22 @@ namespace KSpiceEngine
                 string comp = eq.Component;
                 string stateType = eq.State;
                 string role = eq.Role;
-                
+
                 string matchedHeader = FindBestMatch(csvHeaders, comp, stateType, systemMap);
                 if (matchedHeader != null) {
                     mapping[id] = matchedHeader;
                 }
 
                 // --- Automatic Missing Signal/Boundary Binding ---
-                // If it's a Controller, automatically link Setpoint and Measurement if available
-                if (role == "Controller" && stateType == "Control") {
+                // PID controllers get Setpoint + Measurement mappings used for PID identification.
+                // ASC controllers are excluded — they have no single PV/SP in the PID sense.
+                string controllerType = (string)eq.ControllerType ?? "";
+                if (role == "Controller" && stateType == "Control" && controllerType == "PID") {
                     string spMatch = FindBestMatch(csvHeaders, comp, "Setpoint", systemMap);
-                    if (spMatch != null && !comp.StartsWith("23ASC")) mapping[$"{comp}_Setpoint"] = spMatch;
-                    
+                    if (spMatch != null) mapping[$"{comp}_Setpoint"] = spMatch;
+
                     string measMatch = FindBestMatch(csvHeaders, comp, "Measurement", systemMap);
-                    if (measMatch != null && !comp.StartsWith("23ASC")) mapping[$"{comp}_Measurement"] = measMatch;
+                    if (measMatch != null) mapping[$"{comp}_Measurement"] = measMatch;
                 }
 
                 // If it's FlowEquipment, binding explicit upstream/downstream pressure for boundaries
@@ -43,12 +45,102 @@ namespace KSpiceEngine
 
                     string inPressMatch = FindBestMatch(csvHeaders, comp, "UpstreamPressure", systemMap);
                     if (inPressMatch != null) mapping[$"{comp}_UpstreamPressure"] = inPressMatch;
-                    
+
                     // Map control signal for valves (Opening / LocalControlSignalIn)
                     string ctrlMatch = FindBestMatch(csvHeaders, comp, "ControlSignal", systemMap);
                     if (ctrlMatch != null) mapping[$"{comp}_ControlSignal"] = ctrlMatch;
                 }
             }
+
+            // Second pass: controllers whose _Control mapping is missing because their
+            // ControllerOutput signal isn't logged directly in the CSV.
+            //
+            // Strategy A (cascade master): if the inner controller receives its setpoint
+            // (ExternalSetpoint) from an outer controller whose output IS in the CSV,
+            // use that outer controller's output as the proxy.  Rationale: tight inner
+            // loops (e.g. speed) track their setpoint closely, so the master output
+            // is physically equivalent and — crucially — will be PREDICTED from the
+            // relevant plant state in closed-loop (creating self-correcting feedback).
+            //
+            // Strategy B (output receiver): if no cascade master found, find the
+            // component that physically receives this controller's output and map to
+            // whatever CSV column name that input port appears under.
+            var allModels = (JArray)systemMap["Models"];
+            foreach (var eq in tsaEquations)
+            {
+                if ((string)eq.Role != "Controller") continue;
+                string comp    = (string)eq.Component;
+                string ctrlKey = $"{comp}_Control";
+                if (mapping.ContainsKey(ctrlKey)) continue;
+
+                // Locate this controller in the system map.
+                JObject ctrlModel = null;
+                foreach (var m in allModels)
+                    if (string.Equals((string)m["Name"], comp, StringComparison.OrdinalIgnoreCase))
+                        { ctrlModel = (JObject)m; break; }
+                if (ctrlModel == null) continue;
+
+                // Strategy A: ExternalSetpoint from a cascade master controller.
+                var ctrlInputs = (JArray)ctrlModel["Inputs"];
+                if (ctrlInputs != null)
+                {
+                    foreach (var inp in ctrlInputs)
+                    {
+                        string dst = (string)inp["Destination"] ?? "";
+                        if (!dst.Equals("ExternalSetpoint", StringComparison.OrdinalIgnoreCase)) continue;
+                        string src   = (string)inp["Source"] ?? "";
+                        var   match  = csvHeaders.FirstOrDefault(h =>
+                            h.Equals(src, StringComparison.OrdinalIgnoreCase));
+                        if (match != null)
+                        {
+                            mapping[ctrlKey] = match;
+                            Console.WriteLine($"[SignalMapper] {ctrlKey} -> {match} (cascade ExternalSetpoint trace)");
+                            break;
+                        }
+                    }
+                }
+                if (mapping.ContainsKey(ctrlKey)) continue;
+
+                // Strategy B: component that receives this controller's output.
+                string outputSignal = $"{comp}:ControllerOutput";
+                foreach (var model in allModels)
+                {
+                    var inputs = (JArray)model["Inputs"];
+                    if (inputs == null) continue;
+                    foreach (var inp in inputs)
+                    {
+                        string src = (string)inp["Source"] ?? "";
+                        if (!src.Equals(outputSignal, StringComparison.OrdinalIgnoreCase)) continue;
+                        string dst            = (string)inp["Destination"] ?? "";
+                        string receiverName   = (string)model["Name"] ?? "";
+                        string candidateSignal = $"{receiverName}:{dst}";
+                        var match = csvHeaders.FirstOrDefault(h =>
+                            h.Equals(candidateSignal, StringComparison.OrdinalIgnoreCase));
+                        if (match != null)
+                        {
+                            mapping[ctrlKey] = match;
+                            Console.WriteLine($"[SignalMapper] {ctrlKey} -> {match} (cascade output trace)");
+                            break;
+                        }
+                    }
+                    if (mapping.ContainsKey(ctrlKey)) break;
+                }
+            }
+
+            // Auto-detect speed signals for rotating equipment (pumps, compressors).
+            // Any CSV column ending in ":Speed" is mapped as {comp}_Speed → {col}
+            // so the topology can wire it as a PUMP_SPEED boundary input in CL.
+            foreach (var header in csvHeaders)
+            {
+                if (header.EndsWith(":Speed", StringComparison.OrdinalIgnoreCase))
+                {
+                    string compName = header.Split(':')[0];
+                    string mapKey   = $"{compName}_Speed";
+                    if (!mapping.ContainsKey(mapKey))
+                        mapping[mapKey] = header;
+                }
+            }
+
             return mapping;
         }
 
