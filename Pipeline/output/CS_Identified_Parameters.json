@@ -49,26 +49,30 @@
   },
   "23VA0001_Pressure": {
     "ModelType": "UnitIdentifier_SignedFlows",
-    "FitScore": 61.056,
-    "TimeConstant_s": 36.017,
+    "FitScore": 77.257,
+    "TimeConstant_s": 46.603,
     "Formula": "Pressure(t) = LP(Bias + sum(gain_i * F_i), Tc)  [outflows pre-negated in evaluation]",
     "LinearGains": [
-      0.46783,
-      1.617,
-      1.5453
+      0.62971,
+      2.1069,
+      0.26652,
+      2.1755
     ],
     "InputNames": [
       "25ESV0001_MassFlow(m_in)",
       "23UV0001_MassFlow(m_in)",
+      "23LV0001_MassFlow(m_out)",
       "23KA0001_MassFlow(m_out)"
     ],
-    "Bias": 27.494,
+    "Bias": 27.449,
     "U0": [
       139.95,
       12.456,
+      -26.02,
       -49.064
     ],
     "UNorm": [
+      1.0,
       1.0,
       1.0,
       1.0
@@ -815,19 +819,19 @@
   "23ASC0001_Control": {
     "ModelType": "AntiSurgePhysicalModel",
     "Architecture": "KickBased",
-    "SurgeProxy_MF_Coeff": 0.09925745131947462,
-    "SurgeProxy_a": 0.09383401813192958,
-    "SurgeProxy_b": -5.665499213447267,
+    "SurgeProxy_MF_Coeff": 0.1015716393545507,
+    "SurgeProxy_a": 0.09846126422878339,
+    "SurgeProxy_b": -5.866176084770864,
     "KickThreshold": -0.5,
-    "HoldThreshold": 0.75,
+    "HoldThreshold": 0.68359375,
     "KickRate_PrcPerSec": 6.0,
-    "KickGain_PrcPerSecPerUnit": 0.9453125,
-    "RampDown_PrcPerMin": 3.4375,
-    "RampDecay_Tau_s": 29.375,
+    "KickGain_PrcPerSecPerUnit": 1.6025390625,
+    "RampDown_PrcPerMin": 0.0,
+    "RampDecay_Tau_s": 29.9609375,
     "SurgeMargin_LP_Tau_s": 0.0,
-    "FitScore": 91.9380850743377,
+    "FitScore": 93.54420066623753,
     "SurgeTruthSource": "K-Spice NormalizedFlow vs NormalizedAsymmetricLimit",
-    "Formula": "surge_distance = 0,0993·MF + 0,0938·DP + -5,6655;  KICK if <-0,50: u += (6,00 + 0,945·max(0,-0,50−surge_distance)) %/s·dt;  HOLD if [-0,50,0,75]: u unchanged;  RAMP if >0,75: u -= (3,4/60 + u/29,4) %/s·dt",
+    "Formula": "surge_distance = 0,1016·MF + 0,0985·DP + -5,8662;  KICK if <-0,50: u += (6,00 + 1,603·max(0,-0,50−surge_distance)) %/s·dt;  HOLD if [-0,50,0,68]: u unchanged;  RAMP if >0,68: u -= (0,0/60 + u/30,0) %/s·dt",
     "Benchmark": [
       {
         "Architecture": "LinearOLS",
@@ -984,17 +988,17 @@
       },
       {
         "Architecture": "KickBased",
-        "SurgeProxy_MF_Coeff": 0.09925745131947462,
-        "SurgeProxy_a": 0.09383401813192958,
-        "SurgeProxy_b": -5.665499213447267,
+        "SurgeProxy_MF_Coeff": 0.1015716393545507,
+        "SurgeProxy_a": 0.09846126422878339,
+        "SurgeProxy_b": -5.866176084770864,
         "KickThreshold": -0.5,
-        "HoldThreshold": 0.75,
+        "HoldThreshold": 0.68359375,
         "KickRate_PrcPerSec": 6.0,
-        "KickGain_PrcPerSecPerUnit": 0.9453125,
-        "RampDown_PrcPerMin": 3.4375,
-        "RampDecay_Tau_s": 29.375,
+        "KickGain_PrcPerSecPerUnit": 1.6025390625,
+        "RampDown_PrcPerMin": 0.0,
+        "RampDecay_Tau_s": 29.9609375,
         "SurgeMargin_LP_Tau_s": 0.0,
-        "FitScore": 91.9380850743377,
+        "FitScore": 93.54420066623753,
         "SurgeTruthSource": "K-Spice NormalizedFlow vs NormalizedAsymmetricLimit"
       }
     ]

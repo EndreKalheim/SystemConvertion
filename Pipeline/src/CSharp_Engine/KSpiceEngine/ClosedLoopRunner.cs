@@ -23,25 +23,10 @@ namespace KSpiceEngine
     /// </summary>
     public static class ClosedLoopRunner
     {
-        // Model-IDs that should be driven from the CSV ground-truth column instead
-        // of being predicted. These are the "free inputs to the system" the user
-        // designated. 25ESV0001 captures combined 25HV0001/0002 flow (per the
-        // physical setup), and 23COLD0001 + exit-valve outlet pressures are
-        // boundary conditions of the open system.
-        private static readonly HashSet<string> FreeModelIds = new(StringComparer.OrdinalIgnoreCase)
-        {
-            // System inflow boundary — captures 25HV0001/0002 combined.
-            "25ESV0001_MassFlow",
-            "25ESV0001_Temperature",
-            // Cold-side reservoir — boundary, not part of the modelled plant.
-            "23COLD0001_MassFlow",
-            "23COLD0001_Pressure",
-            "23COLD0001_Temperature",
-        };
-
-        // Raw CSV column names that are also boundary signals (no model maps to them).
-        // The runner returns these straight from the dataset whenever a model's input
-        // resolves to one of these column names.
+        // Raw CSV column names that bypass the model system — no model ID maps to these.
+        // These are outlet pressures of boundary/exit components whose downstream side
+        // is outside the modelled plant. Plant-specific: update when the K-Spice model
+        // topology changes (add/remove exit valves or boundary reservoirs).
         private static readonly HashSet<string> FreeCsvColumns = new(StringComparer.OrdinalIgnoreCase)
         {
             "23COLD0001:OutletStream.p",
@@ -80,7 +65,55 @@ namespace KSpiceEngine
 
             var dataset = DynamicPlantRunner.LoadCsvDataset(csvPath);
             int N = dataset.Values.First().Length;
-            const double dt = 0.5;
+            double dt = DynamicPlantRunner.DetectTimeStep(dataset);
+
+            // Boundary model IDs: driven from CSV truth, never simulated.
+            // Seed: equations explicitly marked "Boundary" in their formula.
+            var freeModelIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var eq in equations)
+            {
+                string formula = (string)eq.Formula ?? "";
+                if (formula.IndexOf("Boundary", StringComparison.OrdinalIgnoreCase) >= 0)
+                    freeModelIds.Add((string)eq.ID);
+            }
+
+            // BFS expansion: any equation whose P_in inputs all come from already-free nodes
+            // AND has no U(t) input from a non-free (actively controlled) node is at the
+            // system inlet — its output is an external disturbance, not an internal state.
+            // The U(t) guard prevents actively-controlled valves (e.g. temperature-control
+            // valves driven by a PID) from being incorrectly marked free; those must be
+            // simulated so the controller loop remains closed. Iterating until stable
+            // handles chains of arbitrary depth. Prevents the inlet-flow ↔
+            // separator-pressure feedback loop that collapses closed-loop simulation.
+            bool inletExpanded = true;
+            while (inletExpanded)
+            {
+                inletExpanded = false;
+                foreach (var eq in equations)
+                {
+                    string id = (string)eq.ID;
+                    if (freeModelIds.Contains(id)) continue;
+                    if (!inputEdges.TryGetValue(id, out var edges)) continue;
+                    var pInSources = edges
+                        .Where(e => string.Equals(e.label, "P_in", StringComparison.OrdinalIgnoreCase))
+                        .Select(e => e.fromNode)
+                        .ToList();
+                    var uSources = edges
+                        .Where(e => string.Equals(e.label, "U(t)", StringComparison.OrdinalIgnoreCase))
+                        .Select(e => e.fromNode)
+                        .ToList();
+                    if (pInSources.Count > 0
+                        && pInSources.All(s => freeModelIds.Contains(s))
+                        && uSources.All(s => freeModelIds.Contains(s)))
+                    {
+                        freeModelIds.Add(id);
+                        inletExpanded = true;
+                    }
+                }
+            }
+
+            Console.WriteLine($"[ClosedLoop] {freeModelIds.Count} free (boundary) model IDs: "
+                            + string.Join(", ", freeModelIds.OrderBy(x => x)));
 
             // Collect the set of *predicted* model_ids first — these are the only
             // valid substitution targets. signalMap has extra convenience entries
@@ -186,7 +219,7 @@ namespace KSpiceEngine
             // returned values — predictions[id][0] is fixed at the CSV truth.
             foreach (string id in evalOrder)
             {
-                if (FreeModelIds.Contains(id) || !evaluators.ContainsKey(id)) continue;
+                if (freeModelIds.Contains(id) || !evaluators.ContainsKey(id)) continue;
                 var eval = evaluators[id];
                 if (eval.ModelType == "Fallback" || eval.ModelType == "Boundary"
                     || eval.InputContract.Count == 0) continue;
@@ -220,7 +253,7 @@ namespace KSpiceEngine
                 computedThisStep.Clear();
                 foreach (string id in evalOrder)
                 {
-                    if (FreeModelIds.Contains(id))
+                    if (freeModelIds.Contains(id))
                     {
                         predictions[id][t] = truthByModelId.TryGetValue(id, out var arr) && t < arr.Length ? arr[t] : 0;
                         computedThisStep.Add(id);
@@ -269,14 +302,14 @@ namespace KSpiceEngine
             int fitOk = 0;
             foreach (var id in allModelIds)
             {
-                if (!truthByModelId.ContainsKey(id) || FreeModelIds.Contains(id) || !evaluators.ContainsKey(id))
+                if (!truthByModelId.ContainsKey(id) || freeModelIds.Contains(id) || !evaluators.ContainsKey(id))
                     continue;
                 double f = OpenLoopTestRunner.ComputeFit(truthByModelId[id], predictions[id]);
                 Console.WriteLine($"[Model] {id} closed-loop fit = {f,6:F1}%");
                 fitOk++;
             }
 
-            DynamicPlantRunner.WriteValidationCsv(dataset, predictions, signalMap, outputCsvPath);
+            DynamicPlantRunner.WriteValidationCsv(dataset, predictions, signalMap, outputCsvPath, dt);
 
             // Persist closed-loop fits so the plotter can label each plot with the
             // actual closed-loop performance (instead of the training fit, which

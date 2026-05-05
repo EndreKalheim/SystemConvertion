@@ -44,7 +44,7 @@ namespace KSpiceEngine
 
             var dataset = DynamicPlantRunner.LoadCsvDataset(testCsvPath);
             int numRows = dataset.Values.First().Length;
-            const double timeBase_s = 0.5;
+            double timeBase_s = DynamicPlantRunner.DetectTimeStep(dataset);
 
             var predictions = new Dictionary<string, double[]>();
             int ok = 0, skipped = 0, failed = 0;
