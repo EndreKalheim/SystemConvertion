@@ -328,8 +328,18 @@ def build_eq_topology():
                     add_edge(speed_key, cid, "speed")
 
             elif inp == "MEASURED_FLOW":
-                for n in find_nearest_state(comp, 'MassFlow', True)[:1]:
-                    add_edge(f"{n}_MassFlow", cid, "y_flow")
+                # For MEASURED_FLOW (used by ASC), we want the main process flow.
+                # Skip UV (recirculation valves).
+                # We do NOT pass through Compressors because we want to measure the compressor's flow.
+                # If the flow element path hits a BlockValve first (like 23ESV0002), we shouldn't stop there
+                # because we don't always model mass flow for pass-through valves tightly.
+                candidates = find_nearest_state(comp, 'MassFlow', True,
+                                            skip_comps=['UV'],
+                                            pass_through_types=['Valve', 'BlockValve', 'ControlValve'])
+                if candidates:
+                    # Prefer the Compressor if available (e.g. 23KA0001 instead of a feed valve upstream)
+                    best = next((n for n in candidates if 'Compressor' in base_types.get(n, '')), candidates[0])
+                    add_edge(f"{best}_MassFlow", cid, "y_flow")
 
             elif inp == "MEASURED_PRESSURE":
                 for n in find_nearest_state(comp, 'Pressure', True):
@@ -375,6 +385,27 @@ def build_eq_topology():
                 # Literal state ID passed directly (e.g. "23KA0001_MassFlow" -> intra-component edge)
                 if inp in equation_ids:
                     add_edge(inp, cid, "local_var")
+
+    # ── Cascade setpoint detection ────────────────────────────────────────────
+    # When one PID/ASC's output port feeds another controller's setpoint input
+    # (e.g. 23PIC0001:ControllerOutput → 23SIC0001:ExternalSetpoint), add a
+    # "cascade_sp" edge so ClosedLoopRunner can substitute the prediction.
+    for eq in equations:
+        if eq.get('Role') != 'Controller':
+            continue
+        comp_bare = eq['Component']
+        cid_ctrl  = eq['ID']
+        for src, port in raw_ins.get(comp_bare, []):
+            if not any(tok in port for tok in ('Output', 'ControllerOutput')):
+                continue
+            src_ktype = base_types.get(src, '')
+            if not ('pid' in src_ktype.lower()
+                    or 'GenericASC' in src_ktype
+                    or 'Controller' in src_ktype):
+                continue
+            src_ctrl_id = f"{src}_Control"
+            if src_ctrl_id in equation_ids and src_ctrl_id != cid_ctrl:
+                add_edge(src_ctrl_id, cid_ctrl, "cascade_sp")
 
     # ── Render HTML with vis-network ─────────────────────────────────────────
 

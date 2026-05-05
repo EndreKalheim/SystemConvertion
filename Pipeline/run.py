@@ -44,12 +44,31 @@ DEFAULT_TEST_CSV = os.path.abspath(os.path.join(HERE, '..', 'KspiceSimTestdata.c
 # ---------------------------------------------------------------------------
 
 def find_mdl_files():
-    """Return all non-backup .mdl files in the kspicefiles directory."""
-    pattern = os.path.join(KSPICE_DIR, '**', '*.mdl')
-    return sorted(
-        f for f in glob.glob(pattern, recursive=True)
+    """Return .mdl files in kspicefiles/. For models where only a .mdl.bak exists
+    (no clean .mdl), include the .bak as a fallback so those models still appear."""
+    clean = {
+        f for f in glob.glob(os.path.join(KSPICE_DIR, '**', '*.mdl'), recursive=True)
         if not f.endswith('.bak')
-    )
+    }
+    # Include .mdl.bak only when no corresponding clean .mdl exists
+    for bak in glob.glob(os.path.join(KSPICE_DIR, '**', '*.mdl.bak'), recursive=True):
+        if bak[:-4] not in clean:   # bak[:-4] strips ".bak" → ".mdl" path
+            clean.add(bak)
+    return sorted(clean)
+
+
+def _prm_for(mdl_path):
+    """Return the matching .prm (or .prm.bak) path for a .mdl or .mdl.bak file."""
+    if mdl_path.endswith('.mdl.bak'):
+        base = mdl_path[:-8]           # strip '.mdl.bak'
+        for candidate in (base + '.prm', base + '.prm.bak'):
+            if os.path.exists(candidate):
+                return candidate
+    else:
+        candidate = mdl_path[:-4] + '.prm'   # strip '.mdl', add '.prm'
+        if os.path.exists(candidate):
+            return candidate
+    return None
 
 
 def pick_model(model_arg):
@@ -76,10 +95,7 @@ def pick_model(model_arg):
         choice = input("\nSelect model (number): ").strip()
         mdl = models[int(choice) - 1]
 
-    # Auto-find matching .prm next to the .mdl
-    prm = mdl[:-4] + '.prm'
-    prm = prm if os.path.exists(prm) else None
-
+    prm = _prm_for(mdl)
     print(f"\n  Model  : {os.path.basename(mdl)}")
     print(f"  Params : {os.path.basename(prm) if prm else '(none found)'}")
     return mdl, prm
@@ -138,6 +154,25 @@ def phase_topology():
     _run([sys.executable, os.path.join(SRC_VIS, 'EquationTopologyBuilder.py')])
 
 
+LAST_CSV_FILE = os.path.join(HERE, 'output', 'last_train_csv.txt')
+
+
+def _save_last_csv(csv_path):
+    """Persist the training CSV path so later phases (visualize, tests) know which
+    CSV to use without requiring --csv on every invocation."""
+    os.makedirs(os.path.dirname(LAST_CSV_FILE), exist_ok=True)
+    with open(LAST_CSV_FILE, 'w') as f:
+        f.write(os.path.abspath(csv_path))
+
+
+def _load_last_csv():
+    """Return the previously saved training CSV path, or None if not found."""
+    if os.path.exists(LAST_CSV_FILE):
+        path = open(LAST_CSV_FILE).read().strip()
+        return path if os.path.exists(path) else None
+    return None
+
+
 def phase_simulate(csv_path):
     print("\n-- Phase 4 | Simulate & identify (C# engine) ------------------")
     if not csv_path or not os.path.exists(csv_path):
@@ -148,17 +183,24 @@ def phase_simulate(csv_path):
            '--map', MAP_JSON,
            '--csv', csv_path]
     _run(cmd)
+    _save_last_csv(csv_path)
 
 
-def phase_visualize():
+def phase_visualize(csv_path=None):
     print("\n-- Phase 5 | Generate visualizations --------------------------")
+    # Resolve the training CSV: explicit arg > saved state > hardcoded default.
+    raw_csv = csv_path or _load_last_csv() or DEFAULT_CSV
+    if raw_csv != (csv_path or DEFAULT_CSV):
+        print(f"  (using saved training CSV: {os.path.basename(raw_csv)})")
+
     # Raw K-Spice component connectivity (overview)
     _run([sys.executable, os.path.join(SRC_VIS, 'TopologyVisualizer.py'),
           '--json', MAP_JSON,
           '--out',  os.path.join(OUT_DIAG, 'System_Topology_V2.html')])
 
     # Validation plots (uses TSA_Explicit_Topology.json from phase 3)
-    _run([sys.executable, os.path.join(HERE, 'Plot_CS_Predictions.py')])
+    _run([sys.executable, os.path.join(HERE, 'Plot_CS_Predictions.py'),
+          '--rawcsv', raw_csv])
 
 
 def phase_testset(test_csv):
@@ -224,7 +266,7 @@ def phase_closedloop_train(csv_path):
 # ---------------------------------------------------------------------------
 
 PHASE_CHOICES = ['all', 'extract', 'equations', 'topology', 'simulate', 'visualize',
-                 'testset', 'closedloop', 'closedloop-train']
+                 'testset', 'closedloop', 'closedloop-train', 'tests']
 
 
 def main():
@@ -243,7 +285,7 @@ def main():
     p.add_argument('--phase', choices=PHASE_CHOICES, default='all',
                    help='Which phase to run (default: all). The "all" option runs the '
                         'original five phases only — use --phase testset / closedloop '
-                        'explicitly to run validation tests.')
+                        'explicitly, or use "tests" to run all evaluation tests.')
     p.add_argument('--list', action='store_true',
                    help='List available models and exit')
     args = p.parse_args()
@@ -269,10 +311,10 @@ def main():
         if run_all or ph == 'equations':  phase_equations(csv_path)
         if run_all or ph == 'topology':   phase_topology()
         if run_all or ph == 'simulate':   phase_simulate(csv_path)
-        if run_all or ph == 'visualize':  phase_visualize()
-        if ph == 'testset':               phase_testset(test_csv)
-        if ph == 'closedloop':            phase_closedloop(test_csv)
-        if ph == 'closedloop-train':      phase_closedloop_train(csv_path)
+        if run_all or ph == 'visualize':  phase_visualize(csv_path)
+        if ph in ('testset', 'tests'):             phase_testset(test_csv)
+        if ph in ('closedloop', 'tests'):          phase_closedloop(test_csv)
+        if ph in ('closedloop-train', 'tests'):    phase_closedloop_train(csv_path)
     except subprocess.CalledProcessError as e:
         sys.exit(f"\n[ERROR] Phase failed (exit code {e.returncode}). See output above.")
 

@@ -401,10 +401,25 @@ namespace KSpiceEngine
                 string lookup = $"{c}_{what}";
                 if (signalMap.TryGetValue(lookup, out string col))
                 {
-                    // Setpoint is always operator input — never substitute a prediction
-                    // (operators set this from outside the modelled plant).
                     if (what == "Setpoint")
                     {
+                        // 1. Cascade: a topology cascade_sp edge means another controller
+                        //    predicts this setpoint (e.g. PIC0001 → SIC0001 setpoint).
+                        if (inputEdges.TryGetValue(ownerId, out var spEdges))
+                        {
+                            var casc = spEdges.FirstOrDefault(e =>
+                                string.Equals(e.label, "cascade_sp", StringComparison.OrdinalIgnoreCase));
+                            if (casc.fromNode != null
+                                && predictions.TryGetValue(casc.fromNode, out var cascPred))
+                                return SafeAt(cascPred, IndexFor(casc.fromNode));
+                        }
+                        // 2. Follow / ratio: the setpoint CSV column traces (via transmitter chain)
+                        //    to a modelled state being predicted — use the prediction.
+                        //    Handles SIC1001/SIC3001 whose setpoint is the measured speed of KA0001/KA2001.
+                        string traced2 = equiv?.TryResolve(col);
+                        if (traced2 != null && predictions.TryGetValue(traced2, out var followPred))
+                            return SafeAt(followPred, IndexFor(traced2));
+                        // 3. Operator input from CSV (true external setpoint).
                         if (dataset.TryGetValue(col, out var arr)) return SafeAt(arr, t);
                         return double.NaN;
                     }

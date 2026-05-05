@@ -85,7 +85,7 @@ namespace KSpiceEngine
 
                 if (role == "Controller" && controllerType == "PID")
                 {
-                    result = IdentifyPidModel(id, comp, Y_true, numRows, timeBase_s, signalMap, dataset);
+                    result = IdentifyPidModel(id, comp, Y_true, numRows, timeBase_s, signalMap, dataset, (JObject)eq);
                 }
                 else if (role == "Controller" && controllerType == "ASC")
                 {
@@ -151,7 +151,8 @@ namespace KSpiceEngine
 
         private static (double[] pred, JObject pars) IdentifyPidModel(
             string id, string comp, double[] Y_true, int numRows, double timeBase_s,
-            Dictionary<string, string> signalMap, Dictionary<string, double[]> dataset)
+            Dictionary<string, string> signalMap, Dictionary<string, double[]> dataset,
+            JObject eqDesc = null)
         {
             string measMapKey = $"{comp}_Measurement";
             string spMapKey   = $"{comp}_Setpoint";
@@ -173,23 +174,49 @@ namespace KSpiceEngine
             double[] Y_sp   = dataset[spSignal];
             try
             {
+                // PidController.Iterate clips its output to [0, 100]. When the
+                // controller output signal is in physical units (e.g. RPM ~750-984
+                // for a speed cascade), identification and simulation both fail
+                // because every sample is immediately pegged to 0 or 100.
+                // Normalise Y_true to [0, 100] before identification; denormalise
+                // the simulated prediction before returning so callers and fit
+                // scores work in the original engineering units.
+                double yMin = Y_true.Min(), yMax = Y_true.Max();
+                bool needsNorm = yMin < -1e-6 || yMax > 100 + 1e-6;
+                // If K-Spice output range is available and wider than 100, prefer
+                // it over the data range — more stable when data excitation is low.
+                if (eqDesc?["KSpice_OutRangeLow"] != null && eqDesc["KSpice_OutRangeHigh"] != null)
+                {
+                    double olo = (double)eqDesc["KSpice_OutRangeLow"];
+                    double ohi = (double)eqDesc["KSpice_OutRangeHigh"];
+                    if (ohi - olo > 100 + 1e-6) { needsNorm = true; yMin = olo; yMax = ohi; }
+                }
+                double yRange = Math.Abs(yMax - yMin);
+                double[] Y_sim = (needsNorm && yRange > 1e-9)
+                    ? Y_true.Select(v => (v - yMin) / yRange * 100.0).ToArray()
+                    : Y_true;
+                if (needsNorm)
+                    Console.WriteLine($"[Model] {id}: output range [{yMin:F1}, {yMax:F1}] — normalising to [0,100] for PID sim");
+
                 var pidData = new UnitDataSet();
                 pidData.Y_meas     = Y_meas;
                 pidData.Y_setpoint = Y_sp;
                 pidData.U = new double[numRows, 1];
-                for (int i = 0; i < numRows; i++) pidData.U[i, 0] = Y_true[i];
+                for (int i = 0; i < numRows; i++) pidData.U[i, 0] = Y_sim[i];
                 pidData.CreateTimeStamps(timeBase_s);
 
                 var pidParam = new PidIdentifier().Identify(ref pidData);
                 double Kp = pidParam.Kp, Ti = pidParam.Ti_s, Td = pidParam.Td_s;
 
-                double[] SimulateWith(double kpUse)
+                double[] SimulateWith(double kpUse, double tiUse, double tdUse)
                 {
-                    var ctrl = new PidController(timeBase_s, kpUse, Ti, Td);
-                    ctrl.WarmStart(Y_meas[0], Y_sp[0], Y_true[0]);
+                    var ctrl = new PidController(timeBase_s, kpUse, tiUse, tdUse);
+                    ctrl.WarmStart(Y_meas[0], Y_sp[0], Y_sim[0]);
                     double[] u = ctrl.Iterate(Y_meas, Y_sp);
-                    u[0] = Y_true[0];
+                    u[0] = Y_sim[0];
                     for (int i = 0; i < u.Length; i++) u[i] = Math.Max(0, Math.Min(100, u[i]));
+                    if (needsNorm && yRange > 1e-9)
+                        for (int i = 0; i < u.Length; i++) u[i] = u[i] / 100.0 * yRange + yMin;
                     return u;
                 }
 
@@ -204,11 +231,12 @@ namespace KSpiceEngine
                     return tss > 0 ? Math.Max(-100, 100 * (1 - sse / tss)) : 0;
                 }
 
-                double[] predPos = SimulateWith(Kp), predNeg = SimulateWith(-Kp);
+                double[] predPos = SimulateWith(Kp, Ti, Td), predNeg = SimulateWith(-Kp, Ti, Td);
                 double fitPos = FitPrc(predPos), fitNeg = FitPrc(predNeg);
 
                 double[] Y_pred;
                 double fitScore;
+                string source = "data-identified";
                 if (fitNeg > fitPos)
                 {
                     Kp = -Kp; Y_pred = predNeg; fitScore = fitNeg;
@@ -219,7 +247,33 @@ namespace KSpiceEngine
                     Y_pred = predPos; fitScore = fitPos;
                     Console.WriteLine($"[Model] {id}: PID identified Kp={Kp:F4}, Ti={Ti:F2}s, Td={Td:F2}s");
                 }
-                Console.WriteLine($"[SUCCESS] {id}: PID FitScore={fitScore:F1}%");
+
+                // Try K-Spice parameters as a fallback when identification is poor.
+                // K-Spice normalises error by MeasRange; convert to TSA per-unit:
+                //   Kp_tsa = Gain * 100 / MeasRange  (output is [0,100] normalised)
+                if (eqDesc?["KSpice_Gain"] != null && eqDesc["KSpice_MeasRange"] != null)
+                {
+                    double kGain  = (double)eqDesc["KSpice_Gain"];
+                    double kRange = (double)eqDesc["KSpice_MeasRange"];
+                    double kTi    = eqDesc["KSpice_Ti_s"] != null ? (double)eqDesc["KSpice_Ti_s"] : Ti;
+                    double kTd    = eqDesc["KSpice_Td_s"] != null ? (double)eqDesc["KSpice_Td_s"] : 0.0;
+                    double kKp    = kGain * 100.0 / kRange;
+                    double[] ksPos = SimulateWith(kKp,  kTi, kTd);
+                    double[] ksNeg = SimulateWith(-kKp, kTi, kTd);
+                    double fitKsPos = FitPrc(ksPos), fitKsNeg = FitPrc(ksNeg);
+                    double bestKsFit = fitKsPos >= fitKsNeg ? fitKsPos : fitKsNeg;
+                    double bestKsKp  = fitKsPos >= fitKsNeg ? kKp : -kKp;
+                    double[] bestKsPred = fitKsPos >= fitKsNeg ? ksPos : ksNeg;
+                    if (bestKsFit > fitScore)
+                    {
+                        Kp = bestKsKp; Ti = kTi; Td = kTd;
+                        Y_pred = bestKsPred; fitScore = bestKsFit;
+                        source = "K-Spice";
+                        Console.WriteLine($"[Model] {id}: K-Spice params better — Kp={Kp:G4}, Ti={Ti:F2}s (fit {fitScore:F1}%)");
+                    }
+                }
+
+                Console.WriteLine($"[SUCCESS] {id}: PID FitScore={fitScore:F1}% ({source})");
 
                 return (Y_pred, new JObject
                 {
@@ -228,7 +282,8 @@ namespace KSpiceEngine
                     ["Ti_s"]      = Ti,
                     ["Td_s"]      = Td,
                     ["FitScore"]  = fitScore,
-                    ["Formula"]   = "Incremental PI (TSA PidController, data-identified): u(k) = u(k-1) + Kp*((e(k)-e(k-1)) + dt/Ti * e(k)),  e = SP - PV"
+                    ["ParamSource"] = source,
+                    ["Formula"]   = "Incremental PI (TSA PidController): u(k) = u(k-1) + Kp*((e(k)-e(k-1)) + dt/Ti * e(k)),  e = SP - PV"
                 });
             }
             catch (Exception ex)

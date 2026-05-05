@@ -57,6 +57,10 @@ def _find_proxy_signal(missing_comp, state_suffix, parent_comp, adj, signal_map,
             if nb in visited:
                 continue
             visited.add(nb)
+            # Anti-surge recirculation valves (UV) loop back to suction and
+            # are not on the main flow path — skip them as proxy candidates.
+            if 'UV' in nb.upper():
+                continue
             candidate = f"{nb}_{state_suffix}"
             csv_col   = signal_map.get(candidate)
             if csv_col and csv_col in dataset_cols:
@@ -70,7 +74,13 @@ def plot_validation(predictions_csv=None, kspice_csv=None, out_dir=None):
     if predictions_csv is None:
         predictions_csv = os.path.join(base_dir, "output", "CS_Predictions.csv")
     if kspice_csv is None:
-        kspice_csv = os.path.join(base_dir, "data", "raw", "KspiceSim.csv")
+        # Prefer the CSV saved by the last simulate run; fall back to the default path.
+        state_file = os.path.join(base_dir, "output", "last_train_csv.txt")
+        if os.path.exists(state_file):
+            candidate = open(state_file).read().strip()
+            kspice_csv = candidate if os.path.exists(candidate) else None
+        if kspice_csv is None:
+            kspice_csv = os.path.join(base_dir, "data", "raw", "KspiceSim.csv")
     if out_dir is None:
         out_dir = os.path.join(base_dir, "output", "validation_plots")
     mapping_json    = os.path.join(base_dir, "output", "diagrams", "SignalMapping.json")

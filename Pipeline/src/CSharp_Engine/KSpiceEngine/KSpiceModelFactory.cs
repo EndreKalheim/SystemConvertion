@@ -71,6 +71,30 @@ namespace KSpiceEngine
                     if (suffix == "Control")
                         eq["ControllerType"] = ktype.Contains("GenericASC") ? "ASC" : "PID";
 
+                    // Embed K-Spice PID tuning so IdentifyPidModel can reference them.
+                    // Needed to normalise controller outputs that are in physical units
+                    // (e.g. RPM for speed controllers) rather than percent [0, 100].
+                    if (suffix == "Control" && !ktype.Contains("GenericASC"))
+                    {
+                        double? g   = (double?)pMap["Gain"];
+                        double? ti  = (double?)pMap["IntegralTime"];
+                        double? td  = (double?)pMap["DerivativeTime"];
+                        double? rlo = (double?)pMap["RangeLowLimit"];
+                        double? rhi = (double?)pMap["RangeHighLimit"];
+                        double? olo = (double?)pMap["OutputRangeLowLimit"];
+                        double? ohi = (double?)pMap["OutputRangeHighLimit"];
+                        if (g  != null) eq["KSpice_Gain"]  = g.Value;
+                        if (ti != null) eq["KSpice_Ti_s"]  = ti.Value;
+                        if (td != null) eq["KSpice_Td_s"]  = td.Value;
+                        if (rlo != null && rhi != null)
+                            eq["KSpice_MeasRange"] = rhi.Value - rlo.Value;
+                        if (olo != null && ohi != null)
+                        {
+                            eq["KSpice_OutRangeLow"]  = olo.Value;
+                            eq["KSpice_OutRangeHigh"] = ohi.Value;
+                        }
+                    }
+
                     if (pMap["M"]        != null && suffix == "MassFlow") eq["Param"] = $"Cv: {pMap["M"]}";
                     if (pMap["Diameter"] != null && suffix == "Pressure")
                         eq["Param"] = $"D: {pMap["Diameter"]} L: {pMap["Length"]}";
