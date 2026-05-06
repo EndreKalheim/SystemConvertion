@@ -1,1 +1,1 @@
-C:\Users\Endre\OneDrive\Dokumenter\sem3\TSA\SystemConvertion\KspicebigSimFixed.csv
+c:\Users\Endre\OneDrive\Dokumenter\sem3\TSA\SystemConvertion\KspiceSim.csv

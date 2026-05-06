@@ -268,7 +268,9 @@ namespace KSpiceEngine
             int nSurge = 0, nSafe = 0;
             for (int i = 0; i < M; i++) { if (inSurge[i]) nSurge++; else nSafe++; }
 
-            // Fit linear surge-margin proxy from predicted signals
+            // Fit linear surge-margin proxy from predicted signals using pressure RATIO (not difference).
+            // Surge is fundamentally a ratio phenomenon (compressor head/lift), so P_out/P_in is the
+            // physically correct metric; pressure difference at high absolute pressure is misleading.
             double[,] XtX = new double[3, 3];
             double[]  Xty = new double[3];
             if (haveKspiceSurge)
@@ -278,8 +280,8 @@ namespace KSpiceEngine
                 for (int i = 0; i < M; i++)
                 {
                     double margin = nfArr[i] - nasArr[i];
-                    double dp     = pOut_pred[i] - pIn_pred[i];
-                    double[] row  = { flow_pred[i], dp, 1.0 };
+                    double pressureRatio = (pIn_pred[i] > 0.1) ? pOut_pred[i] / pIn_pred[i] : 1.0;
+                    double[] row  = { flow_pred[i], pressureRatio, 1.0 };
                     for (int p = 0; p < 3; p++) { Xty[p] += row[p] * margin; for (int q = 0; q < 3; q++) XtX[p, q] += row[p] * row[q]; }
                 }
             }
@@ -291,8 +293,8 @@ namespace KSpiceEngine
                 {
                     double t = inSurge[i] ? -1.0 : +1.0;
                     double w = inSurge[i] ? wSurge : wSafe;
-                    double dp = pOut_pred[i] - pIn_pred[i];
-                    double[] row = { flow_pred[i], dp, 1.0 };
+                    double pressureRatio = (pIn_pred[i] > 0.1) ? pOut_pred[i] / pIn_pred[i] : 1.0;
+                    double[] row = { flow_pred[i], pressureRatio, 1.0 };
                     for (int p = 0; p < 3; p++) { Xty[p] += w * row[p] * t; for (int q = 0; q < 3; q++) XtX[p, q] += w * row[p] * row[q]; }
                 }
             }
@@ -442,7 +444,7 @@ namespace KSpiceEngine
             var (_, _, yKick) = Simulate(bestKickRate, bestKickGain, bestRamp, bestRampTau, bestMargLP, bestThr, bestHoldThr, peakPenalty);
             string surgeSrc = haveKspiceSurge ? "K-Spice NormalizedFlow vs NormalizedAsymmetricLimit"
                                               : "Y_true rising-velocity heuristic";
-            Console.WriteLine($"[Model] {id}:   KickBased final    fit={bestKickFit,6:F2}%  surge_dist={surgeProxy_mf:F4}·MF+{surgeProxy_a:F4}·DP+{surgeProxy_b:F4}, kThr={bestThr:F2}, holdThr={bestHoldThr:F2}, kr={bestKickRate:F2}%/s, kg={bestKickGain:F3}/unit, ramp={bestRamp:F1}%/min, τ_decay={bestRampTau:F1}s, τ_marg={bestMargLP:F1}s");
+            Console.WriteLine($"[Model] {id}:   KickBased final    fit={bestKickFit,6:F2}%  surge_dist={surgeProxy_mf:F4}·MF+{surgeProxy_a:F4}·PR+{surgeProxy_b:F4}, kThr={bestThr:F2}, holdThr={bestHoldThr:F2}, kr={bestKickRate:F2}%/s, kg={bestKickGain:F3}/unit, ramp={bestRamp:F1}%/min, τ_decay={bestRampTau:F1}s, τ_marg={bestMargLP:F1}s  [PR=P_out/P_in]");
 
             var entry = new JObject
             {
@@ -479,10 +481,10 @@ namespace KSpiceEngine
                 ["SurgeMargin_LP_Tau_s"]      = bestMargLP,
                 ["FitScore"]                  = bestKickFit,
                 ["SurgeTruthSource"]          = surgeSrc,
-                ["Formula"]                   = $"surge_distance = {surgeProxy_mf:F4}·MF + {surgeProxy_a:F4}·DP + {surgeProxy_b:F4}"
+                ["Formula"]                   = $"surge_distance = {surgeProxy_mf:F4}·MF + {surgeProxy_a:F4}·PR + {surgeProxy_b:F4}  [PR=P_out/P_in]"
                                                 + (bestMargLP > 0 ? $", LP-filtered (τ={bestMargLP:F1}s)" : "")
                                                 + $";  KICK if <{bestThr:F2}: u += ({bestKickRate:F2} + {bestKickGain:F3}·max(0,{bestThr:F2}−surge_distance)) %/s·dt"
-                                                + $";  HOLD if [{bestThr:F2},{bestHoldThr:F2}]: u unchanged"
+                                                + $";  HOLD if [{bestThr:F2},{bestHoldThr:F2}]: u unchanged (max {120.0:F0}s then slow ramp)"
                                                 + $";  RAMP if >{bestHoldThr:F2}: u -= ({bestRamp:F1}/60"
                                                 + (bestRampTau > 0 ? $" + u/{bestRampTau:F1}" : "") + ") %/s·dt"
             };

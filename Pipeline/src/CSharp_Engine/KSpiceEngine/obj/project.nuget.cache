@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "NXXwT9z9V4Y=",
+  "dgSpecHash": "FYlRDFeKzyw=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Endre\\OneDrive\\Dokumenter\\sem3\\TSA\\SystemConvertion\\Pipeline\\src\\CSharp_Engine\\KSpiceEngine\\KSpiceEngine.csproj",
+  "projectFilePath": "c:\\Users\\Endre\\OneDrive\\Dokumenter\\sem3\\TSA\\SystemConvertion\\Pipeline\\src\\CSharp_Engine\\KSpiceEngine\\KSpiceEngine.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Endre\\.nuget\\packages\\accord\\3.8.0\\accord.3.8.0.nupkg.sha512",
     "C:\\Users\\Endre\\.nuget\\packages\\accord.math\\3.8.0\\accord.math.3.8.0.nupkg.sha512",

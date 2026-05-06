@@ -257,7 +257,9 @@ def build_eq_topology():
                         add_edge(f"{u}_MassFlow", cid, "trunk")
 
             elif inp == "UPSTREAM_PRESSURE":
-                for n in find_nearest_state(comp, 'Pressure', True):
+                # Cap to nearest 1: prevents redundant edges when BFS reaches the same
+                # physical pressure via multiple paths (e.g. HX0001 and KA0001 for UV valves).
+                for n in find_nearest_state(comp, 'Pressure', True)[:1]:
                     add_edge(f"{n}_Pressure", cid, "P_in")
 
             elif inp == "SUCTION_PRESSURE":
@@ -270,6 +272,16 @@ def build_eq_topology():
 
             elif inp == "DOWNSTREAM_PRESSURE":
                 for n in find_nearest_state(comp, 'Pressure', False):
+                    add_edge(f"{n}_Pressure", cid, "P_out")
+
+            elif inp == "CONTAINER_PRESSURE":
+                # UV anti-surge valve: gas discharges back to the compressor suction separator.
+                # Traverse upstream, skip UV valves and FE flow elements, and pass THROUGH
+                # HeatExchanger and Compressor/Pump to find the suction Separator/Tank pressure.
+                # BFS path: UV → HX (pass-through) → KA (pass-through) → VA (Separator, stop).
+                for n in find_nearest_state(comp, 'Pressure', True,
+                                            skip_comps=['UV', 'FE'],
+                                            pass_through_types=['HeatExchanger', 'Compressor', 'Pump'])[:1]:
                     add_edge(f"{n}_Pressure", cid, "P_out")
 
             elif inp == "UPSTREAM_TEMP":
@@ -342,6 +354,8 @@ def build_eq_topology():
                     add_edge(f"{best}_MassFlow", cid, "y_flow")
 
             elif inp == "MEASURED_PRESSURE":
+                # Trace all connected pressures (e.g. from PTs). AscIdentifier sorts them by mean 
+                # to separate suction (low) from discharge (high).
                 for n in find_nearest_state(comp, 'Pressure', True):
                     add_edge(f"{n}_Pressure", cid, "y_pres")
                 for n in find_nearest_state(comp, 'Pressure', False):

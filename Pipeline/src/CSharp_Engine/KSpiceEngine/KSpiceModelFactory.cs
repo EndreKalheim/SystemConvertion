@@ -122,18 +122,33 @@ namespace KSpiceEngine
                 }
                 else if (ktype.Contains("ControlValve") || ktype.Contains("PipeFlow") || ktype.Contains("BlockValve"))
                 {
-                    // BlockValve (ESV, etc.) is modeled as a valve: Q = Cv * sqrt(dP * rho).
-                    // When no controller is wired (LOCAL_CONTROL finds no upstream PID/ASC),
-                    // DynamicPlantRunner defaults to Assumed_100% (always open).
-                    AddState("MassFlow",    "F = Cv * sqrt(dP * rho)",               new[] { "UPSTREAM_PRESSURE", "DOWNSTREAM_PRESSURE", "LOCAL_CONTROL" });
-                    AddState("Temperature", "T_out = f(T_in, P_in, P_out)",          new[] { "UPSTREAM_TEMP", "UPSTREAM_PRESSURE", "DOWNSTREAM_PRESSURE" });
+                    if (baseName.ToUpper().Contains("UV"))
+                    {
+                        // Anti-surge recirculation valve: gas flows from discharge side (HX outlet)
+                        // back to the compressor suction separator.
+                        // UPSTREAM_PRESSURE (capped to [:1] in topology builder) gives HX outlet P_in.
+                        // CONTAINER_PRESSURE traverses upstream through HX/Compressor to find the
+                        // suction separator pressure for P_out.
+                        AddState("MassFlow",    "F = Cv * sqrt(dP * rho)",      new[] { "UPSTREAM_PRESSURE", "CONTAINER_PRESSURE", "LOCAL_CONTROL" });
+                        AddState("Temperature", "T_out = f(T_in, P_in, P_out)", new[] { "UPSTREAM_TEMP", "UPSTREAM_PRESSURE", "CONTAINER_PRESSURE" });
+                    }
+                    else
+                    {
+                        // BlockValve (ESV, etc.) is modeled as a valve: Q = Cv * sqrt(dP * rho).
+                        // When no controller is wired (LOCAL_CONTROL finds no upstream PID/ASC),
+                        // DynamicPlantRunner defaults to Assumed_100% (always open).
+                        AddState("MassFlow",    "F = Cv * sqrt(dP * rho)",      new[] { "UPSTREAM_PRESSURE", "DOWNSTREAM_PRESSURE", "LOCAL_CONTROL" });
+                        AddState("Temperature", "T_out = f(T_in, P_in, P_out)", new[] { "UPSTREAM_TEMP", "UPSTREAM_PRESSURE", "DOWNSTREAM_PRESSURE" });
+                    }
                 }
                 else if (ktype.Contains("Compressor"))
                 {
-                    // Speed-controlled compressor: flow is driven by suction pressure and
-                    // the speed controller (PIC).  Speed is the direct output of the speed
-                    // controller so LOCAL_CONTROL gives a near-linear Speed model.
-                    AddState("MassFlow",    "F = f(N, P_sep)",                       new[] { "UPSTREAM_PRESSURE", "LOCAL_CONTROL" });
+                    // Compressor flow = conservation of mass from downstream HX/valves.
+                    // Using DOWNSTREAM_FLOW_SUM (same as HX equation) avoids the circular
+                    // dependency that arises when UPSTREAM_PRESSURE leaks through the UV
+                    // recirculation loop and picks up the discharge-side HX pressure, which
+                    // itself uses KA_MassFlow as a local_var input.
+                    AddState("MassFlow",    "F = sum(m_downstream)",                 new[] { "DOWNSTREAM_FLOW_SUM", "LOCAL_CONTROL" });
                     AddState("Pressure",    "P_out = P_in + Head(F, N)",             new[] { "SUCTION_PRESSURE", $"{baseName}_MassFlow", "LOCAL_CONTROL" });
                     AddState("Temperature", "T_out = T_in * (P_out/P_in)^((k-1)/k)", new[] { "UPSTREAM_TEMP", $"{baseName}_Pressure", "UPSTREAM_PRESSURE" });
                     // Speed is commanded by the speed controller; identify as linear function
@@ -178,10 +193,19 @@ namespace KSpiceEngine
                 }
                 else
                 {
-                    // Boundary source / unrecognised type — treated as measured input
-                    AddState("MassFlow",    "Boundary Flow",     new string[0]);
-                    AddState("Pressure",    "Boundary Pressure", new string[0]);
-                    AddState("Temperature", "Boundary Energy",   new string[0]);
+                    // Boundary source / unrecognised type — treated as measured input.
+                    // FlowElements measure DP → flow only; they have no absolute-pressure
+                    // or temperature state, so skip those to avoid dead topology edges.
+                    if (ktype.Contains("FlowElement") || ktype.Contains("FlowMeter"))
+                    {
+                        AddState("MassFlow", "Boundary Flow", new string[0]);
+                    }
+                    else
+                    {
+                        AddState("MassFlow",    "Boundary Flow",     new string[0]);
+                        AddState("Pressure",    "Boundary Pressure", new string[0]);
+                        AddState("Temperature", "Boundary Energy",   new string[0]);
+                    }
                 }
             }
 

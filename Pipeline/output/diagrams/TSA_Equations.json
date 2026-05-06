@@ -359,7 +359,7 @@
     "Formula": "F = Cv * sqrt(dP * rho)",
     "Inputs": [
       "UPSTREAM_PRESSURE",
-      "DOWNSTREAM_PRESSURE",
+      "CONTAINER_PRESSURE",
       "LOCAL_CONTROL"
     ],
     "Role": "FlowEquipment"
@@ -372,7 +372,7 @@
     "Inputs": [
       "UPSTREAM_TEMP",
       "UPSTREAM_PRESSURE",
-      "DOWNSTREAM_PRESSURE"
+      "CONTAINER_PRESSURE"
     ],
     "Role": "FlowEquipment"
   },
@@ -555,22 +555,6 @@
     "Role": "FlowEquipment"
   },
   {
-    "ID": "23FE1001_Pressure",
-    "Component": "23FE1001",
-    "State": "Pressure",
-    "Formula": "Boundary Pressure",
-    "Inputs": [],
-    "Role": "Volume"
-  },
-  {
-    "ID": "23FE1001_Temperature",
-    "Component": "23FE1001",
-    "State": "Temperature",
-    "Formula": "Boundary Energy",
-    "Inputs": [],
-    "Role": "FlowEquipment"
-  },
-  {
     "ID": "23ASC1001_Control",
     "Component": "23ASC1001",
     "State": "Control",
@@ -589,7 +573,7 @@
     "Formula": "F = Cv * sqrt(dP * rho)",
     "Inputs": [
       "UPSTREAM_PRESSURE",
-      "DOWNSTREAM_PRESSURE",
+      "CONTAINER_PRESSURE",
       "LOCAL_CONTROL"
     ],
     "Role": "FlowEquipment"
@@ -602,7 +586,7 @@
     "Inputs": [
       "UPSTREAM_TEMP",
       "UPSTREAM_PRESSURE",
-      "DOWNSTREAM_PRESSURE"
+      "CONTAINER_PRESSURE"
     ],
     "Role": "FlowEquipment"
   },
@@ -763,7 +747,7 @@
     "ID": "23KA1001_MassFlow",
     "Component": "23KA1001",
     "State": "MassFlow",
-    "Formula": "F = f(N, P_sep)",
+    "Formula": "F = f(P_sep, N)",
     "Inputs": [
       "UPSTREAM_PRESSURE",
       "LOCAL_CONTROL"
@@ -842,7 +826,7 @@
     "ID": "23KA0001_MassFlow",
     "Component": "23KA0001",
     "State": "MassFlow",
-    "Formula": "F = f(N, P_sep)",
+    "Formula": "F = f(P_sep, N)",
     "Inputs": [
       "UPSTREAM_PRESSURE",
       "LOCAL_CONTROL"
@@ -945,7 +929,7 @@
     "ID": "23KA3001_MassFlow",
     "Component": "23KA3001",
     "State": "MassFlow",
-    "Formula": "F = f(N, P_sep)",
+    "Formula": "F = f(P_sep, N)",
     "Inputs": [
       "UPSTREAM_PRESSURE",
       "LOCAL_CONTROL"
@@ -1051,7 +1035,7 @@
     "Formula": "F = Cv * sqrt(dP * rho)",
     "Inputs": [
       "UPSTREAM_PRESSURE",
-      "DOWNSTREAM_PRESSURE",
+      "CONTAINER_PRESSURE",
       "LOCAL_CONTROL"
     ],
     "Role": "FlowEquipment"
@@ -1064,7 +1048,7 @@
     "Inputs": [
       "UPSTREAM_TEMP",
       "UPSTREAM_PRESSURE",
-      "DOWNSTREAM_PRESSURE"
+      "CONTAINER_PRESSURE"
     ],
     "Role": "FlowEquipment"
   },
@@ -1096,7 +1080,7 @@
     "ID": "23KA2001_MassFlow",
     "Component": "23KA2001",
     "State": "MassFlow",
-    "Formula": "F = f(N, P_sep)",
+    "Formula": "F = f(P_sep, N)",
     "Inputs": [
       "UPSTREAM_PRESSURE",
       "LOCAL_CONTROL"
@@ -1178,7 +1162,7 @@
     "Formula": "F = Cv * sqrt(dP * rho)",
     "Inputs": [
       "UPSTREAM_PRESSURE",
-      "DOWNSTREAM_PRESSURE",
+      "CONTAINER_PRESSURE",
       "LOCAL_CONTROL"
     ],
     "Role": "FlowEquipment"
@@ -1191,7 +1175,7 @@
     "Inputs": [
       "UPSTREAM_TEMP",
       "UPSTREAM_PRESSURE",
-      "DOWNSTREAM_PRESSURE"
+      "CONTAINER_PRESSURE"
     ],
     "Role": "FlowEquipment"
   },
@@ -1437,22 +1421,6 @@
     "Role": "FlowEquipment"
   },
   {
-    "ID": "23FE2001_Pressure",
-    "Component": "23FE2001",
-    "State": "Pressure",
-    "Formula": "Boundary Pressure",
-    "Inputs": [],
-    "Role": "Volume"
-  },
-  {
-    "ID": "23FE2001_Temperature",
-    "Component": "23FE2001",
-    "State": "Temperature",
-    "Formula": "Boundary Energy",
-    "Inputs": [],
-    "Role": "FlowEquipment"
-  },
-  {
     "ID": "23ASC2001_Control",
     "Component": "23ASC2001",
     "State": "Control",
@@ -1567,22 +1535,6 @@
     "Component": "23FE3001",
     "State": "MassFlow",
     "Formula": "Boundary Flow",
-    "Inputs": [],
-    "Role": "FlowEquipment"
-  },
-  {
-    "ID": "23FE3001_Pressure",
-    "Component": "23FE3001",
-    "State": "Pressure",
-    "Formula": "Boundary Pressure",
-    "Inputs": [],
-    "Role": "Volume"
-  },
-  {
-    "ID": "23FE3001_Temperature",
-    "Component": "23FE3001",
-    "State": "Temperature",
-    "Formula": "Boundary Energy",
     "Inputs": [],
     "Role": "FlowEquipment"
   },

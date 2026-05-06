@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
@@ -90,7 +90,7 @@ namespace KSpiceEngine
                 else if (role == "Controller" && controllerType == "ASC")
                 {
                     var inputCols = FindInputSignals(id, inputEdges, signalMap, dataset, physicalNeighbors);
-                    if (inputCols.Count < 3)
+                    if (inputCols.Count < 2)
                     {
                         Console.WriteLine($"[WARNING] {id}: No input signals found for ASC.");
                         result = (Enumerable.Repeat(0.0, numRows).ToArray(), Fallback("No input signals found for ASC"));
@@ -121,7 +121,8 @@ namespace KSpiceEngine
                 }
                 else if (state == "MassFlow" && kspiceType.IndexOf("Valve", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
-                    result = IdentifyValveModel(id, comp, Y_true, numRows, timeBase_s, models, signalMap, dataset);
+                    var inputCols = FindInputSignals(id, inputEdges, signalMap, dataset, physicalNeighbors);
+                    result = IdentifyValveModel(id, comp, Y_true, numRows, timeBase_s, models, signalMap, dataset, inputCols);
                 }
                 else if (state == "Temperature" && IsContainerType(kspiceType))
                 {
@@ -363,7 +364,7 @@ namespace KSpiceEngine
 
         private static (double[] pred, JObject pars) IdentifyValveModel(
             string id, string comp, double[] Y_true, int numRows, double timeBase_s,
-            JArray models, Dictionary<string, string> signalMap, Dictionary<string, double[]> dataset)
+            JArray models, Dictionary<string, string> signalMap, Dictionary<string, double[]> dataset, List<(string name, double[] data)> inputCols)
         {
             Console.WriteLine($"[Model] {id}: Outlet Valve Physics Model identification");
             string compBase = comp.EndsWith("_pf", StringComparison.OrdinalIgnoreCase)
@@ -380,22 +381,28 @@ namespace KSpiceEngine
                     cv = (double)valveInfo["Parameters"]["CvCheckValveFullyOpen"];
             }
 
-            string[] pInCands  = { $"{pfComp}:InletStream.p",  $"{pfComp}:InletPressure",
-                                   signalMap.ContainsKey($"{compBase}_UpstreamPressure")   ? signalMap[$"{compBase}_UpstreamPressure"]   : null };
-            string[] pOutCands = { $"{pfComp}:OutletStream.p", $"{pfComp}:OutletPressure",
-                                   signalMap.ContainsKey($"{compBase}_DownstreamPressure") ? signalMap[$"{compBase}_DownstreamPressure"] : null };
-            string[] uCands    = {
-                signalMap.ContainsKey($"{compBase}_ControlSignal") ? signalMap[$"{compBase}_ControlSignal"] : null,
-                $"{compBase}:LocalControlSignalIn",
-                $"{compBase}:TargetPosition",
-                $"{compBase}:Opening"
-            };
-
             double[] pIn = null, pOut = null, uData = null;
             string pInCol = null, pOutCol = null, uCol = null;
-            foreach (var cand in pInCands)  { if (cand != null && dataset.ContainsKey(cand)) { pIn   = dataset[cand]; pInCol  = cand; break; } }
-            foreach (var cand in pOutCands) { if (cand != null && dataset.ContainsKey(cand)) { pOut  = dataset[cand]; pOutCol = cand; break; } }
-            foreach (var cand in uCands)    { if (cand != null && dataset.ContainsKey(cand)) { uData = dataset[cand]; uCol    = cand; break; } }
+
+            foreach (var col in inputCols)
+            {
+                if (col.name.EndsWith("(P_in)"))  { pIn = col.data; pInCol = col.name; }
+                if (col.name.EndsWith("(P_out)")) { pOut = col.data; pOutCol = col.name; }
+                if (col.name.EndsWith("(U(t))") || col.name.EndsWith("(local_var)")) { uData = col.data; uCol = col.name; }
+            }
+
+            if (pIn == null)
+            {
+                string[] pInCands = { $"{pfComp}:InletStream.p", $"{pfComp}:InletPressure", signalMap.ContainsKey($"{compBase}_UpstreamPressure") ? signalMap[$"{compBase}_UpstreamPressure"] : null };
+                foreach (var cand in pInCands) { if (cand != null && dataset.ContainsKey(cand)) { pIn = dataset[cand]; pInCol = cand; break; } }
+            }
+
+            if (pOut == null)
+            {
+                string[] pOutCands = { $"{pfComp}:OutletStream.p", $"{pfComp}:OutletPressure", signalMap.ContainsKey($"{compBase}_DownstreamPressure") ? signalMap[$"{compBase}_DownstreamPressure"] : null };
+                foreach (var cand in pOutCands) { if (cand != null && dataset.ContainsKey(cand)) { pOut = dataset[cand]; pOutCol = cand; break; } }
+            }
+
             if (uData == null) { uData = Enumerable.Repeat(100.0, numRows).ToArray(); uCol = "Assumed_100%"; }
 
             if (pIn == null || pOut == null)

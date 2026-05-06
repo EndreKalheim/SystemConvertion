@@ -26,7 +26,12 @@ namespace KSpiceEngine.CustomModels
         public double CloseTime_s      { get; set; } = 60.0;
 
         // ── Kick-based (architecture = KickBased) ──────────────────────────
-        // surge_distance = SurgeProxy_MF_Coeff·MF + SurgeProxy_a·DP + SurgeProxy_b  (DP=P_out-P_in)
+        // surge_distance = SurgeProxy_MF_Coeff·MF + SurgeProxy_a·PressureRatio + SurgeProxy_b  (PressureRatio=P_out/P_in)
+        //
+        // Uses pressure *ratio* (not difference) because surge is physically determined
+        // by compressor head (lift), which is fundamentally a ratio phenomenon. This avoids
+        // false positives at high absolute pressures and correctly prioritizes flow-to-ratio
+        // combinations that actually risk surge.
         //
         // The three regression coefficients are stored normalised (divided by the
         // std-dev of the surge distance over training), so the surge distance is
@@ -93,6 +98,8 @@ namespace KSpiceEngine.CustomModels
         private bool lpInitialized = false;
         private double surgeMarginLP = 0.0;
         private bool surgeMarginLPInitialized = false;
+        private double holdStartTime = -1.0;  // Timestamp when hold began; -1 = not in hold
+        private const double MaxHoldDuration_s = 120.0;  // Max time valve can stay held open (prevents indefinite lockout)
 
         public AntiSurgePhysicalModel()
         {
@@ -146,6 +153,7 @@ namespace KSpiceEngine.CustomModels
                 case "P_out":       return P_out;
                 case "MF":          return MF;
                 case "DP":          return P_out - P_in;
+                case "PR":          return (P_in > 0.1) ? P_out / P_in : 1.0;  // Pressure ratio (KickBased uses this)
                 case "MF2":         return MF * MF;
                 case "DP_over_MF2": return (P_out - P_in) / Math.Max(MF * MF, 1.0);
                 case "Const":       return 1.0;
@@ -172,8 +180,10 @@ namespace KSpiceEngine.CustomModels
             {
                 // ── Surge proxy: distance from surge line ──────────────────
                 // surge_distance < KickThreshold ⇒ in-surge ⇒ kick the valve
-                double DP = P_out - P_in;
-                double surgeDistanceRaw = p.SurgeProxy_MF_Coeff * MassFlow + p.SurgeProxy_a * DP + p.SurgeProxy_b;
+                // Use pressure *ratio* (P_out/P_in) instead of difference because
+                // surge risk is determined by compressor head (lift), a ratio phenomenon.
+                double PressureRatio = (P_in > 0.1) ? P_out / P_in : 1.0;
+                double surgeDistanceRaw = p.SurgeProxy_MF_Coeff * MassFlow + p.SurgeProxy_a * PressureRatio + p.SurgeProxy_b;
 
                 // Optional LP filter on surge margin — gives the controller
                 // a "memory" so brief excursions out of surge don't end the hold.
@@ -198,6 +208,7 @@ namespace KSpiceEngine.CustomModels
                                              + p.KickGain_PrcPerSecPerUnit * err;
                     uOut = uPrev + kickRatePrcPerSec * timeBase_s;
                     if (uOut > p.UMax) uOut = p.UMax;
+                    holdStartTime = -1.0;  // Exit hold when we re-enter surge
                 }
                 else if (surgeDistance > p.HoldThreshold && uPrev > p.UMin)
                 {
@@ -211,12 +222,29 @@ namespace KSpiceEngine.CustomModels
                     double rampPerSec = linearRate + expRate;
                     uOut = uPrev - rampPerSec * timeBase_s;
                     if (uOut < p.UMin) uOut = p.UMin;
+                    holdStartTime = -1.0;  // Exit hold when we enter safe region
                 }
                 else
                 {
                     // HOLD band: operating point still in marginal region — refuse
                     // to close further. Reproduces the K-Spice held-open plateau.
-                    uOut = uPrev;
+                    // However, enforce a time limit to prevent indefinite lockout:
+                    // if hold has persisted beyond MaxHoldDuration_s, begin slow ramp-down.
+                    if (holdStartTime < 0)
+                        holdStartTime = 0.0;  // Start timing the hold
+                    
+                    holdStartTime += timeBase_s;
+                    if (holdStartTime > MaxHoldDuration_s && uPrev > p.UMin)
+                    {
+                        // Hold timeout: begin gentle ramp-down to prevent indefinite closure delay
+                        double gentleRamp = (p.RampDown_PrcPerMin / 60.0) * 0.5;  // Half the normal ramp rate
+                        uOut = uPrev - gentleRamp * timeBase_s;
+                        if (uOut < p.UMin) uOut = p.UMin;
+                    }
+                    else
+                    {
+                        uOut = uPrev;
+                    }
                 }
             }
             else // LinearOLS (default fallback)
