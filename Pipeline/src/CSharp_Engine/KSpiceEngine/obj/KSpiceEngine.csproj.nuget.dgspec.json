@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "c:\\Users\\Endre\\OneDrive\\Dokumenter\\sem3\\TSA\\SystemConvertion\\Pipeline\\src\\CSharp_Engine\\KSpiceEngine\\KSpiceEngine.csproj": {}
+    "C:\\Users\\Endre\\OneDrive\\Dokumenter\\sem3\\TSA\\SystemConvertion\\Pipeline\\src\\CSharp_Engine\\KSpiceEngine\\KSpiceEngine.csproj": {}
   },
   "projects": {
-    "c:\\Users\\Endre\\OneDrive\\Dokumenter\\sem3\\TSA\\SystemConvertion\\Pipeline\\src\\CSharp_Engine\\KSpiceEngine\\KSpiceEngine.csproj": {
+    "C:\\Users\\Endre\\OneDrive\\Dokumenter\\sem3\\TSA\\SystemConvertion\\Pipeline\\src\\CSharp_Engine\\KSpiceEngine\\KSpiceEngine.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Users\\Endre\\OneDrive\\Dokumenter\\sem3\\TSA\\SystemConvertion\\Pipeline\\src\\CSharp_Engine\\KSpiceEngine\\KSpiceEngine.csproj",
+        "projectUniqueName": "C:\\Users\\Endre\\OneDrive\\Dokumenter\\sem3\\TSA\\SystemConvertion\\Pipeline\\src\\CSharp_Engine\\KSpiceEngine\\KSpiceEngine.csproj",
         "projectName": "KSpiceEngine",
-        "projectPath": "c:\\Users\\Endre\\OneDrive\\Dokumenter\\sem3\\TSA\\SystemConvertion\\Pipeline\\src\\CSharp_Engine\\KSpiceEngine\\KSpiceEngine.csproj",
+        "projectPath": "C:\\Users\\Endre\\OneDrive\\Dokumenter\\sem3\\TSA\\SystemConvertion\\Pipeline\\src\\CSharp_Engine\\KSpiceEngine\\KSpiceEngine.csproj",
         "packagesPath": "C:\\Users\\Endre\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\Endre\\OneDrive\\Dokumenter\\sem3\\TSA\\SystemConvertion\\Pipeline\\src\\CSharp_Engine\\KSpiceEngine\\obj\\",
+        "outputPath": "C:\\Users\\Endre\\OneDrive\\Dokumenter\\sem3\\TSA\\SystemConvertion\\Pipeline\\src\\CSharp_Engine\\KSpiceEngine\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -32,8 +32,8 @@
           "net10.0": {
             "targetAlias": "net10.0",
             "projectReferences": {
-              "c:\\Users\\Endre\\OneDrive\\Dokumenter\\sem3\\TSA\\SystemConvertion\\TimeSeriesAnalysis-master\\TimeSeriesAnalysis.csproj": {
-                "projectPath": "c:\\Users\\Endre\\OneDrive\\Dokumenter\\sem3\\TSA\\SystemConvertion\\TimeSeriesAnalysis-master\\TimeSeriesAnalysis.csproj"
+              "C:\\Users\\Endre\\OneDrive\\Dokumenter\\sem3\\TSA\\SystemConvertion\\TimeSeriesAnalysis-master\\TimeSeriesAnalysis.csproj": {
+                "projectPath": "C:\\Users\\Endre\\OneDrive\\Dokumenter\\sem3\\TSA\\SystemConvertion\\TimeSeriesAnalysis-master\\TimeSeriesAnalysis.csproj"
               }
             }
           }
@@ -357,14 +357,14 @@
         }
       }
     },
-    "c:\\Users\\Endre\\OneDrive\\Dokumenter\\sem3\\TSA\\SystemConvertion\\TimeSeriesAnalysis-master\\TimeSeriesAnalysis.csproj": {
+    "C:\\Users\\Endre\\OneDrive\\Dokumenter\\sem3\\TSA\\SystemConvertion\\TimeSeriesAnalysis-master\\TimeSeriesAnalysis.csproj": {
       "version": "1.4.9",
       "restore": {
-        "projectUniqueName": "c:\\Users\\Endre\\OneDrive\\Dokumenter\\sem3\\TSA\\SystemConvertion\\TimeSeriesAnalysis-master\\TimeSeriesAnalysis.csproj",
+        "projectUniqueName": "C:\\Users\\Endre\\OneDrive\\Dokumenter\\sem3\\TSA\\SystemConvertion\\TimeSeriesAnalysis-master\\TimeSeriesAnalysis.csproj",
         "projectName": "TimeSeriesAnalysis",
-        "projectPath": "c:\\Users\\Endre\\OneDrive\\Dokumenter\\sem3\\TSA\\SystemConvertion\\TimeSeriesAnalysis-master\\TimeSeriesAnalysis.csproj",
+        "projectPath": "C:\\Users\\Endre\\OneDrive\\Dokumenter\\sem3\\TSA\\SystemConvertion\\TimeSeriesAnalysis-master\\TimeSeriesAnalysis.csproj",
         "packagesPath": "C:\\Users\\Endre\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\Endre\\OneDrive\\Dokumenter\\sem3\\TSA\\SystemConvertion\\TimeSeriesAnalysis-master\\obj\\",
+        "outputPath": "C:\\Users\\Endre\\OneDrive\\Dokumenter\\sem3\\TSA\\SystemConvertion\\TimeSeriesAnalysis-master\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

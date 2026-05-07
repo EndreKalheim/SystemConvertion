@@ -126,7 +126,7 @@ namespace KSpiceEngine
                                          pIn_pred, pOut_pred, flow_pred,
                                          closeTime_s, timeBase_s, dataset, M);
             if (kick.benchmarkEntry != null) benchmark.Add(kick.benchmarkEntry);
-            if (kick.fitScore > 0.0)
+            if (kick.fitScore > bestFit)
             {
                 bestFit    = kick.fitScore;
                 bestY      = kick.y;
@@ -307,8 +307,8 @@ namespace KSpiceEngine
                 double sumSd = 0, sumSd2 = 0;
                 for (int i = 0; i < M; i++)
                 {
-                    double dp = pOut_pred[i] - pIn_pred[i];
-                    double sd = beta[0] * flow_pred[i] + beta[1] * dp + beta[2];
+                    double pressureRatio = (pIn_pred[i] > 0.1) ? pOut_pred[i] / pIn_pred[i] : 1.0;
+                    double sd = beta[0] * flow_pred[i] + beta[1] * pressureRatio + beta[2];
                     sumSd += sd; sumSd2 += sd * sd;
                 }
                 double meanSd = sumSd / M;
@@ -484,7 +484,7 @@ namespace KSpiceEngine
                 ["Formula"]                   = $"surge_distance = {surgeProxy_mf:F4}·MF + {surgeProxy_a:F4}·PR + {surgeProxy_b:F4}  [PR=P_out/P_in]"
                                                 + (bestMargLP > 0 ? $", LP-filtered (τ={bestMargLP:F1}s)" : "")
                                                 + $";  KICK if <{bestThr:F2}: u += ({bestKickRate:F2} + {bestKickGain:F3}·max(0,{bestThr:F2}−surge_distance)) %/s·dt"
-                                                + $";  HOLD if [{bestThr:F2},{bestHoldThr:F2}]: u unchanged (max {120.0:F0}s then slow ramp)"
+                                                + $";  HOLD if [{bestThr:F2},{bestHoldThr:F2}]: u unchanged"
                                                 + $";  RAMP if >{bestHoldThr:F2}: u -= ({bestRamp:F1}/60"
                                                 + (bestRampTau > 0 ? $" + u/{bestRampTau:F1}" : "") + ") %/s·dt"
             };

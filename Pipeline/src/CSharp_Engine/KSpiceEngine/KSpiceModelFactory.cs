@@ -148,7 +148,7 @@ namespace KSpiceEngine
                     // dependency that arises when UPSTREAM_PRESSURE leaks through the UV
                     // recirculation loop and picks up the discharge-side HX pressure, which
                     // itself uses KA_MassFlow as a local_var input.
-                    AddState("MassFlow",    "F = sum(m_downstream)",                 new[] { "DOWNSTREAM_FLOW_SUM", "LOCAL_CONTROL" });
+                    AddState("MassFlow",    "F = sum(m_downstream)",                 new[] { "SUCTION_PRESSURE", "LOCAL_CONTROL" });
                     AddState("Pressure",    "P_out = P_in + Head(F, N)",             new[] { "SUCTION_PRESSURE", $"{baseName}_MassFlow", "LOCAL_CONTROL" });
                     AddState("Temperature", "T_out = T_in * (P_out/P_in)^((k-1)/k)", new[] { "UPSTREAM_TEMP", $"{baseName}_Pressure", "UPSTREAM_PRESSURE" });
                     // Speed is commanded by the speed controller; identify as linear function

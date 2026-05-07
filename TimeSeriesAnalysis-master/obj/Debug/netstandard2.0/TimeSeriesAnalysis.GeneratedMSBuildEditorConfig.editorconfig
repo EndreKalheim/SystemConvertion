@@ -1,6 +1,6 @@
 is_global = true
 build_property.RootNamespace = TimeSeriesAnalysis
-build_property.ProjectDir = c:\Users\Endre\OneDrive\Dokumenter\sem3\TSA\SystemConvertion\TimeSeriesAnalysis-master\
+build_property.ProjectDir = C:\Users\Endre\OneDrive\Dokumenter\sem3\TSA\SystemConvertion\TimeSeriesAnalysis-master\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.CsWinRTUseWindowsUIXamlProjections = false

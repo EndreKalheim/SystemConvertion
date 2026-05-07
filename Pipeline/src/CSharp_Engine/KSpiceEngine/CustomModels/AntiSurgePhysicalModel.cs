@@ -92,14 +92,21 @@ namespace KSpiceEngine.CustomModels
     /// </summary>
     public class AntiSurgePhysicalModel : ModelBaseClass, ISimulatableModel
     {
+        private enum SurgePhase
+        {
+            Hold,
+            Kick,
+            Decay,
+        }
+
         public AntiSurgeParameters modelParameters = new AntiSurgeParameters();
         private double uPrev = 0.0;
         private double targetLP = 0.0;
         private bool lpInitialized = false;
         private double surgeMarginLP = 0.0;
         private bool surgeMarginLPInitialized = false;
-        private double holdStartTime = -1.0;  // Timestamp when hold began; -1 = not in hold
-        private const double MaxHoldDuration_s = 120.0;  // Max time valve can stay held open (prevents indefinite lockout)
+        private bool wasInSurge = false;
+        private SurgePhase surgePhase = SurgePhase.Hold;
 
         public AntiSurgePhysicalModel()
         {
@@ -178,6 +185,18 @@ namespace KSpiceEngine.CustomModels
 
             if (p.Architecture == "KickBased")
             {
+                double ApplyDecay(double surgeDistance)
+                {
+                    double linearRate = p.RampDown_PrcPerMin / 60.0;
+                    double expRate    = (p.RampDecay_Tau_s > 1e-9) ? uPrev / p.RampDecay_Tau_s : 0.0;
+                    double rampPerSec = linearRate + expRate;
+                    double uNext = uPrev - rampPerSec * timeBase_s;
+                    if (uNext < p.UMin) uNext = p.UMin;
+                    surgePhase = SurgePhase.Decay;
+                    wasInSurge = false;
+                    return uNext;
+                }
+
                 // ── Surge proxy: distance from surge line ──────────────────
                 // surge_distance < KickThreshold ⇒ in-surge ⇒ kick the valve
                 // Use pressure *ratio* (P_out/P_in) instead of difference because
@@ -206,43 +225,55 @@ namespace KSpiceEngine.CustomModels
                     double err = p.KickThreshold - surgeDistance; // > 0 inside surge
                     double kickRatePrcPerSec = p.KickRate_PrcPerSec
                                              + p.KickGain_PrcPerSecPerUnit * err;
+                    // If we're just entering surge, give a short burst to open faster.
+                    bool entering = !wasInSurge;
                     uOut = uPrev + kickRatePrcPerSec * timeBase_s;
+                    if (entering)
+                    {
+                        // burst multiplier (tunable via identification if desired)
+                        uOut += 5.0 * kickRatePrcPerSec * timeBase_s;
+                    }
                     if (uOut > p.UMax) uOut = p.UMax;
-                    holdStartTime = -1.0;  // Exit hold when we re-enter surge
+                    wasInSurge = true;
+                    surgePhase = SurgePhase.Kick;
                 }
-                else if (surgeDistance > p.HoldThreshold && uPrev > p.UMin)
+                else if (surgePhase == SurgePhase.Decay)
                 {
-                    // SAFE: combined linear + exponential close.
-                    //   rate = constant_floor + uPrev / decay_tau
-                    // Linear floor ensures u eventually reaches 0; exponential
-                    // term makes early decay (high u) fast and tail (low u) slow,
-                    // matching the K-Spice trace shape.
-                    double linearRate = p.RampDown_PrcPerMin / 60.0;
-                    double expRate    = (p.RampDecay_Tau_s > 1e-9) ? uPrev / p.RampDecay_Tau_s : 0.0;
-                    double rampPerSec = linearRate + expRate;
-                    uOut = uPrev - rampPerSec * timeBase_s;
-                    if (uOut < p.UMin) uOut = p.UMin;
-                    holdStartTime = -1.0;  // Exit hold when we enter safe region
+                    // Once decay has started, keep decaying until a new kick.
+                    // This prevents the valve from re-entering HOLD mid-close and
+                    // getting stranded above zero.
+                    uOut = ApplyDecay(surgeDistance);
                 }
                 else
                 {
-                    // HOLD band: operating point still in marginal region — refuse
-                    // to close further. Reproduces the K-Spice held-open plateau.
-                    // However, enforce a time limit to prevent indefinite lockout:
-                    // if hold has persisted beyond MaxHoldDuration_s, begin slow ramp-down.
-                    if (holdStartTime < 0)
-                        holdStartTime = 0.0;  // Start timing the hold
-                    
-                    holdStartTime += timeBase_s;
-                    if (holdStartTime > MaxHoldDuration_s && uPrev > p.UMin)
+                    if (surgePhase == SurgePhase.Kick)
                     {
-                        // Hold timeout: begin gentle ramp-down to prevent indefinite closure delay
-                        double gentleRamp = (p.RampDown_PrcPerMin / 60.0) * 0.5;  // Half the normal ramp rate
-                        uOut = uPrev - gentleRamp * timeBase_s;
-                        if (uOut < p.UMin) uOut = p.UMin;
+                        // Kick has already happened; move into a true hold only if
+                        // the compressor remains in the hysteresis band. Holding is
+                        // a pause between kick and recovery, not a permanent state.
+                        if (surgeDistance <= p.HoldThreshold)
+                        {
+                            surgePhase = SurgePhase.Hold;
+                            wasInSurge = false;
+                            uOut = uPrev;
+                        }
+                        else
+                        {
+                            uOut = ApplyDecay(surgeDistance);
+                        }
+                    }
+                    else if (surgeDistance > p.HoldThreshold && uPrev > p.UMin)
+                    {
+                        // Recovery is confirmed: switch to decay and keep closing.
+                        uOut = ApplyDecay(surgeDistance);
                     }
                     else
                     {
+                        // Hold is only allowed while the signal remains in the
+                        // hysteresis band. If we already started decaying, the
+                        // decay state owns the tail until a new kick occurs.
+                        surgePhase = SurgePhase.Hold;
+                        wasInSurge = false;
                         uOut = uPrev;
                     }
                 }
@@ -293,6 +324,8 @@ namespace KSpiceEngine.CustomModels
             targetLP = uPrev;
             lpInitialized = true;
             surgeMarginLPInitialized = false; // initialized lazily on first Iterate
+            surgePhase = SurgePhase.Hold;
+            wasInSurge = false;
         }
 
         public double? GetSteadyStateInput(double x0, int inputIdx=0, double[] givenInputValues=null) { return null; }
