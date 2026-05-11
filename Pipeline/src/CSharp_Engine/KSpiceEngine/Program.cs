@@ -21,6 +21,7 @@ namespace KSpiceEngine
             string mapPath = null;
             string csvPath = null;
             string testCsvPath = null;
+            string selectedKspiceModel = null;
             // Output filename suffix — lets the same closedloop mode write to either
             // CS_Predictions_ClosedLoop.csv (default) or CS_Predictions_ClosedLoop_Train.csv
             // when run on the training CSV, so the two runs don't clobber each other.
@@ -33,6 +34,7 @@ namespace KSpiceEngine
                 if (args[i] == "--csv")     csvPath = args[i + 1];
                 if (args[i] == "--testcsv") testCsvPath = args[i + 1];
                 if (args[i] == "--suffix")  suffix = args[i + 1];
+                if (args[i] == "--kspicemdl") selectedKspiceModel = args[i + 1];
             }
 
             // Default paths: relative to the build-output directory (same as before)
@@ -120,7 +122,7 @@ namespace KSpiceEngine
                         return;
                     }
 
-                    DynamicPlantRunner.RunPlantSimulations(csvPath, mapPath, eqMapPath, sigMapPath, predPath);
+                    DynamicPlantRunner.RunPlantSimulations(csvPath, mapPath, eqMapPath, sigMapPath, predPath, selectedKspiceModel);
                     Console.WriteLine($"[SUCCESS] Predictions -> {predPath}");
                 }
 

@@ -38,6 +38,7 @@ namespace KSpiceEngine
         private UnitModel unitModel;
         private CustomModels.ValvePhysicsModel valveModel;
         private CustomModels.AntiSurgePhysicalModel ascModel;
+        private CustomModels.HeatExchangerTemperatureModel hxTempModel;
         private PidController pidController;
 
         // Integrator-style state for IdentifyLinear_IntegratedFlow.
@@ -131,6 +132,17 @@ namespace KSpiceEngine
                         slots.Add(new InputSlot { SourceKey = (string)simInputs[1], Label = "P_out" });
                         slots.Add(new InputSlot { SourceKey = (string)simInputs[2], Label = "U" });
                     }
+                    return slots;
+
+                case "HeatExchangerTemperatureModel":
+                    slots.Add(new InputSlot { SourceKey = $"@HX_Tin:{comp}",        Label = "UPSTREAM_TEMP"   });
+                    // GasFlowSourceId: if the identifier was trained against a specific model
+                    // (e.g. 23KA0001_MassFlow) instead of what the topology routes, use that
+                    // same model ID directly so closed-loop uses the same signal as training.
+                    string gasFlowSrc = (string)p["GasFlowSourceId"];
+                    slots.Add(new InputSlot { SourceKey = gasFlowSrc ?? $"@HX_Flow:{comp}", Label = "MassFlow" });
+                    slots.Add(new InputSlot { SourceKey = $"@HX_CoolTemp:{comp}",   Label = "COOLING_TEMP"    });
+                    slots.Add(new InputSlot { SourceKey = $"@HX_PartnerFlow:{comp}", Label = "PARTNER_FLOW"    });
                     return slots;
 
                 case "IdentifyLinear":
@@ -230,6 +242,19 @@ namespace KSpiceEngine
                     return;
                 }
 
+                case "HeatExchangerTemperatureModel":
+                {
+                    hxTempModel = new CustomModels.HeatExchangerTemperatureModel(
+                        ID, new[] { "Tin", "MassFlow", "CoolTemp", "PartnerFlow" }, ID);
+                    hxTempModel.modelParameters.Subtype       = (string)p["Subtype"]        ?? "GasSide";
+                    hxTempModel.modelParameters.Bias          = (double?)p["Bias"]          ?? 0.0;
+                    hxTempModel.modelParameters.Alpha         = (double?)p["Alpha"]         ?? 0.5;
+                    hxTempModel.modelParameters.GainGas       = (double?)p["GainGas"]       ?? 0.0;
+                    hxTempModel.modelParameters.GainWater     = (double?)p["GainWater"]     ?? 0.0;
+                    hxTempModel.modelParameters.CapacityRatio = (double?)p["CapacityRatio"] ?? 1.0;
+                    return;
+                }
+
                 case "IdentifyLinear":
                 case "UnitIdentifier":
                 case "UnitIdentifier_SignedFlows":
@@ -284,6 +309,7 @@ namespace KSpiceEngine
                     netBalanceAccum = 0.0;
                     return;
                 }
+
             }
         }
 
@@ -298,8 +324,9 @@ namespace KSpiceEngine
             lastOutput = initialOutput;
             pidPrimed  = false;
             pidLastY   = initialOutput;
-            if (ascModel != null)   ascModel.WarmStart(null, initialOutput);
-            if (valveModel != null) valveModel.WarmStart(null, initialOutput);
+            if (ascModel != null)    ascModel.WarmStart(null, initialOutput);
+            if (valveModel != null)  valveModel.WarmStart(null, initialOutput);
+            if (hxTempModel != null) hxTempModel.WarmStart(null, initialOutput);
             if (integratorAccum != null)
             {
                 Array.Clear(integratorAccum, 0, integratorAccum.Length);
@@ -356,6 +383,14 @@ namespace KSpiceEngine
             {
                 if (inputs == null || inputs.Length < 3) return lastOutput;
                 double y = valveModel.Iterate(inputs, timeBase_s)[0];
+                lastOutput = y;
+                return y;
+            }
+
+            if (hxTempModel != null)
+            {
+                if (inputs == null || inputs.Length < 1) return lastOutput;
+                double y = hxTempModel.Iterate(inputs, timeBase_s)[0];
                 lastOutput = y;
                 return y;
             }

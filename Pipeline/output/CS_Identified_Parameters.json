@@ -81,19 +81,18 @@
   "23VA0001_WaterLevel": {
     "ModelType": "IdentifyLinear_IntegratedFlow",
     "FitScore": 94.778,
-    "TimeConstant_s": 0.0,
-    "Formula": "Level(t) = Bias + sum(gain_i * integral(input_i * dt))  [outflows negated]",
-    "LinearGains": [
-      0.064089,
-      0.0045732,
-      0.0033699,
-      0.33064
-    ],
     "InputNames": [
       "25ESV0001_MassFlow(m_in)",
       "23UV0001_MassFlow(m_in)",
       "23PA0001_MassFlow(m_out)",
       "23LV0001_MassFlow(m_out)"
+    ],
+    "Formula": "Level(t) ~ y(0) + sum_i( gain_i * integral(signed_flow_i * dt) )",
+    "LinearGains": [
+      0.064089,
+      0.0045732,
+      0.0033699,
+      0.33064
     ],
     "Bias": 568.94,
     "U0": [
@@ -118,19 +117,18 @@
   "23VA0001_TotalLevel": {
     "ModelType": "IdentifyLinear_IntegratedFlow",
     "FitScore": 93.465,
-    "TimeConstant_s": 0.0,
-    "Formula": "Level(t) = Bias + sum(gain_i * integral(input_i * dt))  [outflows negated]",
-    "LinearGains": [
-      0.17935,
-      -0.052911,
-      0.25454,
-      0.18878
-    ],
     "InputNames": [
       "25ESV0001_MassFlow(m_in)",
       "23UV0001_MassFlow(m_in)",
       "23PA0001_MassFlow(m_out)",
       "23LV0001_MassFlow(m_out)"
+    ],
+    "Formula": "Level(t) ~ y(0) + sum_i( gain_i * integral(signed_flow_i * dt) )",
+    "LinearGains": [
+      0.17935,
+      -0.052911,
+      0.25454,
+      0.18878
     ],
     "Bias": 656.7,
     "U0": [
@@ -153,10 +151,10 @@
     ]
   },
   "23VA0001_Temperature": {
-    "ModelType": "IdentifyLinear",
+    "ModelType": "UnitIdentifier",
     "FitScore": 87.766,
     "TimeConstant_s": 56.059,
-    "Formula": "First-order linear MISO with time constant",
+    "Formula": "Dynamic MISO: 7 inputs, Tc=56,06s",
     "LinearGains": [
       0.21617,
       0.65094,
@@ -357,34 +355,19 @@
     ]
   },
   "23HX0001_Temperature": {
-    "ModelType": "UnitIdentifier",
-    "FitScore": 89.097,
-    "TimeConstant_s": 0.69385,
-    "Formula": "Dynamic MISO: 4 inputs, Tc=0,69s",
-    "LinearGains": [
-      -0.053283,
-      0.3237,
-      0.51912,
-      -0.40487
-    ],
+    "ModelType": "HeatExchangerTemperatureModel",
+    "Subtype": "GasSide",
+    "FitScore": 94.14983269687444,
+    "Bias": 9.081117933128885,
+    "Alpha": 0.30869165064402837,
+    "GainGas": 0.41297407745895165,
+    "GainWater": -0.5018730694445683,
+    "Formula": "T_out = Bias + Alpha * T_in + GainGas * F_gas + GainWater * F_water",
     "InputNames": [
       "23KA0001_Temperature(T_in)",
       "23HX0001_MassFlow(local_var)",
       "23HX0001s_Temperature(T_cool)",
       "23HX0001s_MassFlow(m_partner)"
-    ],
-    "Bias": 43.766,
-    "U0": [
-      81.65,
-      49.001,
-      68.129,
-      21.424
-    ],
-    "UNorm": [
-      1.0,
-      1.0,
-      1.0,
-      1.0
     ]
   },
   "23UV0001_MassFlow": {
@@ -781,40 +764,16 @@
     "Reason": "UnitIdentifier could not identify"
   },
   "23HX0001s_Temperature": {
-    "ModelType": "UnitIdentifier",
-    "FitScore": 80.418,
-    "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 4 inputs, Tc=0,00s",
-    "LinearGains": [
-      0.0,
-      0.74237,
-      2.0307,
-      -0.63802
-    ],
+    "ModelType": "HeatExchangerTemperatureModel",
+    "Subtype": "WaterSide",
+    "FitScore": -2.1456753389906824,
+    "CapacityRatio": 1.8262926140182552,
+    "Formula": "T_out = T_cold + CapacityRatio * (T_gas_out - T_cold)",
     "InputNames": [
       "23COLD0001_Temperature(T_in)",
       "23HX0001s_MassFlow(local_var)",
       "23HX0001_Temperature(T_cool)",
       "23HX0001_MassFlow(m_partner)"
-    ],
-    "Bias": 68.129,
-    "U0": [
-      15.0,
-      21.424,
-      43.769,
-      49.001
-    ],
-    "UNorm": [
-      1.0,
-      1.0,
-      1.0,
-      1.0
-    ],
-    "Curvatures": [
-      "NaN",
-      "NaN",
-      "NaN",
-      "NaN"
     ]
   },
   "23TIC0003_Control": {

@@ -13,20 +13,21 @@ namespace KSpiceEngine
     /// when there's an algebraic loop), with only a small set of "free" boundary
     /// signals coming from the CSV:
     ///
-    ///   - 25ESV0001_MassFlow + 25ESV0001_Temperature (system inflow)
-    ///   - 23COLD0001 OutletStream.p / .t          (cold-side reservoir)
-    ///   - Exit-valve OutletStream.p for 23ESV0005, 23LV0001, 23LV0002, 23TV0003
-    ///   - All controller setpoints
+    ///   - FreeCsvColumns (see below): exit-valve outlet pressures + COLD0001 reservoir
+    ///     + 25ESV0001 system inlet (mass flow and temperature)
+    ///   - Equations marked "Boundary" (Feed1/Feed2/PSV0001/COLD0001 models)
+    ///   - All controller setpoints (resolved via signalMap)
     ///
-    /// Tells you whether the system of identified models is internally consistent
-    /// and stable when run as a unit (errors compound over time).
+    /// Everything else uses the identified model predictions so errors compound over time,
+    /// which is exactly what reveals whether the model system is internally consistent.
     /// </summary>
     public static class ClosedLoopRunner
     {
         // Raw CSV column names that bypass the model system — no model ID maps to these.
-        // These are outlet pressures of boundary/exit components whose downstream side
-        // is outside the modelled plant. Plant-specific: update when the K-Spice model
-        // topology changes (add/remove exit valves or boundary reservoirs).
+        // Includes exit-valve downstream pressures (outside the plant boundary), the cold
+        // reservoir properties, and the system inlet flow/temperature from 25ESV0001
+        // (external feed, no model is identified for it).
+        // Plant-specific: update when the K-Spice topology changes.
         private static readonly HashSet<string> FreeCsvColumns = new(StringComparer.OrdinalIgnoreCase)
         {
             "23COLD0001:OutletStream.p",
@@ -35,6 +36,8 @@ namespace KSpiceEngine
             "23LV0001_pf:OutletStream.p",
             "23LV0002_pf:OutletStream.p",
             "23TV0003_pf:OutletStream.p",
+            "25ESV0001_pf:MassFlow",
+            "25ESV0001_pf:OutletStream.t",
         };
 
         public static void Run(string csvPath, string systemMapPath, string equationsPath,
@@ -77,40 +80,11 @@ namespace KSpiceEngine
                     freeModelIds.Add((string)eq.ID);
             }
 
-            // BFS expansion: any equation whose P_in inputs all come from already-free nodes
-            // AND has no U(t) input from a non-free (actively controlled) node is at the
-            // system inlet — its output is an external disturbance, not an internal state.
-            // The U(t) guard prevents actively-controlled valves (e.g. temperature-control
-            // valves driven by a PID) from being incorrectly marked free; those must be
-            // simulated so the controller loop remains closed. Iterating until stable
-            // handles chains of arbitrary depth. Prevents the inlet-flow ↔
-            // separator-pressure feedback loop that collapses closed-loop simulation.
-            bool inletExpanded = true;
-            while (inletExpanded)
-            {
-                inletExpanded = false;
-                foreach (var eq in equations)
-                {
-                    string id = (string)eq.ID;
-                    if (freeModelIds.Contains(id)) continue;
-                    if (!inputEdges.TryGetValue(id, out var edges)) continue;
-                    var pInSources = edges
-                        .Where(e => string.Equals(e.label, "P_in", StringComparison.OrdinalIgnoreCase))
-                        .Select(e => e.fromNode)
-                        .ToList();
-                    var uSources = edges
-                        .Where(e => string.Equals(e.label, "U(t)", StringComparison.OrdinalIgnoreCase))
-                        .Select(e => e.fromNode)
-                        .ToList();
-                    if (pInSources.Count > 0
-                        && pInSources.All(s => freeModelIds.Contains(s))
-                        && uSources.All(s => freeModelIds.Contains(s)))
-                    {
-                        freeModelIds.Add(id);
-                        inletExpanded = true;
-                    }
-                }
-            }
+            // 25ESV0001 is the system inlet from outside the plant boundary.
+            // Its flow and temperature are external disturbances, not controlled by
+            // any identified model. Mark them free so closed-loop uses CSV truth.
+            foreach (var inletId in new[] { "25ESV0001_MassFlow", "25ESV0001_Temperature" })
+                freeModelIds.Add(inletId);
 
             Console.WriteLine($"[ClosedLoop] {freeModelIds.Count} free (boundary) model IDs: "
                             + string.Join(", ", freeModelIds.OrderBy(x => x)));
@@ -309,17 +283,19 @@ namespace KSpiceEngine
                 fitOk++;
             }
 
-            DynamicPlantRunner.WriteValidationCsv(dataset, predictions, signalMap, outputCsvPath, dt);
+            // Write predictions CSV excluding free/boundary signals: those are just CSV
+            // pass-through and would produce misleading 100% plots.
+            var predictionsToWrite = predictions
+                .Where(kv => !freeModelIds.Contains(kv.Key))
+                .ToDictionary(kv => kv.Key, kv => kv.Value);
+            DynamicPlantRunner.WriteValidationCsv(dataset, predictionsToWrite, signalMap, outputCsvPath, dt);
 
-            // Persist closed-loop fits so the plotter can label each plot with the
-            // actual closed-loop performance (instead of the training fit, which
-            // says nothing about chain-stability). Derive the sidecar name from
-            // the predictions path so suffixed runs (e.g. _Train) get matching
-            // _FitScores files instead of overwriting each other.
+            // Persist closed-loop fits for non-free models only.
             var fits = new JObject();
             foreach (var id in allModelIds)
             {
                 if (!truthByModelId.ContainsKey(id)) continue;
+                if (freeModelIds.Contains(id) || !evaluators.ContainsKey(id)) continue;
                 fits[id] = OpenLoopTestRunner.ComputeFit(truthByModelId[id], predictions[id]);
             }
             string predBase = Path.GetFileNameWithoutExtension(outputCsvPath); // e.g. CS_Predictions_ClosedLoop_Train
@@ -436,6 +412,12 @@ namespace KSpiceEngine
                 return GetAscRoleValue(inputCols, key, t, predictions, csvToModelId, forceLastStep, equiv, computedThisStep);
             }
 
+            if (key.StartsWith("@HX_Tin:") || key.StartsWith("@HX_Flow:") || key.StartsWith("@HX_CoolTemp:") || key.StartsWith("@HX_PartnerFlow:"))
+            {
+                var inputCols = DynamicPlantRunner.FindInputSignals(ownerId, inputEdges, signalMap, dataset, physicalNeighbors);
+                return GetHxRoleValue(inputCols, key, t, predictions, csvToModelId, forceLastStep, equiv, computedThisStep);
+            }
+
             // Source is a CSV column directly.
             if (dataset.ContainsKey(key) || FreeCsvColumns.Contains(key))
                 return FromCsvCol(key);
@@ -507,6 +489,59 @@ namespace KSpiceEngine
             return SafeAt(chosen.data, t);
         }
 
+        private static double GetHxRoleValue(List<(string name, double[] data)> inputCols, string roleKey, int t,
+            Dictionary<string, double[]> predictions, Dictionary<string, string> csvToModelId, bool forceLastStep,
+            SignalEquivalenceMap equiv, HashSet<string> computedThisStep = null)
+        {
+            string role = roleKey.Substring(1, roleKey.IndexOf(':') - 1);
+            (string name, double[] data) tin = default, flow = default, cool = default, partner = default;
+            
+            // Match HX inputs by topology edge labels (T_in, T_cool, m_partner, local_var for HX own flow).
+            // Column names are formatted as "ModelKey(label)" by FindInputSignals.
+            foreach (var col in inputCols)
+            {
+                string n = col.name;
+                int pIdx = n.IndexOf('(');
+                if (pIdx <= 0) continue;
+                int closeParen = n.IndexOf(')', pIdx);
+                if (closeParen <= pIdx) continue;
+                string label = n.Substring(pIdx + 1, closeParen - pIdx - 1);
+                
+                if (string.Equals(label, "T_in", StringComparison.OrdinalIgnoreCase)) { tin = col; continue; }
+                if (string.Equals(label, "T_cool", StringComparison.OrdinalIgnoreCase)) { cool = col; continue; }
+                if (string.Equals(label, "m_partner", StringComparison.OrdinalIgnoreCase)) { partner = col; continue; }
+                // HX's own mass flow is marked as "local_var" in the topology, but any "MassFlow" without a special label works.
+                if (n.IndexOf("MassFlow", StringComparison.OrdinalIgnoreCase) >= 0 && flow.data == null) { flow = col; continue; }
+            }
+
+            (string name, double[] data) chosen = role switch
+            {
+                "HX_Tin" => tin,
+                "HX_Flow" => flow,
+                "HX_CoolTemp" => cool,
+                "HX_PartnerFlow" => partner,
+                _ => default
+            };
+
+            if (chosen.data == null)
+                return double.NaN;
+
+            int paren = chosen.name.IndexOf('(');
+            string key = paren > 0 ? chosen.name.Substring(0, paren).Trim() : chosen.name.Trim();
+            if (predictions.TryGetValue(key, out var parr))
+            {
+                int idx = (forceLastStep || (computedThisStep != null && !computedThisStep.Contains(key))) ? t - 1 : t;
+                return SafeAt(parr, idx);
+            }
+            string traced = equiv?.TryResolve(key);
+            if (traced != null && predictions.TryGetValue(traced, out var parr2))
+            {
+                int idx = (forceLastStep || (computedThisStep != null && !computedThisStep.Contains(traced))) ? t - 1 : t;
+                return SafeAt(parr2, idx);
+            }
+            return SafeAt(chosen.data, t);
+        }
+
         /// <summary>
         /// ValvePhysicsModel needs three positional inputs (P_in, P_out, U). Build
         /// each slot independently: topology edge if one exists, otherwise the
@@ -526,7 +561,7 @@ namespace KSpiceEngine
             for (int i = 0; i < 3; i++)
             {
                 string preferred = null;  // edge whose source is a known predicted model
-                string fallback  = null;  // any edge with the right label (synthetic source)
+                string fallback = null;    // any edge with the right label (synthetic source)
                 if (edges != null)
                 {
                     foreach (var e in edges)

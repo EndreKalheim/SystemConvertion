@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 
@@ -20,6 +21,7 @@ namespace KSpiceEngine
             List<(string name, double[] data)> inputCols,
             Dictionary<string, double[]> predictions,
             JArray models,
+            string selectedKspiceModelPath,
             Dictionary<string, double[]> dataset)
         {
             int M = Y_true.Length;
@@ -95,16 +97,34 @@ namespace KSpiceEngine
             bool usingPredicted = pIn_pred != pIn || pOut_pred != pOut || flow_pred != flow;
             Console.WriteLine($"[Model] {id}:   ASC inputs: pIn={pInName}, pOut={pOutName}, flow={flowName}  (predicted override: {usingPredicted})");
 
-            // 3. Read CloseTime from K-Spice model parameters
+            // 3. Read CloseTime from K-Spice model parameters. Prefer parameters
+            //    originating from the selected K-Spice .mdl when available.
             double closeTime_s = 60.0;
+            Console.WriteLine($"[Model] {id}: selected K-Spice model path = {selectedKspiceModelPath}");
             foreach (var m in models)
             {
                 string rn = ((string)m["Name"]).Replace("_pf", "", StringComparison.OrdinalIgnoreCase);
                 if (string.Equals(rn, comp, StringComparison.OrdinalIgnoreCase))
                 {
+                    // If the system map carries a SourceFile or SourceMdl marker, prefer
+                    // entries that match the selected K-Spice model path. Otherwise fall
+                    // back to the first matching component entry.
+                    bool sourceMatches = false;
+                    if (!string.IsNullOrEmpty(selectedKspiceModelPath))
+                    {
+                        var src = (string)m["SourceFile"] ?? (string)m["SourceMdl"] ?? null;
+                        if (src != null)
+                        {
+                            try { sourceMatches = string.Equals(Path.GetFileName(src), Path.GetFileName(selectedKspiceModelPath), StringComparison.OrdinalIgnoreCase); }
+                            catch { sourceMatches = false; }
+                        }
+                    }
                     var prm = m["Parameters"] as JObject;
-                    if (prm?["CloseTime"] != null) closeTime_s = (double)prm["CloseTime"];
-                    break;
+                    if (prm?["CloseTime"] != null && (sourceMatches || string.IsNullOrEmpty(selectedKspiceModelPath)))
+                    {
+                        closeTime_s = (double)prm["CloseTime"];
+                        break;
+                    }
                 }
             }
 

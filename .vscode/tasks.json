@@ -1,0 +1,360 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "build-timeseriesanalysis",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"TimeSeriesAnalysis-master/TimeSeriesAnalysis.sln"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "build-timeseriesanalysis-2",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"TimeSeriesAnalysis-master/TimeSeriesAnalysis.sln"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "run-equations",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"run",
+				"--project",
+				"Pipeline/src/CSharp_Engine/KSpiceEngine",
+				"--",
+				"--mode",
+				"equations",
+				"--map",
+				"Pipeline/data/extracted/KSpiceSystemMap.json",
+				"--csv",
+				"Pipeline/data/raw/KspiceSim.csv",
+				"--kspicemdl",
+				"kspicefiles/TutorialHN.mdl"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "build-KSpiceEngine",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"Pipeline/src/CSharp_Engine/KSpiceEngine",
+				"-v",
+				"minimal"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "run-equations",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"run",
+				"--project",
+				"Pipeline/src/CSharp_Engine/KSpiceEngine",
+				"--",
+				"--mode",
+				"equations",
+				"--map",
+				"Pipeline/data/extracted/KSpiceSystemMap.json",
+				"--csv",
+				"Pipeline/data/raw/KspiceSim.csv",
+				"--kspicemdl",
+				"kspicefiles/TutorialHN.mdl"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "run-full-pipeline",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"run.py",
+				"--model",
+				"TutorialHN.mdl",
+				"--phase",
+				"all"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "run-full-pipeline2",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"Pipeline/run.py",
+				"--model",
+				"TutorialHN.mdl",
+				"--phase",
+				"all"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "build-after-hx-fix",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"Pipeline/src/CSharp_Engine/KSpiceEngine",
+				"-v",
+				"minimal"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "run-pipeline-after-fix",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"Pipeline/run.py",
+				"--model",
+				"TutorialHN.mdl",
+				"--phase",
+				"all"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "run-hx-stats",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"Pipeline/scripts/hx_stats.py",
+				"Pipeline/output/CS_Predictions_ClosedLoop.csv"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "run-hx-stats2",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"Pipeline/scripts/hx_stats.py",
+				"Pipeline/output/CS_Predictions_ClosedLoop.csv"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "build-after-hx-bias",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"Pipeline/src/CSharp_Engine/KSpiceEngine",
+				"-v",
+				"minimal"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "run-pipeline-hx-bias",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"Pipeline/run.py",
+				"--model",
+				"TutorialHN.mdl",
+				"--phase",
+				"all"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "build-after-hx-threshold-search",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"Pipeline/src/CSharp_Engine/KSpiceEngine",
+				"-v",
+				"minimal"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "run-pipeline-hx-threshold-search",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"Pipeline/run.py",
+				"--model",
+				"TutorialHN.mdl",
+				"--phase",
+				"all"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "build-after-hx-arx",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"Pipeline/src/CSharp_Engine/KSpiceEngine",
+				"-v",
+				"minimal"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "run-pipeline-hx-arx",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"Pipeline/run.py",
+				"--model",
+				"TutorialHN.mdl",
+				"--phase",
+				"all"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "hx-stats-after-fix",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"Pipeline/scripts/hx_stats.py",
+				"Pipeline/output/CS_Predictions_ClosedLoop.csv"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "hx-stats-openloop-after-fix",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"Pipeline/scripts/hx_stats.py",
+				"Pipeline/output/CS_Predictions.csv"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "build-after-hx-closedloop-fix",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"Pipeline/src/CSharp_Engine/KSpiceEngine",
+				"-v",
+				"minimal"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "run-pipeline-hx-closedloop-fix",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"Pipeline/run.py",
+				"--model",
+				"TutorialHN.mdl",
+				"--phase",
+				"all"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "hx-stats-closedloop-after-fix",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"Pipeline/scripts/hx_stats.py",
+				"Pipeline/output/CS_Predictions_ClosedLoop.csv"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "hx-stats-after-refit",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"Pipeline/scripts/hx_stats.py",
+				"Pipeline/output/CS_Predictions_ClosedLoop.csv"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}

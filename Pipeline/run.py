@@ -140,12 +140,14 @@ def phase_extract(mdl, prm):
     _run(cmd)
 
 
-def phase_equations(csv_path):
+def phase_equations(csv_path, mdl=None):
     print("\n-- Phase 2 | Generate equations (C# engine) -------------------")
     cmd = ['dotnet', 'run', '--project', CSHARP_PROJ, '--',
            '--mode', 'equations',
            '--map', MAP_JSON,
            '--csv', csv_path or '']
+    if mdl:
+        cmd += ['--kspicemdl', mdl]
     _run(cmd)
 
 
@@ -173,7 +175,7 @@ def _load_last_csv():
     return None
 
 
-def phase_simulate(csv_path):
+def phase_simulate(csv_path, mdl=None):
     print("\n-- Phase 4 | Simulate & identify (C# engine) ------------------")
     if not csv_path or not os.path.exists(csv_path):
         print("  [SKIP] No CSV available — skipping simulation phase")
@@ -182,6 +184,8 @@ def phase_simulate(csv_path):
            '--mode', 'simulate',
            '--map', MAP_JSON,
            '--csv', csv_path]
+    if mdl:
+        cmd += ['--kspicemdl', mdl]
     _run(cmd)
     _save_last_csv(csv_path)
 
@@ -203,7 +207,7 @@ def phase_visualize(csv_path=None):
           '--rawcsv', raw_csv])
 
 
-def phase_testset(test_csv):
+def phase_testset(test_csv, mdl=None):
     """Test 2 — apply frozen identified models to a held-out CSV (open-loop)."""
     print("\n-- Phase 6 | Test set (frozen models on held-out CSV) ---------")
     if not test_csv or not os.path.exists(test_csv):
@@ -213,6 +217,8 @@ def phase_testset(test_csv):
            '--mode', 'testset',
            '--map', MAP_JSON,
            '--testcsv', test_csv]
+    if mdl:
+        cmd += ['--kspicemdl', mdl]
     _run(cmd)
     # Plot test-set predictions to a separate folder
     _run([sys.executable, os.path.join(HERE, 'Plot_CS_Predictions.py'),
@@ -221,7 +227,7 @@ def phase_testset(test_csv):
           '--outdir',      os.path.join(HERE, 'output', 'validation_plots_testset')])
 
 
-def phase_closedloop(test_csv):
+def phase_closedloop(test_csv, mdl=None):
     """Test 1 — closed-loop simulation on the held-out CSV (or training CSV if none)."""
     print("\n-- Phase 7 | Closed-loop simulation ---------------------------")
     csv_for_run = test_csv if test_csv and os.path.exists(test_csv) else None
@@ -230,6 +236,8 @@ def phase_closedloop(test_csv):
            '--map', MAP_JSON]
     if csv_for_run:
         cmd += ['--testcsv', csv_for_run]
+    if mdl:
+        cmd += ['--kspicemdl', mdl]
     _run(cmd)
     # Plot closed-loop predictions to a separate folder
     raw_csv = csv_for_run or DEFAULT_CSV
@@ -239,7 +247,7 @@ def phase_closedloop(test_csv):
           '--outdir',      os.path.join(HERE, 'output', 'validation_plots_closedloop')])
 
 
-def phase_closedloop_train(csv_path):
+def phase_closedloop_train(csv_path, mdl=None):
     """Test 3 — closed-loop simulation driven by the TRAINING CSV. Same machinery
     as phase_closedloop, but writes to *_Train suffixed files so the user can
     compare closed-loop performance on training vs held-out trajectories side by
@@ -254,6 +262,8 @@ def phase_closedloop_train(csv_path):
            '--csv', csv_path,
            # No --testcsv — the C# runner falls through to --csv (training).
            '--suffix', '_Train']
+    if mdl:
+        cmd += ['--kspicemdl', mdl]
     _run(cmd)
     _run([sys.executable, os.path.join(HERE, 'Plot_CS_Predictions.py'),
           '--predictions', os.path.join(HERE, 'output', 'CS_Predictions_ClosedLoop_Train.csv'),
@@ -308,13 +318,13 @@ def main():
 
     try:
         if run_all or ph == 'extract':    phase_extract(mdl, prm)
-        if run_all or ph == 'equations':  phase_equations(csv_path)
+        if run_all or ph == 'equations':  phase_equations(csv_path, mdl)
         if run_all or ph == 'topology':   phase_topology()
-        if run_all or ph == 'simulate':   phase_simulate(csv_path)
+        if run_all or ph == 'simulate':   phase_simulate(csv_path, mdl)
         if run_all or ph == 'visualize':  phase_visualize(csv_path)
-        if ph in ('testset', 'tests'):             phase_testset(test_csv)
-        if ph in ('closedloop', 'tests'):          phase_closedloop(test_csv)
-        if ph in ('closedloop-train', 'tests'):    phase_closedloop_train(csv_path)
+        if ph in ('testset', 'tests'):             phase_testset(test_csv, mdl)
+        if ph in ('closedloop', 'tests'):          phase_closedloop(test_csv, mdl)
+        if ph in ('closedloop-train', 'tests'):    phase_closedloop_train(csv_path, mdl)
     except subprocess.CalledProcessError as e:
         sys.exit(f"\n[ERROR] Phase failed (exit code {e.returncode}). See output above.")
 

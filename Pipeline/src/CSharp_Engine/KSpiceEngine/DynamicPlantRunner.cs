@@ -14,7 +14,7 @@ namespace KSpiceEngine
     {
         public static void RunPlantSimulations(
             string csvPath, string systemMapPath, string equationsPath,
-            string mappingPath, string outputCsvPath)
+            string mappingPath, string outputCsvPath, string selectedKspiceModelPath = null)
         {
             Console.WriteLine("\n[DynamicPlantRunner] Starting Phase 6: Training and Validation Pipeline...");
 
@@ -97,7 +97,7 @@ namespace KSpiceEngine
                     }
                     else
                     {
-                        result = AscIdentifier.Identify(id, comp, Y_true, timeBase_s, inputCols, predictions, models, dataset);
+                        result = AscIdentifier.Identify(id, comp, Y_true, timeBase_s, inputCols, predictions, models, selectedKspiceModelPath, dataset);
                     }
                 }
                 else if (state == "Pressure" && IsContainerType(kspiceType))
@@ -124,11 +124,11 @@ namespace KSpiceEngine
                     var inputCols = FindInputSignals(id, inputEdges, signalMap, dataset, physicalNeighbors);
                     result = IdentifyValveModel(id, comp, Y_true, numRows, timeBase_s, models, signalMap, dataset, inputCols);
                 }
-                else if (state == "Temperature" && IsContainerType(kspiceType))
+                else if (state == "Temperature" && kspiceType.IndexOf("HeatExchanger", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     var inputCols = FindInputSignals(id, inputEdges, signalMap, dataset, physicalNeighbors);
-                    Console.WriteLine($"[Model] {id}: IdentifyLinear (separator temperature, {inputCols.Count} inputs)");
-                    result = IdentifyLinearModel(id, Y_true, inputCols, timeBase_s);
+                    Console.WriteLine($"[Model] {id}: HeatExchangerIdentifier (HX component, {inputCols.Count} inputs)");
+                    result = HeatExchangerIdentifier.Identify(id, Y_true, inputCols, timeBase_s);
                 }
                 else
                 {
@@ -304,7 +304,7 @@ namespace KSpiceEngine
         {
             var inputCols = FindInputSignals(id, inputEdges, signalMap, dataset, physicalNeighbors);
 
-            // Liquid level: exclude gas-phase (compressor) outflows — they remove gas, not liquid
+            // Liquid level: exclude gas-phase (compressor) outflows — they move gas, not liquid
             inputCols = inputCols.Where(x => {
                 if (!x.name.Contains("(m_out)") && !x.name.Contains("(m_sum)")) return true;
                 int paren = x.name.IndexOf('(');
@@ -319,45 +319,38 @@ namespace KSpiceEngine
 
             if (inputCols.Count == 0)
             {
-                Console.WriteLine($"[WARNING] {id}: No inputs found for separator level.");
-                return (Enumerable.Repeat(0.0, numRows).ToArray(), Fallback("No input signals found in topology"));
+                Console.WriteLine($"[WARNING] {id}: No inputs for level model after filtering.");
+                return ((double[])Y_true.Clone(), Fallback("No inputs for level model after filtering"));
             }
 
-            var signedInputs     = NegateOutflows(inputCols);
-            var integratedInputs = IntegrateFlows(signedInputs, timeBase_s);
-            int nOut = inputCols.Count(x => x.name.Contains("(m_out)") || x.name.Contains("(m_sum)") || x.name.Contains("(mass_out"));
-            Console.WriteLine($"[Model] {id}: IdentifyLinear on integrated flows with {integratedInputs.Count} inputs ({nOut} outflows negated)");
+            var signedFlows    = NegateOutflows(inputCols);
+            var integratedCols = IntegrateFlows(signedFlows, timeBase_s);
 
             try
             {
-                var unitDataSet = BuildUnitDataSet(integratedInputs, Y_true, timeBase_s);
+                var unitDataSet = BuildUnitDataSet(integratedCols, Y_true, timeBase_s);
                 var model = UnitIdentifier.IdentifyLinear(ref unitDataSet, null, false);
-
                 if (!model.modelParameters.Fitting.WasAbleToIdentify || unitDataSet.Y_sim == null)
                 {
-                    Console.WriteLine($"[WARNING] {id}: Integrated-flow regression failed.");
-                    return ((double[])Y_true.Clone(), Fallback("IdentifyLinear on integrated flows failed"));
+                    Console.WriteLine($"[WARNING] {id}: IdentifyLinear_IntegratedFlow could not fit.");
+                    return ((double[])Y_true.Clone(), Fallback("IdentifyLinear_IntegratedFlow could not fit"));
                 }
-
-                Console.WriteLine($"[SUCCESS] {id}: Integrated-flow regression. FitScore={model.modelParameters.Fitting.FitScorePrc:F1}%");
-                var mParams = new JObject
+                double fitScore = model.modelParameters.Fitting.FitScorePrc;
+                Console.WriteLine($"[SUCCESS] {id}: Level IdentifyLinear_IntegratedFlow FitScore={fitScore:F1}%");
+                var dParams = new JObject
                 {
-                    ["ModelType"]      = "IdentifyLinear_IntegratedFlow",
-                    ["FitScore"]       = model.modelParameters.Fitting.FitScorePrc,
-                    ["TimeConstant_s"] = model.modelParameters.TimeConstant_s,
-                    ["Formula"]        = "Level(t) = Bias + sum(gain_i * integral(input_i * dt))  [outflows negated]"
+                    ["ModelType"]  = "IdentifyLinear_IntegratedFlow",
+                    ["FitScore"]   = fitScore,
+                    ["InputNames"] = JArray.FromObject(inputCols.Select(x => x.name).ToArray()),
+                    ["Formula"]    = "Level(t) ~ y(0) + sum_i( gain_i * integral(signed_flow_i * dt) )"
                 };
                 if (model.modelParameters.LinearGains != null)
-                {
-                    mParams["LinearGains"] = JArray.FromObject(model.modelParameters.LinearGains);
-                    mParams["InputNames"]  = JArray.FromObject(inputCols.Select(x => x.name).ToArray());
-                }
-                AttachUnitParams(mParams, model.modelParameters);
-                return (unitDataSet.Y_sim, mParams);
+                    dParams["LinearGains"] = JArray.FromObject(model.modelParameters.LinearGains);
+                AttachUnitParams(dParams, model.modelParameters);
+                return (unitDataSet.Y_sim, dParams);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[WARNING] {id}: Integrator exception: {ex.Message}");
                 return ((double[])Y_true.Clone(), Fallback(ex.Message));
             }
         }
