@@ -32,7 +32,7 @@ SRC_VIS      = os.path.join(HERE, 'src', 'Visualization')
 SRC_PARSER   = os.path.join(HERE, 'src', 'Parser', 'KSpiceParser.py')
 
 MAP_JSON     = os.path.join(DATA_EXT, 'KSpiceSystemMap.json')
-DEFAULT_CSV  = os.path.join(DATA_RAW,  'KspiceSim.csv')
+DEFAULT_CSV  = os.path.join(DATA_RAW,  'KspiceBigSimFixed.csv')
 # Held-out test CSV (lives one level above Pipeline/). Used by the testset and
 # closedloop phases — same plant, different operating trajectory, never seen
 # during identification. Override with --testcsv.

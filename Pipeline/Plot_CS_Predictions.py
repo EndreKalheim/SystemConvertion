@@ -153,7 +153,7 @@ def plot_validation(predictions_csv=None, kspice_csv=None, out_dir=None):
             candidate = open(state_file).read().strip()
             kspice_csv = candidate if os.path.exists(candidate) else None
         if kspice_csv is None:
-            kspice_csv = os.path.join(base_dir, "data", "raw", "KspiceSim.csv")
+            kspice_csv = os.path.join(base_dir, "data", "raw", "KspiceBigSimFixed.csv")
     if out_dir is None:
         out_dir = os.path.join(base_dir, "output", "validation_plots")
     mapping_json    = os.path.join(base_dir, "output", "diagrams", "SignalMapping.json")

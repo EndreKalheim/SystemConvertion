@@ -39,7 +39,12 @@ namespace KSpiceEngine
         private CustomModels.ValvePhysicsModel? valveModel;
         private CustomModels.AntiSurgePhysicalModel? ascModel;
         private CustomModels.HeatExchangerTemperatureModel? hxTempModel;
-        private PidController? pidController;
+        // Direct incremental PI state — replaces PidController to allow anti-windup.
+        private bool pidActive;
+        private double pidKp;
+        private double pidTi_s;
+        private double pidEprev;   // e(k-1) for incremental formula
+        private double pidUnorm;   // previous output normalised to [0,100]
 
         // Integrator-style state for IdentifyLinear_IntegratedFlow.
         private double[]? integratorAccum;       // running ∫signal·dt per input
@@ -64,9 +69,9 @@ namespace KSpiceEngine
         private bool[]? netBalanceIsOutflow;
         private double netBalanceAnchor;
 
-        // For PID: warm-start state needs first SP/PV/U values from the dataset.
-        private double pidLastY;
         private bool pidPrimed;
+        private double pidYMin = 0.0;
+        private double pidYMax = 100.0;
 
         // Last good output for fallback returns.
         private double lastOutput;
@@ -195,11 +200,11 @@ namespace KSpiceEngine
             {
                 case "PID":
                 {
-                    double Kp = (double?)p["Kp"] ?? 0.0;
-                    double Ti = (double?)p["Ti_s"] ?? double.PositiveInfinity;
-                    double Td = (double?)p["Td_s"] ?? 0.0;
-                    // timeBase_s is set on first Iterate (PidController takes it in ctor).
-                    pidController = new PidController(0.5, Kp, Ti, Td);
+                    pidKp   = (double?)p["Kp"]    ?? 0.0;
+                    pidTi_s = (double?)p["Ti_s"]  ?? double.PositiveInfinity;
+                    pidYMin = (double?)p["YMin"]   ?? 0.0;
+                    pidYMax = (double?)p["YMax"]   ?? 100.0;
+                    pidActive = true;
                     return;
                 }
 
@@ -325,7 +330,6 @@ namespace KSpiceEngine
         {
             lastOutput = initialOutput;
             pidPrimed  = false;
-            pidLastY   = initialOutput;
             if (ascModel != null)      ascModel.WarmStart(null, initialOutput);
             if (valveModel != null)    valveModel.WarmStart(null, initialOutput);
             if (hxTempModel != null)   hxTempModel.WarmStart(null, initialOutput);
@@ -354,21 +358,28 @@ namespace KSpiceEngine
             if (ModelType == "Boundary" || ModelType == "Fallback")
                 return lastOutput; // runner is responsible for filling these from CSV
 
-            if (pidController != null)
+            if (pidActive)
             {
                 if (inputs == null || inputs.Length < 2) return lastOutput;
                 double sp = inputs[0];
                 double pv = inputs[1];
+                double yRange = pidYMax - pidYMin;
+                bool hasPhysRange = yRange > 100 + 1e-6;
                 if (!pidPrimed)
                 {
-                    pidController.WarmStart(pv, sp, lastOutput);
+                    pidUnorm = hasPhysRange
+                        ? Math.Max(0, Math.Min(100, (lastOutput - pidYMin) / yRange * 100.0))
+                        : Math.Max(0, Math.Min(100, lastOutput));
+                    pidEprev = sp - pv;
                     pidPrimed = true;
                     return lastOutput;
                 }
-                double[] u = pidController.Iterate(new[] { pv }, new[] { sp });
-                double y = u[0];
-                if (y < 0) y = 0;
-                if (y > 100) y = 100;
+                double e = sp - pv;
+                double dtOverTi = pidTi_s > 1e-9 ? timeBase_s / pidTi_s : 0.0;
+                double du = pidKp * ((e - pidEprev) + dtOverTi * e);
+                pidUnorm = Math.Max(0, Math.Min(100, pidUnorm + du));
+                pidEprev = e;
+                double y = hasPhysRange ? pidUnorm / 100.0 * yRange + pidYMin : pidUnorm;
                 lastOutput = y;
                 return y;
             }

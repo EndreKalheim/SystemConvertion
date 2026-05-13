@@ -190,7 +190,10 @@ namespace KSpiceEngine
                 {
                     double olo = (double)eqDesc["KSpice_OutRangeLow"];
                     double ohi = (double)eqDesc["KSpice_OutRangeHigh"];
-                    if (ohi - olo > 100 + 1e-6) { needsNorm = true; yMin = olo; yMax = ohi; }
+                    double slack = Math.Max(1.0, (ohi - olo) * 0.1);
+                    bool dataFitsKSpice = Y_true.Min() >= olo - slack && Y_true.Max() <= ohi + slack;
+                    if (ohi - olo > 100 + 1e-6 && dataFitsKSpice)
+                    { needsNorm = true; yMin = olo; yMax = ohi; }
                 }
                 double yRange = Math.Abs(yMax - yMin);
                 double[] Y_sim = (needsNorm && yRange > 1e-9)
@@ -211,11 +214,19 @@ namespace KSpiceEngine
 
                 double[] SimulateWith(double kpUse, double tiUse, double tdUse)
                 {
-                    var ctrl = new PidController(timeBase_s, kpUse, tiUse, tdUse);
-                    ctrl.WarmStart(Y_meas[0], Y_sp[0], Y_sim[0]);
-                    double[] u = ctrl.Iterate(Y_meas, Y_sp);
+                    double[] u = new double[numRows];
                     u[0] = Y_sim[0];
-                    for (int i = 0; i < u.Length; i++) u[i] = Math.Max(0, Math.Min(100, u[i]));
+                    double uprev = Y_sim[0];
+                    double eprev = Y_sp[0] - Y_meas[0];
+                    double dtOverTi = tiUse > 1e-9 ? timeBase_s / tiUse : 0.0;
+                    for (int i = 1; i < numRows; i++)
+                    {
+                        double e = Y_sp[i] - Y_meas[i];
+                        double du = kpUse * ((e - eprev) + dtOverTi * e);
+                        uprev = Math.Max(0, Math.Min(100, uprev + du));
+                        u[i] = uprev;
+                        eprev = e;
+                    }
                     if (needsNorm && yRange > 1e-9)
                         for (int i = 0; i < u.Length; i++) u[i] = u[i] / 100.0 * yRange + yMin;
                     return u;
@@ -259,6 +270,12 @@ namespace KSpiceEngine
                     double kTi    = eqDesc["KSpice_Ti_s"] != null ? (double)eqDesc["KSpice_Ti_s"] : Ti;
                     double kTd    = eqDesc["KSpice_Td_s"] != null ? (double)eqDesc["KSpice_Td_s"] : 0.0;
                     double kKp    = kGain * 100.0 / kRange;
+                    // Detect unit mismatch: K-Spice can store MeasRange in SI base units
+                    // (Pa) while the CSV uses derived units (bar). If the declared range
+                    // is >1000× the actual data range, scale by 1e-5 (Pa → bar).
+                    double measDataRange = Y_meas.Max() - Y_meas.Min();
+                    if (measDataRange > 1e-6 && kRange > measDataRange * 1000)
+                        kKp = kGain * 100.0 / (kRange / 1e5);
                     double[] ksPos = SimulateWith(kKp,  kTi, kTd);
                     double[] ksNeg = SimulateWith(-kKp, kTi, kTd);
                     double fitKsPos = FitPrc(ksPos), fitKsNeg = FitPrc(ksNeg);
@@ -274,6 +291,30 @@ namespace KSpiceEngine
                     }
                 }
 
+                // Gain-scale search: PidIdentifier can underestimate Kp when long flat
+                // periods dominate its objective. Try scaled-up gains with the anti-windup
+                // simulation to recover the true proportional response.
+                if (fitScore < 99.0)
+                {
+                    double baseKp = Kp;
+                    foreach (double scale in new[] { 1.5, 2.0, 3.0, 4.0, 5.0, 7.0, 10.0, 15.0 })
+                    {
+                        foreach (double sign in new[] { 1.0, -1.0 })
+                        {
+                            double scaledKp = sign * Math.Abs(baseKp) * scale;
+                            double[] cand = SimulateWith(scaledKp, Ti, Td);
+                            double cf = FitPrc(cand);
+                            if (cf > fitScore)
+                            {
+                                Kp = scaledKp; Y_pred = cand; fitScore = cf;
+                                source = $"data-identified (x{scale:G3})";
+                            }
+                        }
+                    }
+                    if (source.Contains("x"))
+                        Console.WriteLine($"[Model] {id}: gain scale improved fit → Kp={Kp:G4}, Ti={Ti:F2}s (fit {fitScore:F1}%)");
+                }
+
                 Console.WriteLine($"[SUCCESS] {id}: PID FitScore={fitScore:F1}% ({source})");
 
                 return (Y_pred, new JObject
@@ -284,6 +325,8 @@ namespace KSpiceEngine
                     ["Td_s"]      = Td,
                     ["FitScore"]  = fitScore,
                     ["ParamSource"] = source,
+                    ["YMin"]      = needsNorm ? (double?)yMin : null,
+                    ["YMax"]      = needsNorm ? (double?)yMax : null,
                     ["Formula"]   = "Incremental PI (TSA PidController): u(k) = u(k-1) + Kp*((e(k)-e(k-1)) + dt/Ti * e(k)),  e = SP - PV"
                 });
             }
@@ -576,8 +619,9 @@ namespace KSpiceEngine
         {
             foreach (var key in dataset.Keys)
             {
-                if (!key.Equals("Time", StringComparison.OrdinalIgnoreCase) &&
-                    !key.Equals("t",    StringComparison.OrdinalIgnoreCase)) continue;
+                if (!key.Equals("Time",      StringComparison.OrdinalIgnoreCase) &&
+                    !key.Equals("t",         StringComparison.OrdinalIgnoreCase) &&
+                    !key.Equals("ModelTime", StringComparison.OrdinalIgnoreCase)) continue;
                 var col = dataset[key];
                 if (col.Length >= 2) return col[1] - col[0];
             }

@@ -17,7 +17,10 @@
       "Bash(python run.py --model \"TutorialHN\")",
       "Bash(echo \"Exit: $?\")",
       "Bash(xargs grep *)",
-      "Bash(git stash *)"
+      "Bash(git stash *)",
+      "Bash(Select-String -Pattern \"23PIC0001|23PIC2001|normalising|SUCCESS.*PID|WARN.*PIC\")",
+      "Bash(findstr /I \"PIC0001 PIC2001 normalising\")",
+      "Bash(Select-String -Pattern \"23PIC|23SIC|Error|error\")"
     ]
   }
 }
