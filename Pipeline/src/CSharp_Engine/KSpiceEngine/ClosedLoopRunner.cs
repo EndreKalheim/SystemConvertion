@@ -321,8 +321,8 @@ namespace KSpiceEngine
             Dictionary<string, string> signalMap, Dictionary<string, string> csvToModelId,
             Dictionary<string, List<(string fromNode, string label)>> inputEdges,
             Dictionary<string, HashSet<string>> physicalNeighbors,
-            SignalEquivalenceMap equiv,
-            HashSet<string> computedThisStep = null)
+            SignalEquivalenceMap? equiv,
+            HashSet<string>? computedThisStep = null)
         {
             string key = slot.SourceKey;
 
@@ -436,7 +436,7 @@ namespace KSpiceEngine
 
         private static double GetAscRoleValue(List<(string name, double[] data)> inputCols, string roleKey, int t,
             Dictionary<string, double[]> predictions, Dictionary<string, string> csvToModelId, bool forceLastStep,
-            SignalEquivalenceMap equiv, HashSet<string> computedThisStep = null)
+            SignalEquivalenceMap? equiv, HashSet<string>? computedThisStep = null)
         {
             string role = roleKey.Substring(1, roleKey.IndexOf(':') - 1);
             // Same heuristic the trainer used to label Inlet/Outlet/Flow.
@@ -491,7 +491,7 @@ namespace KSpiceEngine
 
         private static double GetHxRoleValue(List<(string name, double[] data)> inputCols, string roleKey, int t,
             Dictionary<string, double[]> predictions, Dictionary<string, string> csvToModelId, bool forceLastStep,
-            SignalEquivalenceMap equiv, HashSet<string> computedThisStep = null)
+            SignalEquivalenceMap? equiv, HashSet<string>? computedThisStep = null)
         {
             string role = roleKey.Substring(1, roleKey.IndexOf(':') - 1);
             (string name, double[] data) tin = default, flow = default, cool = default, partner = default;

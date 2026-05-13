@@ -269,8 +269,21 @@ def build_eq_topology():
                     add_edge(f"{n}_Pressure", cid, "P_in")
 
             elif inp == "DOWNSTREAM_PRESSURE":
-                for n in find_nearest_state(comp, 'Pressure', False):
-                    add_edge(f"{n}_Pressure", cid, "P_out")
+                found = find_nearest_state(comp, 'Pressure', False)
+                if found:
+                    for n in found:
+                        add_edge(f"{n}_Pressure", cid, "P_out")
+                else:
+                    # No modeled downstream Pressure equation — check signal_map for a
+                    # direct downstream pressure signal (e.g. export boundary).
+                    fallback_key = f"{comp}_DownstreamPressure"
+                    if fallback_key in signal_map:
+                        if fallback_key not in equation_ids:
+                            tsa_states.append({"id": fallback_key,
+                                               "label": f"{comp}\n(DownstreamPressure)\n[boundary]",
+                                               "shape": "box", "color": "#D9EAD3"})
+                            equation_ids.add(fallback_key)
+                        add_edge(fallback_key, cid, "P_out")
 
             elif inp == "CONTAINER_PRESSURE":
                 # UV anti-surge valve: gas discharges back to the compressor suction separator.
@@ -372,7 +385,7 @@ def build_eq_topology():
                                 elif 'oil' in p_lower or 'light' in p_lower or 'overflow' in p_lower:
                                     add_edge(f"{u}_OilLevel",   cid, "y_meas")
                                 else:
-                                    add_edge(f"{u}_TotalLevel", cid, "y_meas")
+                                    add_edge(f"{u}_OilLevel", cid, "y_meas")
                             if 'PIC' in comp:
                                 add_edge(f"{u}_Pressure",    cid, "y_meas")
                             if 'TIC' in comp:

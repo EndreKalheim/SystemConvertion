@@ -10,7 +10,7 @@
   "25ESV0001_Temperature": "25ESV0001_pf:OutletStream.t",
   "23VA0001_Pressure": "23VA0001:Pressure",
   "23VA0001_WaterLevel": "23VA0001:LevelHeavyPhaseFeedSideWeir",
-  "23VA0001_TotalLevel": "23VA0001:LevelOverflowLiquid",
+  "23VA0001_OilLevel": "23VA0001:LevelOverflowLiquid",
   "23VA0001_Temperature": "23VA0001:Temperature",
   "23VA0001_DownstreamPressure": "23VA0001:OverflowOutletStream[0].p",
   "23ESV0002_MassFlow": "23ESV0002_pf:MassFlow",

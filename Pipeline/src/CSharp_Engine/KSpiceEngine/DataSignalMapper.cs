@@ -256,7 +256,7 @@ namespace KSpiceEngine
                     $"{compUpper}:OutletStream.p",
                     $"{compUpper}:OverflowOutletStream[0].p"
                 });
-            } else if (stateType == "WaterLevel" || stateType == "TotalLevel" || stateType == "Level") {
+            } else if (stateType == "WaterLevel" || stateType == "OilLevel" || stateType == "Level") {
                 if (stateType == "WaterLevel") candidates.Add($"{compUpper}:LevelHeavyPhaseFeedSideWeir");
                 candidates.Add($"{compUpper}:LevelOverflowLiquid");
                 candidates.Add($"{compUpper}:LevelFeedSideWeir");

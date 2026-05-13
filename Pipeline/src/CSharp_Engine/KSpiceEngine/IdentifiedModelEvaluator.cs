@@ -32,23 +32,23 @@ namespace KSpiceEngine
         // Optional fall-through: the CSV signal mapping key for this model's output
         // (e.g. "23VA0001_Pressure"). Used by Boundary/Fallback to copy truth when
         // available, and by ClosedLoopRunner to warm-start from CSV.
-        public string OutputSignalKey { get; }
+        public string? OutputSignalKey { get; }
 
         // Underlying TSA / custom model object (one of these is non-null after construction).
-        private UnitModel unitModel;
-        private CustomModels.ValvePhysicsModel valveModel;
-        private CustomModels.AntiSurgePhysicalModel ascModel;
-        private CustomModels.HeatExchangerTemperatureModel hxTempModel;
-        private PidController pidController;
+        private UnitModel? unitModel;
+        private CustomModels.ValvePhysicsModel? valveModel;
+        private CustomModels.AntiSurgePhysicalModel? ascModel;
+        private CustomModels.HeatExchangerTemperatureModel? hxTempModel;
+        private PidController? pidController;
 
         // Integrator-style state for IdentifyLinear_IntegratedFlow.
-        private double[] integratorAccum;       // running ∫signal·dt per input
-        private double[] integratorLinearGains; // gains in the order of InputContract
-        private bool[]   integratorIsOutflow;   // negate if outflow
-        private double   integratorBias;
-        private double[] integratorU0;          // mean of integrated input from training (offset)
-        private double[] integratorCurvatures;  // optional curvature gains: c*(accum-U0)^2/UNorm
-        private double[] integratorUNorm;       // normalization for curvature denominator
+        private double[]? integratorAccum;       // running ∫signal·dt per input
+        private double[]? integratorLinearGains; // gains in the order of InputContract
+        private bool[]?   integratorIsOutflow;   // negate if outflow
+        private double    integratorBias;
+        private double[]? integratorU0;          // mean of integrated input from training (offset)
+        private double[]? integratorCurvatures;  // optional curvature gains: c*(accum-U0)^2/UNorm
+        private double[]? integratorUNorm;       // normalization for curvature denominator
         // Anchors the integrator to the warm-start truth at t=0 so the model's
         // trajectory starts at the right value instead of the trainer's bias-Σg·U0
         // baseline. Without this anchor every closed-loop run would step by
@@ -61,7 +61,7 @@ namespace KSpiceEngine
         // gas-pressure runaway when individual flow predictions drifted.
         private double netBalanceAccum;
         private double netBalanceGain;
-        private bool[] netBalanceIsOutflow;
+        private bool[]? netBalanceIsOutflow;
         private double netBalanceAnchor;
 
         // For PID: warm-start state needs first SP/PV/U values from the dataset.
@@ -76,10 +76,10 @@ namespace KSpiceEngine
             // Source key in the SignalMapping (e.g. "23VA0001_Pressure", "25ESV0001_MassFlow")
             // or a special role token: "@Setpoint", "@Measurement", "@P_in", "@P_out",
             // "@Flow", "@U" (the runner resolves these from comp + signal_map).
-            public string SourceKey;
+            public string SourceKey = "";
             // Edge label from topology, e.g. "m_in", "m_out", "P_out". Used for outflow
             // detection in IntegratedFlow models (m_out → negate).
-            public string Label;
+            public string Label = "";
             // True if this slot represents an outflow whose sign must be flipped before
             // being fed to the integrator level model.
             public bool IsOutflow;
@@ -88,9 +88,9 @@ namespace KSpiceEngine
         public IdentifiedModelEvaluator(string id, JObject p)
         {
             this.ID = id;
-            this.ModelType = (string)(p["ModelType"]) ?? "Unknown";
+            this.ModelType = (string?)p["ModelType"] ?? "Unknown";
             this.InputContract = ResolveInputContract(id, p);
-            this.OutputSignalKey = (string)p["__OutputSignalKey"];
+            this.OutputSignalKey = (string?)p["__OutputSignalKey"];
             BuildUnderlyingModel(p);
         }
 
@@ -100,7 +100,7 @@ namespace KSpiceEngine
         // open-loop, neighbour prediction (or CSV for boundaries) for closed-loop.
         private static List<InputSlot> ResolveInputContract(string modelId, JObject p)
         {
-            string mt = (string)(p["ModelType"]) ?? "";
+            string mt = (string?)p["ModelType"] ?? "";
             int li = modelId.LastIndexOf('_');
             string comp = li > 0 ? modelId.Substring(0, li) : modelId;
 
@@ -125,25 +125,27 @@ namespace KSpiceEngine
                 case "ValvePhysicsModel":
                     // SimInputs were saved with the original CSV column names
                     // (P_in, P_out, U). Use those directly.
-                    var simInputs = (JArray)p["SimInputs"];
+                    var simInputs = (JArray?)p["SimInputs"];
                     if (simInputs != null && simInputs.Count >= 3)
                     {
-                        slots.Add(new InputSlot { SourceKey = (string)simInputs[0], Label = "P_in" });
-                        slots.Add(new InputSlot { SourceKey = (string)simInputs[1], Label = "P_out" });
-                        slots.Add(new InputSlot { SourceKey = (string)simInputs[2], Label = "U" });
+                        slots.Add(new InputSlot { SourceKey = (string?)simInputs[0] ?? "", Label = "P_in"  });
+                        slots.Add(new InputSlot { SourceKey = (string?)simInputs[1] ?? "", Label = "P_out" });
+                        slots.Add(new InputSlot { SourceKey = (string?)simInputs[2] ?? "", Label = "U"     });
                     }
                     return slots;
 
                 case "HeatExchangerTemperatureModel":
+                {
                     slots.Add(new InputSlot { SourceKey = $"@HX_Tin:{comp}",        Label = "UPSTREAM_TEMP"   });
                     // GasFlowSourceId: if the identifier was trained against a specific model
                     // (e.g. 23KA0001_MassFlow) instead of what the topology routes, use that
                     // same model ID directly so closed-loop uses the same signal as training.
-                    string gasFlowSrc = (string)p["GasFlowSourceId"];
+                    string? gasFlowSrc = (string?)p["GasFlowSourceId"];
                     slots.Add(new InputSlot { SourceKey = gasFlowSrc ?? $"@HX_Flow:{comp}", Label = "MassFlow" });
-                    slots.Add(new InputSlot { SourceKey = $"@HX_CoolTemp:{comp}",   Label = "COOLING_TEMP"    });
+                    slots.Add(new InputSlot { SourceKey = $"@HX_CoolTemp:{comp}",    Label = "COOLING_TEMP"    });
                     slots.Add(new InputSlot { SourceKey = $"@HX_PartnerFlow:{comp}", Label = "PARTNER_FLOW"    });
                     return slots;
+                }
 
                 case "IdentifyLinear":
                 case "UnitIdentifier":
@@ -154,12 +156,12 @@ namespace KSpiceEngine
                     // InputNames is a list like "25ESV0001_MassFlow(m_in)". Strip the
                     // parens and keep the resolved key + label so the runner can look
                     // each one up in the signal map (or in current/prev predictions).
-                    var inputNames = (JArray)p["InputNames"];
+                    var inputNames = (JArray?)p["InputNames"];
                     if (inputNames != null)
                     {
                         foreach (var nameTok in inputNames)
                         {
-                            string raw = (string)nameTok;
+                            string raw = (string?)nameTok ?? "";
                             int paren = raw.IndexOf('(');
                             string key = paren > 0 ? raw.Substring(0, paren).Trim() : raw.Trim();
                             string label = "";
@@ -246,7 +248,7 @@ namespace KSpiceEngine
                 {
                     hxTempModel = new CustomModels.HeatExchangerTemperatureModel(
                         ID, new[] { "Tin", "MassFlow", "CoolTemp", "PartnerFlow" }, ID);
-                    hxTempModel.modelParameters.Subtype       = (string)p["Subtype"]        ?? "GasSide";
+                    hxTempModel.modelParameters.Subtype       = (string?)p["Subtype"]        ?? "GasSide";
                     hxTempModel.modelParameters.Bias          = (double?)p["Bias"]          ?? 0.0;
                     hxTempModel.modelParameters.Alpha         = (double?)p["Alpha"]         ?? 0.5;
                     hxTempModel.modelParameters.GainGas       = (double?)p["GainGas"]       ?? 0.0;
@@ -324,9 +326,9 @@ namespace KSpiceEngine
             lastOutput = initialOutput;
             pidPrimed  = false;
             pidLastY   = initialOutput;
-            if (ascModel != null)    ascModel.WarmStart(null, initialOutput);
-            if (valveModel != null)  valveModel.WarmStart(null, initialOutput);
-            if (hxTempModel != null) hxTempModel.WarmStart(null, initialOutput);
+            if (ascModel != null)      ascModel.WarmStart(null, initialOutput);
+            if (valveModel != null)    valveModel.WarmStart(null, initialOutput);
+            if (hxTempModel != null)   hxTempModel.WarmStart(null, initialOutput);
             if (integratorAccum != null)
             {
                 Array.Clear(integratorAccum, 0, integratorAccum.Length);

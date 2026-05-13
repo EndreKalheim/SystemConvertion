@@ -154,17 +154,6 @@
     "Role": "Volume"
   },
   {
-    "ID": "23VA0001_TotalLevel",
-    "Component": "23VA0001",
-    "State": "TotalLevel",
-    "Formula": "dL/dt   = (1/A) * (m_in - m_out)",
-    "Inputs": [
-      "UPSTREAM_FLOW",
-      "DOWNSTREAM_FLOW"
-    ],
-    "Role": "Volume"
-  },
-  {
     "ID": "23VA0001_Temperature",
     "Component": "23VA0001",
     "State": "Temperature",

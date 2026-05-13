@@ -107,7 +107,6 @@ namespace KSpiceEngine
                     AddState("Pressure",    "dP/dt = k * (m_in - m_out)",           new[] { "UPSTREAM_FLOW", "DOWNSTREAM_FLOW" });
                     AddState("WaterLevel",  "dL_w/dt = (1/A) * (m_in - m_out)",     new[] { "UPSTREAM_FLOW", "DOWNSTREAM_FLOW" });
                     AddState("OilLevel",    "dL_o/dt = (1/A) * (m_in - m_out)",     new[] { "UPSTREAM_FLOW", "DOWNSTREAM_FLOW" });
-                    AddState("TotalLevel",  "dL/dt   = (1/A) * (m_in - m_out)",     new[] { "UPSTREAM_FLOW", "DOWNSTREAM_FLOW" });
                     AddState("Temperature", "T_out = f(T_in, m_in, m_out)",          new[] { "UPSTREAM_FLOW", "UPSTREAM_TEMP", "DOWNSTREAM_FLOW" });
                 }
                 else if (ktype.Contains("HeatExchanger"))

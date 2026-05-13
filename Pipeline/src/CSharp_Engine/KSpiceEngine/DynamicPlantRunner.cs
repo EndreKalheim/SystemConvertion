@@ -14,7 +14,7 @@ namespace KSpiceEngine
     {
         public static void RunPlantSimulations(
             string csvPath, string systemMapPath, string equationsPath,
-            string mappingPath, string outputCsvPath, string selectedKspiceModelPath = null)
+            string mappingPath, string outputCsvPath, string? selectedKspiceModelPath = null)
         {
             Console.WriteLine("\n[DynamicPlantRunner] Starting Phase 6: Training and Validation Pipeline...");
 
@@ -143,7 +143,7 @@ namespace KSpiceEngine
             WriteValidationCsv(dataset, predictions, signalMap, outputCsvPath, timeBase_s);
             Console.WriteLine($"\n[SUCCESS] Validation Data Written to {outputCsvPath}");
 
-            string paramsOutPath = Path.Combine(Path.GetDirectoryName(outputCsvPath), "CS_Identified_Parameters.json");
+            string paramsOutPath = Path.Combine(Path.GetDirectoryName(outputCsvPath)!, "CS_Identified_Parameters.json");
             File.WriteAllText(paramsOutPath, JsonConvert.SerializeObject(identifiedParams, Formatting.Indented));
             Console.WriteLine($"[SUCCESS] Identified Parameters Written to {paramsOutPath}");
         }

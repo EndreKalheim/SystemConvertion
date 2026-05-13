@@ -16,7 +16,8 @@
       "Read(//c/Users/Endre/OneDrive/Dokumenter/sem3/TSA/KspicetoTsa/KSpiceToTSA_Pipeline/Runtime/Validation_Plots_Algo/**)",
       "Bash(python run.py --model \"TutorialHN\")",
       "Bash(echo \"Exit: $?\")",
-      "Bash(xargs grep *)"
+      "Bash(xargs grep *)",
+      "Bash(git stash *)"
     ]
   }
 }

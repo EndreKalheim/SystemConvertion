@@ -47,7 +47,7 @@ def generate_validation_plots():
             candidates.append(f"{comp}:LevelHeavyPhaseFeedSideWeir")
         elif state == "OilLevel":
             candidates.append(f"{comp}:LevelOverflowLiquid")
-        elif state == "TotalLevel":
+        elif state == "OilLevel":
             candidates.append(f"{comp}:Level")
             candidates.append(f"{comp}:VolumeTotal")
         elif state == "Control":
@@ -60,7 +60,7 @@ def generate_validation_plots():
             candidates.append(f"{comp}:{state}")
             if state == "WaterLevel": candidates.append(f"{comp}:LevelHeavyPhaseFeedSideWeir")
             elif state == "OilLevel": candidates.append(f"{comp}:LevelOverflowLiquid")
-            elif state == "TotalLevel": candidates.append(f"{comp}:VolumeTopWeirOverflowSide")
+            elif state == "OilLevel": candidates.append(f"{comp}:VolumeTopWeirOverflowSide")
         
         if comp == "23LIC002":
             comp = "23LIC0002"

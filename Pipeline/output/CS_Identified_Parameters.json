@@ -114,7 +114,7 @@
       "NaN"
     ]
   },
-  "23VA0001_TotalLevel": {
+  "23VA0001_OilLevel": {
     "ModelType": "IdentifyLinear_IntegratedFlow",
     "FitScore": 93.465,
     "InputNames": [
@@ -427,14 +427,14 @@
     "DensityTuningFactor": 0.04766222070334253,
     "Formula": "Q = 0,0477 * 3000 * U * sqrt(max(0, P_in - P_out))",
     "InputNames": [
-      "23ESV0005_pf:OutletStream.p"
+      "23ESV0005_DownstreamPressure(P_out)"
     ],
     "LinearGains": [
       -1.0
     ],
     "SimInputs": [
       "23HX0001_Pressure(P_in)",
-      "23ESV0005_pf:OutletStream.p",
+      "23ESV0005_DownstreamPressure(P_out)",
       "Assumed_100%"
     ]
   },
@@ -442,25 +442,30 @@
     "ModelType": "UnitIdentifier",
     "FitScore": 74.834,
     "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 2 inputs, Tc=0,00s",
+    "Formula": "Dynamic MISO: 3 inputs, Tc=0,00s",
     "LinearGains": [
       0.89259,
-      27.237
+      27.237,
+      0.0
     ],
     "InputNames": [
       "23HX0001_Temperature(T_in)",
-      "23HX0001_Pressure(P_in)"
+      "23HX0001_Pressure(P_in)",
+      "23ESV0005_DownstreamPressure(P_out)"
     ],
     "Bias": 42.831,
     "U0": [
       43.769,
-      46.214
+      46.214,
+      46.13
     ],
     "UNorm": [
+      1.0,
       1.0,
       1.0
     ],
     "Curvatures": [
+      "NaN",
       "NaN",
       "NaN"
     ]
@@ -585,14 +590,14 @@
     "DensityTuningFactor": 0.19409539706910908,
     "Formula": "Q = 0,1941 * 250 * U * sqrt(max(0, P_in - P_out))",
     "InputNames": [
-      "23LV0002_pf:OutletStream.p"
+      "23LV0002_DownstreamPressure(P_out)"
     ],
     "LinearGains": [
       -1.0
     ],
     "SimInputs": [
       "23PA0001_Pressure(P_in)",
-      "23LV0002_pf:OutletStream.p",
+      "23LV0002_DownstreamPressure(P_out)",
       "23LIC0002_Control(U(t))"
     ]
   },
@@ -600,21 +605,25 @@
     "ModelType": "UnitIdentifier",
     "FitScore": 68.629,
     "TimeConstant_s": 8.2675,
-    "Formula": "Dynamic MISO: 2 inputs, Tc=8,27s",
+    "Formula": "Dynamic MISO: 3 inputs, Tc=8,27s",
     "LinearGains": [
       0.3471,
-      0.14479
+      0.14479,
+      0.0
     ],
     "InputNames": [
       "23PA0001_Temperature(T_in)",
-      "23PA0001_Pressure(P_in)"
+      "23PA0001_Pressure(P_in)",
+      "23LV0002_DownstreamPressure(P_out)"
     ],
     "Bias": 45.613,
     "U0": [
       48.736,
-      55.518
+      55.518,
+      26.01
     ],
     "UNorm": [
+      1.0,
       1.0,
       1.0
     ]
@@ -626,14 +635,14 @@
     "DensityTuningFactor": 0.11588749299897086,
     "Formula": "Q = 0,1159 * 100 * U * sqrt(max(0, P_in - P_out))",
     "InputNames": [
-      "23LV0001_pf:OutletStream.p"
+      "23LV0001_DownstreamPressure(P_out)"
     ],
     "LinearGains": [
       -1.0
     ],
     "SimInputs": [
       "23VA0001_Pressure(P_in)",
-      "23LV0001_pf:OutletStream.p",
+      "23LV0001_DownstreamPressure(P_out)",
       "23LIC0001_Control(U(t))"
     ]
   },
@@ -641,21 +650,25 @@
     "ModelType": "UnitIdentifier",
     "FitScore": 22.333,
     "TimeConstant_s": 162.49,
-    "Formula": "Dynamic MISO: 2 inputs, Tc=162,49s",
+    "Formula": "Dynamic MISO: 3 inputs, Tc=162,49s",
     "LinearGains": [
       2.7345,
-      -0.5841
+      -0.5841,
+      0.0
     ],
     "InputNames": [
       "23VA0001_Temperature(T_in)",
-      "23VA0001_Pressure(P_in)"
+      "23VA0001_Pressure(P_in)",
+      "23LV0001_DownstreamPressure(P_out)"
     ],
     "Bias": 41.5,
     "U0": [
       41.349,
-      27.613
+      27.613,
+      11.01
     ],
     "UNorm": [
+      1.0,
       1.0,
       1.0
     ]
@@ -694,14 +707,14 @@
     "DensityTuningFactor": 0.23740601286760177,
     "Formula": "Q = 0,2374 * 300 * U * sqrt(max(0, P_in - P_out))",
     "InputNames": [
-      "23TV0003_pf:OutletStream.p"
+      "23TV0003_DownstreamPressure(P_out)"
     ],
     "LinearGains": [
       -1.0
     ],
     "SimInputs": [
       "23HX0001s_Pressure(P_in)",
-      "23TV0003_pf:OutletStream.p",
+      "23TV0003_DownstreamPressure(P_out)",
       "23TIC0003_Control(U(t))"
     ]
   },
@@ -709,21 +722,25 @@
     "ModelType": "UnitIdentifier",
     "FitScore": 95.953,
     "TimeConstant_s": 8.1926,
-    "Formula": "Dynamic MISO: 2 inputs, Tc=8,19s",
+    "Formula": "Dynamic MISO: 3 inputs, Tc=8,19s",
     "LinearGains": [
       1.0157,
+      0.0,
       0.0
     ],
     "InputNames": [
       "23HX0001s_Temperature(T_in)",
-      "23HX0001s_Pressure(P_in)"
+      "23HX0001s_Pressure(P_in)",
+      "23TV0003_DownstreamPressure(P_out)"
     ],
     "Bias": 68.191,
     "U0": [
       68.129,
-      9.01
+      9.01,
+      4.01
     ],
     "UNorm": [
+      1.0,
       1.0,
       1.0
     ]

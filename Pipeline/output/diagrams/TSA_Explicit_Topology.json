@@ -122,17 +122,6 @@
       }
     },
     {
-      "id": "23VA0001_TotalLevel",
-      "label": "23VA0001\n(TotalLevel)\n\nEq: dL/dt   = (1/A) * (m_in - m_out)",
-      "color": "#81ecec",
-      "shape": "box",
-      "group": "23VA0001",
-      "font": {
-        "multi": "html",
-        "size": 11
-      }
-    },
-    {
       "id": "23VA0001_Temperature",
       "label": "23VA0001\n(Temperature)\n\nEq: T_out = f(T_in, m_in, m_out)",
       "color": "#f3a683",
@@ -551,6 +540,24 @@
       }
     },
     {
+      "id": "23ESV0005_DownstreamPressure",
+      "label": "23ESV0005\n(DownstreamPressure)\n[boundary]",
+      "shape": "box",
+      "color": "#D9EAD3"
+    },
+    {
+      "id": "23LV0002_DownstreamPressure",
+      "label": "23LV0002\n(DownstreamPressure)\n[boundary]",
+      "shape": "box",
+      "color": "#D9EAD3"
+    },
+    {
+      "id": "23LV0001_DownstreamPressure",
+      "label": "23LV0001\n(DownstreamPressure)\n[boundary]",
+      "shape": "box",
+      "color": "#D9EAD3"
+    },
+    {
       "id": "23LIC0001:Measurement",
       "label": "23LIC0001:Measurement",
       "shape": "box",
@@ -567,6 +574,12 @@
       "label": "23PIC0001:Measurement",
       "shape": "box",
       "color": "#EAD1DC"
+    },
+    {
+      "id": "23TV0003_DownstreamPressure",
+      "label": "23TV0003\n(DownstreamPressure)\n[boundary]",
+      "shape": "box",
+      "color": "#D9EAD3"
     },
     {
       "id": "23TIC0003:Measurement",
@@ -804,60 +817,6 @@
     {
       "from": "23KA0001_MassFlow",
       "to": "23VA0001_OilLevel",
-      "label": "m_out",
-      "arrows": "to",
-      "font": {
-        "size": 8
-      }
-    },
-    {
-      "from": "25ESV0001_MassFlow",
-      "to": "23VA0001_TotalLevel",
-      "label": "m_in",
-      "arrows": "to",
-      "font": {
-        "size": 8
-      }
-    },
-    {
-      "from": "23UV0001_MassFlow",
-      "to": "23VA0001_TotalLevel",
-      "label": "m_in",
-      "arrows": "to",
-      "font": {
-        "size": 8
-      }
-    },
-    {
-      "from": "23PSV0001_MassFlow",
-      "to": "23VA0001_TotalLevel",
-      "label": "m_out",
-      "arrows": "to",
-      "font": {
-        "size": 8
-      }
-    },
-    {
-      "from": "23MV0003_MassFlow",
-      "to": "23VA0001_TotalLevel",
-      "label": "m_out",
-      "arrows": "to",
-      "font": {
-        "size": 8
-      }
-    },
-    {
-      "from": "23LV0001_MassFlow",
-      "to": "23VA0001_TotalLevel",
-      "label": "m_out",
-      "arrows": "to",
-      "font": {
-        "size": 8
-      }
-    },
-    {
-      "from": "23KA0001_MassFlow",
-      "to": "23VA0001_TotalLevel",
       "label": "m_out",
       "arrows": "to",
       "font": {
@@ -1144,6 +1103,15 @@
       }
     },
     {
+      "from": "23ESV0005_DownstreamPressure",
+      "to": "23ESV0005_MassFlow",
+      "label": "P_out",
+      "arrows": "to",
+      "font": {
+        "size": 8
+      }
+    },
+    {
       "from": "23HX0001_Temperature",
       "to": "23ESV0005_Temperature",
       "label": "T_in",
@@ -1156,6 +1124,15 @@
       "from": "23HX0001_Pressure",
       "to": "23ESV0005_Temperature",
       "label": "P_in",
+      "arrows": "to",
+      "font": {
+        "size": 8
+      }
+    },
+    {
+      "from": "23ESV0005_DownstreamPressure",
+      "to": "23ESV0005_Temperature",
+      "label": "P_out",
       "arrows": "to",
       "font": {
         "size": 8
@@ -1297,6 +1274,15 @@
       }
     },
     {
+      "from": "23LV0002_DownstreamPressure",
+      "to": "23LV0002_MassFlow",
+      "label": "P_out",
+      "arrows": "to",
+      "font": {
+        "size": 8
+      }
+    },
+    {
       "from": "23LIC0002_Control",
       "to": "23LV0002_MassFlow",
       "label": "U(t)",
@@ -1324,9 +1310,27 @@
       }
     },
     {
+      "from": "23LV0002_DownstreamPressure",
+      "to": "23LV0002_Temperature",
+      "label": "P_out",
+      "arrows": "to",
+      "font": {
+        "size": 8
+      }
+    },
+    {
       "from": "23VA0001_Pressure",
       "to": "23LV0001_MassFlow",
       "label": "P_in",
+      "arrows": "to",
+      "font": {
+        "size": 8
+      }
+    },
+    {
+      "from": "23LV0001_DownstreamPressure",
+      "to": "23LV0001_MassFlow",
+      "label": "P_out",
       "arrows": "to",
       "font": {
         "size": 8
@@ -1354,6 +1358,15 @@
       "from": "23VA0001_Pressure",
       "to": "23LV0001_Temperature",
       "label": "P_in",
+      "arrows": "to",
+      "font": {
+        "size": 8
+      }
+    },
+    {
+      "from": "23LV0001_DownstreamPressure",
+      "to": "23LV0001_Temperature",
+      "label": "P_out",
       "arrows": "to",
       "font": {
         "size": 8
@@ -1396,6 +1409,15 @@
       }
     },
     {
+      "from": "23TV0003_DownstreamPressure",
+      "to": "23TV0003_MassFlow",
+      "label": "P_out",
+      "arrows": "to",
+      "font": {
+        "size": 8
+      }
+    },
+    {
       "from": "23TIC0003_Control",
       "to": "23TV0003_MassFlow",
       "label": "U(t)",
@@ -1417,6 +1439,15 @@
       "from": "23HX0001s_Pressure",
       "to": "23TV0003_Temperature",
       "label": "P_in",
+      "arrows": "to",
+      "font": {
+        "size": 8
+      }
+    },
+    {
+      "from": "23TV0003_DownstreamPressure",
+      "to": "23TV0003_Temperature",
+      "label": "P_out",
       "arrows": "to",
       "font": {
         "size": 8

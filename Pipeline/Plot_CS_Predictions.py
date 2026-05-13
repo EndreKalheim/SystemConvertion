@@ -2,11 +2,84 @@ import os
 import glob
 import json
 import argparse
+import textwrap
 from collections import deque
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+
+
+def _build_comp_inputs(system_map_path):
+    """For each K-Spice component, map destination port name -> source signal string."""
+    if not os.path.exists(system_map_path):
+        return {}
+    with open(system_map_path) as f:
+        smap = json.load(f)
+    result = {}
+    for model in smap.get('Models', []):
+        comp = model['Name']
+        entry = {}
+        for inp in model.get('Inputs', []):
+            src = inp.get('Source', '')
+            dst = inp.get('Destination', '')
+            if src and dst:
+                entry[dst] = src
+        if entry:
+            result[comp] = entry
+    return result
+
+
+def _trace_signal_to_model(start, comp_inputs, csv_to_predicted_model, max_hops=8):
+    """Walk K-Spice wiring from `start` until reaching a CSV column that maps to a
+    predicted model. Handles transmitter pass-throughs: when the port is an output
+    (not an input port of that component), fall through to the component's inputs.
+    Also handles stream references: K-Spice stores stream properties as
+    'Comp:OutletStream.t' etc., but wiring edges reference just 'Comp:OutletStream',
+    so we try appending '.t'/'.f'/'.p' suffixes at each step."""
+    visited = set()
+    current = start
+    for _ in range(max_hops):
+        if current in visited:
+            break
+        visited.add(current)
+        # Direct hit: this signal is a predicted model's CSV column.
+        if current in csv_to_predicted_model:
+            return csv_to_predicted_model[current]
+        # Stream reference: the signal may be a bare stream object (e.g.
+        # "23HX0001:OutletStream") while the CSV columns use dotted properties
+        # ("23HX0001:OutletStream.t"). Try all three standard suffixes.
+        for sfx in ('.t', '.f', '.p'):
+            if current + sfx in csv_to_predicted_model:
+                return csv_to_predicted_model[current + sfx]
+        colon = current.find(':')
+        if colon <= 0:
+            break
+        comp = current[:colon]
+        port = current[colon + 1:]
+        if comp not in comp_inputs:
+            break
+        inp_dict = comp_inputs[comp]
+        # Follow the exact port if it's an input port of this component.
+        if port in inp_dict:
+            current = inp_dict[port]
+            continue
+        # Port is an output (e.g. transmitter's MeasuredValue): check all inputs of
+        # the component for a direct predicted-model hit, else follow the first one.
+        first_src = None
+        for src in inp_dict.values():
+            if src in csv_to_predicted_model:
+                return csv_to_predicted_model[src]
+            for sfx in ('.t', '.f', '.p'):
+                if src + sfx in csv_to_predicted_model:
+                    return csv_to_predicted_model[src + sfx]
+            if first_src is None:
+                first_src = src
+        if first_src:
+            current = first_src
+        else:
+            break
+    return None
 
 
 def _build_physical_adjacency(system_map_path):
@@ -111,6 +184,8 @@ def plot_validation(predictions_csv=None, kspice_csv=None, out_dir=None):
         except Exception:
             override_fits = {}
 
+    is_closedloop = 'ClosedLoop' in os.path.basename(predictions_csv)
+
     # ── Clean up old plots so stale files never accumulate ───────────────────
     if os.path.exists(out_dir):
         for old_file in glob.glob(os.path.join(out_dir, "*.png")):
@@ -139,7 +214,17 @@ def plot_validation(predictions_csv=None, kspice_csv=None, out_dir=None):
         print(f"[ERROR] Loading files: {e}")
         return
 
-    phys_adj = _build_physical_adjacency(system_map_json)
+    phys_adj    = _build_physical_adjacency(system_map_json)
+    comp_inputs = _build_comp_inputs(system_map_json)
+
+    # Reverse signal map: csv_col -> model_id, but only for model_ids that
+    # actually have a _Predicted column — used to resolve PID measurement signals
+    # to their predicted state in closed-loop mode.
+    predicted_model_ids = {c[:-len('_Predicted')] for c in df_pred.columns if c.endswith('_Predicted')}
+    csv_to_predicted_model = {}
+    for k, v in signal_map.items():
+        if k in predicted_model_ids and v not in csv_to_predicted_model:
+            csv_to_predicted_model[v] = k
 
     # ── Build input-edge map from topology ───────────────────────────────────
     input_edges = {}
@@ -161,7 +246,7 @@ def plot_validation(predictions_csv=None, kspice_csv=None, out_dir=None):
         if true_col not in df_pred.columns:
             continue
 
-        # Component / state split on the first underscore (names like 23VA0001_TotalLevel)
+        # Component / state split on the first underscore (names like 23VA0001_OilLevel)
         first_under = model_id.find('_')
         comp  = model_id[:first_under] if first_under > 0 else model_id
         state = model_id[first_under+1:] if first_under > 0 else ''
@@ -185,6 +270,7 @@ def plot_validation(predictions_csv=None, kspice_csv=None, out_dir=None):
         parent_comp = model_id[:_pi] if _pi > 0 else None
 
         inputs_by_csv = {}
+        src_node_by_csv = {}  # csv_col -> src_node, for closed-loop predicted-input lookup
 
         # For controllers (PID), always inject Setpoint + Measurement first so
         # every controller plot shows the exact two signals fed to PidIdentifier
@@ -198,6 +284,13 @@ def plot_validation(predictions_csv=None, kspice_csv=None, out_dir=None):
                 inputs_by_csv[sp_csv] = f"Setpoint: {sp_csv}"
             if meas_csv and meas_csv in df_raw.columns:
                 inputs_by_csv[meas_csv] = f"Measurement: {meas_csv}"
+                # Walk the K-Spice wiring from the measurement port through any
+                # transmitter pass-throughs to the actual predicted state column
+                # (e.g. 23LIC0001:Measurement → 23LT0001:MeasuredValue →
+                #  23VA0001:LevelHeavyPhaseFeedSideWeir → 23VA0001_WaterLevel).
+                meas_model = _trace_signal_to_model(meas_csv, comp_inputs, csv_to_predicted_model)
+                if meas_model:
+                    src_node_by_csv[meas_csv] = meas_model
         elif model_type == "ValvePhysicsModel":
             # ValvePhysicsModel only contributes the local pipe outlet pressure as a unique
             # signal — P_in (upstream comp) and U(t) (controller output) come from the
@@ -220,6 +313,7 @@ def plot_validation(predictions_csv=None, kspice_csv=None, out_dir=None):
 
             csv_col    = signal_map.get(src_node) or signal_map.get(src_node.replace('_pf', ''))
 
+            proxy_key = None
             if not (csv_col and csv_col in df_raw.columns):
                 # Proxy resolution — only for MassFlow (conserved in series connections)
                 _li = src_node.rfind('_')
@@ -237,6 +331,9 @@ def plot_validation(predictions_csv=None, kspice_csv=None, out_dir=None):
                 display = f"{edge_label}: {src_node}"
                 if csv_col not in inputs_by_csv:
                     inputs_by_csv[csv_col] = display
+                    # Use the clean proxy model ID for CL predicted-input lookup,
+                    # not the mangled display string (e.g. "X [proxy->Y]").
+                    src_node_by_csv[csv_col] = proxy_key if proxy_key else src_node
                 else:
                     inputs_by_csv[csv_col] += f" | {edge_label}"
 
@@ -271,7 +368,12 @@ def plot_validation(predictions_csv=None, kspice_csv=None, out_dir=None):
         tc        = p.get('TimeConstant_s')
         tc_str    = f"  Tc={tc:.2f}s" if tc is not None else ""
         formula   = p.get('Formula', '')
-        title_str = f"{model_id}  [{model_type}{fit_str}{tc_str}]\n{formula}"
+        if len(formula) > 100:
+            wrapped = textwrap.wrap(formula, width=100, break_long_words=True)
+            formula_display = '\n'.join(wrapped[:2]) + (' …' if len(wrapped) > 2 else '')
+        else:
+            formula_display = formula
+        title_str = f"{model_id}  [{model_type}{fit_str}{tc_str}]\n{formula_display}"
 
         # ── Layout ────────────────────────────────────────────────────────────
         n_inputs  = len(input_signals)
@@ -308,8 +410,26 @@ def plot_validation(predictions_csv=None, kspice_csv=None, out_dir=None):
                 break
             ax = axes[i]
             signal_data = df_raw[csv_col].values[:min_len]
-            ax.plot(df_pred['Time'].values[:min_len], signal_data,
-                    color='darkorange', linewidth=1.2)
+            time_axis   = df_pred['Time'].values[:min_len]
+
+            # In closed-loop mode: if this input comes from a predicted model, also
+            # show the predicted signal that was actually fed to the model — lets the
+            # user distinguish "bad model" from "bad (propagated) input".
+            src_nd = src_node_by_csv.get(csv_col)
+            cl_col = f"{src_nd}_Predicted" if src_nd else None
+            has_cl = is_closedloop and cl_col and cl_col in df_pred.columns
+
+            if has_cl:
+                ax.plot(time_axis, signal_data,
+                        color='dimgray', linewidth=1.0, linestyle='--', alpha=0.7,
+                        label='K-Spice (truth)')
+                cl_data = df_pred[cl_col].values[:min_len]
+                ax.plot(time_axis, cl_data,
+                        color='darkorange', linewidth=1.2,
+                        label='CL actual input')
+                ax.legend(fontsize=7, loc='upper right')
+            else:
+                ax.plot(time_axis, signal_data, color='darkorange', linewidth=1.2)
 
             gain = gain_by_csv.get(csv_col)
             if gain is not None:
