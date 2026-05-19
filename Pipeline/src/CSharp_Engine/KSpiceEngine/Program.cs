@@ -45,7 +45,7 @@ namespace KSpiceEngine
                 mapPath = Path.Combine(pipelineRoot, "data", "extracted", "KSpiceSystemMap.json");
 
             if (string.IsNullOrEmpty(csvPath))
-                csvPath = Path.Combine(pipelineRoot, "data", "raw", "KspiceSim.csv");
+                csvPath = Path.Combine(pipelineRoot, "data", "raw", "KspiceBigSimFixed.csv");
 
             string diagDir = Path.Combine(pipelineRoot, "output", "diagrams");
             string outDir  = Path.Combine(pipelineRoot, "output");

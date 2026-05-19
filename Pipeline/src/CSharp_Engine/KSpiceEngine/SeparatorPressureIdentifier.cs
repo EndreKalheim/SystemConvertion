@@ -126,14 +126,67 @@ namespace KSpiceEngine
                     return ((double[])Y_true.Clone(),
                             new JObject { ["ModelType"] = "Fallback", ["Reason"] = "All pressure strategies failed" });
 
-                // Prefer F when it achieves reasonable fit — avoids multicollinearity from large opposing gains
-                var stratF = results.FirstOrDefault(r => r.name == "UnitIdentifier_SignedFlows");
-                var best   = (stratF.name != null && stratF.fit >= 20.0)
-                             ? stratF
-                             : results.OrderByDescending(r => r.fit).First();
+                // Reject strategies whose per-stream gains are implausibly large.
+                // |gain| > 50 indicates OLS collinearity (e.g. a proxy signal correlated
+                // with another input assigns huge cancelling gains that blow up in testset).
+                const double MaxGain = 50.0;
+                bool GainsOk(JObject pars)
+                {
+                    var gains = pars["LinearGains"] as JArray;
+                    return gains == null || gains.All(g => Math.Abs((double)g) <= MaxGain);
+                }
 
-                if (stratF.name != null && stratF.fit >= 20.0)
+                // Strategy selection priority (most generalizable first):
+                //   F > E > C > D > A > B
+                // F and E use a leaky-integrator (dynamic) model on raw flows — they return
+                // to a mean and generalise across CSV files with different initial conditions.
+                // C also uses raw net flow (single static gain) and is robust.
+                // A, B, D regress on CUMULATIVE INTEGRALS whose absolute level drifts with
+                // initial conditions; they overfit training data and fail on held-out CSVs.
+                // Per-stream strategies (A, B, D, F) are additionally rejected when any
+                // |gain| > MaxGain — a sign of OLS collinearity (e.g. proxy signal aliasing).
+
+                // Dynamic strategies preferred: F (per-stream) then E (net) then C (static net)
+                var stratF = results.FirstOrDefault(r => r.name == "UnitIdentifier_SignedFlows");
+                var stratE = results.FirstOrDefault(r => r.name == "IdentifyLinear-rawFlows");
+                var stratC = results.FirstOrDefault(r => r.name == "NetMassBalance");
+
+                bool stratFOk = stratF.name != null && stratF.fit >= 20.0 && GainsOk(stratF.pars);
+                bool stratEOk = stratE.name != null && stratE.fit >= 20.0;
+                bool stratCOk = stratC.name != null && stratC.fit >= 20.0;
+
+                (double[] ySim, double fit, string name, JObject pars) best;
+                if (stratFOk)
+                {
+                    best = stratF;
                     Console.WriteLine($"[Model] {id}: Preferring Strategy F (UnitIdent-SignedFlows) fit={stratF.fit:F1}%.");
+                }
+                else if (stratEOk)
+                {
+                    best = stratE;
+                    if (stratF.name != null)
+                    {
+                        var maxG = (stratF.pars["LinearGains"] as JArray)?
+                                       .Max(g => Math.Abs((double)g)) ?? 0.0;
+                        Console.WriteLine($"[Model] {id}: Strategy F rejected (maxGain={maxG:F1} > {MaxGain}). Using E.");
+                    }
+                    else Console.WriteLine($"[Model] {id}: Strategy F unavailable. Using E fit={stratE.fit:F1}%.");
+                }
+                else if (stratCOk)
+                {
+                    best = stratC;
+                    Console.WriteLine($"[Model] {id}: Strategies F/E unavailable or poor. Using C fit={stratC.fit:F1}%.");
+                }
+                else
+                {
+                    // Last resort: among all results with acceptable gains by fit; else unconstrained.
+                    var acceptable = results.Where(r => GainsOk(r.pars)).OrderByDescending(r => r.fit).ToList();
+                    best = acceptable.Count > 0
+                           ? acceptable[0]
+                           : results.OrderByDescending(r => r.fit).First();
+                    Console.WriteLine($"[Model] {id}: All preferred strategies poor/rejected. Using {best.name} fit={best.fit:F1}%.");
+                }
+
                 Console.WriteLine($"[SUCCESS] {id}: Best={best.name}, FitScore={best.fit:F1}%");
                 return (best.ySim, best.pars);
             }

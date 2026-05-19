@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -129,33 +129,148 @@ namespace KSpiceEngine
             }
 
             // 4. Run OLS multi-architecture benchmark.
-            // Results are stored as a fallback: if KickBased fails (fitScore == 0) the
-            // best OLS candidate is returned instead.  The benchmark array is always
-            // attached to the output JSON so the plotter can compare all architectures.
-            // OLS is intentionally overridden by KickBased whenever fitScore > 0 because
-            // static OLS weights cause false kick-opens in closed-loop simulation.
+            // The benchmark tracks two winners:
+            //   bestFit/bestParams  — overall best OLS (may be SurgeProxy, LinearOLS, etc.)
+            //   bestPRFit/bestPRParams — best LinearPR candidate (scale-invariant, safe)
             var benchmark = new JArray();
-            double bestFit = double.NegativeInfinity;
-            double[] bestY = null;
+            double bestFit   = double.NegativeInfinity;
+            double[] bestY   = null;
             JObject bestParams = null;
+            double bestPRFit   = double.NegativeInfinity;
+            double[] bestPRY   = null;
+            JObject bestPRParams = null;
             RunOlsBenchmark(id, Y_true, pIn, pOut, flow, closeTime_s, timeBase_s, M,
-                            ref benchmark, ref bestFit, ref bestY, ref bestParams);
+                            ref benchmark, ref bestFit, ref bestY, ref bestParams,
+                            ref bestPRFit, ref bestPRY, ref bestPRParams);
 
-            // 5. Fit physics-based KickBased model
+            // 5. Fit physics-based KickBased model.
+            // Selection priority (from highest to lowest):
+            //   (a) KickBased — if its training fit >= best LinearPR fit.
+            //       KickBased is always preferred when it is competitive because it handles
+            //       surge events as a state machine (correct physical structure).
+            //   (b) LinearPR (PR=P_out/P_in, MF, Const) — if it beats KickBased.
+            //       LinearPR is scale-invariant: weights don't blow up when operating
+            //       pressure shifts between training and test/CL.
+            //   (c) Best overall OLS (LinearOLS, SurgeProxy, etc.) — fallback when neither
+            //       KickBased nor LinearPR achieves positive fit.
+            //       NOTE: LinearOLS/SurgeProxy use raw P_out/DP_over_MF2 which can explode
+            //       at different operating points — only use as last resort.
             var kick = IdentifyKickBased(id, comp, Y_true, pIn, pOut, flow,
                                          pIn_pred, pOut_pred, flow_pred,
                                          closeTime_s, timeBase_s, dataset, M);
             if (kick.benchmarkEntry != null) benchmark.Add(kick.benchmarkEntry);
-            if (kick.fitScore > bestFit)
+
+            // UMin is needed for active-period fit and over-triggering checks.
+            double sortedMin5 = Y_true.OrderBy(y => y).Skip((int)(Y_true.Length * 0.05)).First();
+            double estimatedUMin = (sortedMin5 >= 2.0) ? sortedMin5 : 0.0;
+            Console.WriteLine($"  [ASC] {id}: estimatedUMin={estimatedUMin:F1}% (5th-pct={sortedMin5:F1}%)");
+
+            // Active-period fit: how well does KickBased track the valve when it is actively
+            // moving? Good overall fit via zero-baseline does not mean it tracks active control.
+            double activeFitKick = -100.0;
+            int nActiveSamples = 0;
+            if (kick.y != null)
             {
-                bestFit    = kick.fitScore;
-                bestY      = kick.y;
-                bestParams = kick.@params;
+                nActiveSamples = Y_true.Count(y => y > estimatedUMin + 5.0);
+                if (nActiveSamples > 10)
+                {
+                    double meanActive = Y_true.Where(y => y > estimatedUMin + 5.0).Average();
+                    double ssea = 0, tssa = 0;
+                    for (int i = 0; i < M; i++)
+                    {
+                        if (Y_true[i] > estimatedUMin + 5.0)
+                        {
+                            double r  = Y_true[i] - kick.y[i]; ssea += r * r;
+                            double dm = Y_true[i] - meanActive; tssa += dm * dm;
+                        }
+                    }
+                    activeFitKick = tssa > 1e-12 ? Math.Max(-100, 100.0 * (1 - ssea / tssa)) : -100.0;
+                }
+                Console.WriteLine($"  [ASC] {id}: KickBased active-period fit={activeFitKick:F2}%  (nActive={nActiveSamples}/{M})");
+            }
+
+            // Over-triggering check: KickBased predicts surge far more often than truth.
+            bool kickOverTriggering = false;
+            if (kick.y != null && kick.fitScore > 0.0)
+            {
+                double predSurgeFrac = kick.y.Count(y => y > estimatedUMin + 5.0) / (double)M;
+                double trueSurgeFrac = Y_true.Count(y => y > estimatedUMin + 5.0) / (double)M;
+                kickOverTriggering = predSurgeFrac > Math.Max(trueSurgeFrac * 3.0, 0.25);
+                if (kickOverTriggering)
+                    Console.WriteLine($"  [ASC] {id}: KickBased over-triggers (pred={predSurgeFrac:P1} vs truth={trueSurgeFrac:P1}) -- will use fallback");
+                else
+                    Console.WriteLine($"  [ASC] {id}: KickBased surge fraction OK (pred={predSurgeFrac:P1} vs truth={trueSurgeFrac:P1})");
+            }
+
+            // ARX fallback: U[t] = alpha*U[t-1] + beta*LP(PR[t]) + gamma*LP(MF[t]) + const
+            // Identified with teacher forcing; free-running evaluation gives honest CL estimate.
+            var arx = IdentifyARX(id, Y_true, pIn, pOut, flow, timeBase_s, M,
+                                   openTime_s: 5.0, closeTime_s: closeTime_s);
+
+            // Selection: (a) KickBased if active-period fit > 50% and not over-triggering;
+            //            (b) ARX if free-run fit > 0 and > 15% of best LinearPR training fit;
+            //            (c) LinearPR; (d) best OLS.
+            // KickBased threshold is 50%: 30-50% active-period fit means marginal tracking;
+            // ARX is more CL-stable in those borderline cases (alpha cap prevents runaway).
+            bool kickIsGood = kick.fitScore > 0.0 && activeFitKick > 50.0 && !kickOverTriggering;
+            // ARX has alpha≈0.95 memory; when inputs are from predicted models (not CSV),
+            // error accumulation destabilises CL. Restrict to direct-input ASCs only.
+            bool arxWins    = arx.y != null && arx.fitScore > 0.0
+                              && arx.fitScore > Math.Max(0.0, bestPRFit) * 0.50
+                              && !usingPredicted;
+
+            if (kickIsGood)
+            {
+                bestFit = kick.fitScore; bestY = kick.y; bestParams = kick.@params;
+                Console.WriteLine($"  [ASC] {id}: -> KickBased selected (activeFit={activeFitKick:F1}%)");
+            }
+            else if (arxWins)
+            {
+                bestFit = arx.fitScore; bestY = arx.y; bestParams = arx.@params;
+                Console.WriteLine($"  [ASC] {id}: -> ARX selected (fit={arx.fitScore:F1}%, KickBased activeFit={activeFitKick:F1}%)");
+            }
+            else if (bestPRFit > double.NegativeInfinity)
+            {
+                bestFit = bestPRFit; bestY = bestPRY; bestParams = bestPRParams;
+                Console.WriteLine($"  [ASC] {id}: -> LinearPR selected (fit={bestPRFit:F1}%)");
+            }
+            else
+            {
+                Console.WriteLine($"  [ASC] {id}: -> Best OLS selected (fit={bestFit:F1}%)");
             }
 
             if (bestY == null || bestParams == null)
                 return ((double[])Y_true.Clone(),
                         new JObject { ["ModelType"] = "Fallback", ["Reason"] = "All ASC candidates failed" });
+
+            bestParams["UMin"] = estimatedUMin;
+
+            // Override with constant-UMin for quiet ASCs or over-triggering KickBased.
+            double surgeFracQ = Y_true.Count(y => y > estimatedUMin + 5.0) / (double)M;
+            Console.WriteLine($"  [ASC] {id}: surgeFraction (> UMin+5%)={surgeFracQ:P1}");
+            bool quietNoModel = surgeFracQ < 0.05 && !kickIsGood && (arx.y == null || arx.fitScore < 0);
+            if (quietNoModel || kickOverTriggering)
+            {
+                double[] constY = Y_true.Select(_ => estimatedUMin).ToArray();
+                double   tss    = Y_true.Select(y => y - Y_true.Average()).Select(d => d * d).Sum();
+                double   sse    = constY.Zip(Y_true, (pred, t) => (t - pred) * (t - pred)).Sum();
+                double   cFit   = tss > 1e-12 ? Math.Max(-100, 100.0 * (1.0 - sse / tss)) : 0;
+                bestFit    = cFit;
+                bestY      = constY;
+                bestParams = new JObject
+                {
+                    ["ModelType"]    = "ConstantUMin",
+                    ["Architecture"] = "ConstantUMin",
+                    ["Value"]        = estimatedUMin,
+                    ["UMin"]         = estimatedUMin,
+                    ["FitScore"]     = cFit,
+                    ["Formula"]      = kickOverTriggering
+                        ? $"U(t) = {estimatedUMin:F1}% (KickBased over-triggers -- surgeFrac={surgeFracQ:P1})"
+                        : $"U(t) = {estimatedUMin:F1}% (quiet ASC -- surgeFrac={surgeFracQ:P1})"
+                };
+                string reason = kickOverTriggering ? "KickBased over-triggering" : "quiet ASC";
+                Console.WriteLine($"  [ASC] {id}: {reason} -- using constant UMin={estimatedUMin:F1}%");
+            }
 
             bestParams["Benchmark"] = benchmark;
             Console.WriteLine($"[SUCCESS] {id}: best architecture = {bestParams["Architecture"]}, fit={bestFit:F2}%");
@@ -168,22 +283,28 @@ namespace KSpiceEngine
             string id, double[] Y_true,
             double[] pIn, double[] pOut, double[] flow,
             double closeTime_s, double timeBase_s, int M,
-            ref JArray benchmark, ref double bestFit, ref double[] bestY, ref JObject bestParams)
+            ref JArray benchmark, ref double bestFit, ref double[] bestY, ref JObject bestParams,
+            ref double bestPRFit, ref double[] bestPRY, ref JObject bestPRParams)
         {
             var linearFeats = new[] { "P_out", "MF", "P_in", "Const" };
             var dpFeats     = new[] { "DP", "MF", "Const" };
             var surgeFeats  = new[] { "DP", "MF", "MF2", "DP_over_MF2", "Const" };
+            var prFeats     = new[] { "PR", "MF", "Const" };
+            var prNlFeats   = new[] { "PR", "MF", "MF2", "Const" };
             var candidates  = new List<(string label, string[] features, double lpTau)>
             {
-                ("LinearOLS",       linearFeats, 0.0),
-                ("LinearOLS_LP1s",  linearFeats, 1.0),
-                ("LinearOLS_LP2s",  linearFeats, 2.0),
-                ("LinearOLS_LP3s",  linearFeats, 3.0),
-                ("LinearOLS_LP5s",  linearFeats, 5.0),
-                ("LinearDP_LP2s",   dpFeats,     2.0),
-                ("LinearDP_LP3s",   dpFeats,     3.0),
-                ("SurgeProxy_LP2s", surgeFeats,  2.0),
-                ("SurgeProxy_LP3s", surgeFeats,  3.0),
+                ("LinearOLS",        linearFeats, 0.0),
+                ("LinearOLS_LP1s",   linearFeats, 1.0),
+                ("LinearOLS_LP2s",   linearFeats, 2.0),
+                ("LinearOLS_LP3s",   linearFeats, 3.0),
+                ("LinearOLS_LP5s",   linearFeats, 5.0),
+                ("LinearDP_LP2s",    dpFeats,     2.0),
+                ("LinearDP_LP3s",    dpFeats,     3.0),
+                ("SurgeProxy_LP2s",  surgeFeats,  2.0),
+                ("SurgeProxy_LP3s",  surgeFeats,  3.0),
+                ("LinearPR_LP2s",    prFeats,     2.0),
+                ("LinearPR_LP3s",    prFeats,     3.0),
+                ("LinearPR_NL_LP2s", prNlFeats,   2.0),
             };
 
             foreach (var cand in candidates)
@@ -238,22 +359,29 @@ namespace KSpiceEngine
                 });
                 Console.WriteLine($"[Model] {id}:   {cand.label,-18} fit={fit,6:F2}%  τ_LP={cand.lpTau:F1}s  weights=[{string.Join(", ", cand.features.Zip(w, (n, v) => $"{n}={v:G3}"))}]");
 
+                var entryParams = new JObject
+                {
+                    ["ModelType"]      = "AntiSurgePhysicalModel",
+                    ["Architecture"]   = cand.label,
+                    ["FeatureNames"]   = JArray.FromObject(cand.features),
+                    ["FeatureWeights"] = JArray.FromObject(w),
+                    ["LPFilter_Tau_s"] = cand.lpTau,
+                    ["OpenTime_s"]     = model.modelParameters.OpenTime_s,
+                    ["CloseTime_s"]    = model.modelParameters.CloseTime_s,
+                    ["FitScore"]       = fit,
+                    ["Formula"]        = $"target = Σ w·feature(P_in,P_out,MF) over [{string.Join(", ", cand.features)}]; LP(τ={cand.lpTau:F1}s) → asymmetric rate-limit (open {100.0 / model.modelParameters.OpenTime_s:F1} %/s, close {100.0 / closeTime_s:F2} %/s)."
+                };
                 if (fit > bestFit)
                 {
                     bestFit    = fit;
                     bestY      = y_sim;
-                    bestParams = new JObject
-                    {
-                        ["ModelType"]      = "AntiSurgePhysicalModel",
-                        ["Architecture"]   = cand.label,
-                        ["FeatureNames"]   = JArray.FromObject(cand.features),
-                        ["FeatureWeights"] = JArray.FromObject(w),
-                        ["LPFilter_Tau_s"] = cand.lpTau,
-                        ["OpenTime_s"]     = model.modelParameters.OpenTime_s,
-                        ["CloseTime_s"]    = model.modelParameters.CloseTime_s,
-                        ["FitScore"]       = fit,
-                        ["Formula"]        = $"target = Σ w·feature(P_in,P_out,MF) over [{string.Join(", ", cand.features)}]; LP(τ={cand.lpTau:F1}s) → asymmetric rate-limit (open {100.0 / model.modelParameters.OpenTime_s:F1} %/s, close {100.0 / closeTime_s:F2} %/s)."
-                    };
+                    bestParams = entryParams;
+                }
+                if (cand.label.StartsWith("LinearPR") && fit > bestPRFit)
+                {
+                    bestPRFit    = fit;
+                    bestPRY      = y_sim;
+                    bestPRParams = entryParams;
                 }
             }
         }
@@ -268,6 +396,11 @@ namespace KSpiceEngine
             double closeTime_s, double timeBase_s,
             Dictionary<string, double[]> dataset, int M)
         {
+            // Estimate operational floor for the level-based in-surge criterion below.
+            double sortedMin5Local = Y_true.OrderBy(y => y).Skip((int)(Y_true.Length * 0.05)).First();
+            double uMinLocal = (sortedMin5Local >= 2.0) ? sortedMin5Local : 0.0;
+            const double surgeDeadZone = 5.0;  // % above UMin floor
+
             // Derive in-surge mask from K-Spice internals if available, else heuristic
             bool[] inSurge = new bool[M];
             string nfKey   = $"{comp}:NormalizedFlow";
@@ -282,7 +415,8 @@ namespace KSpiceEngine
             else
             {
                 for (int i = 1; i < M; i++)
-                    inSurge[i] = (Y_true[i] - Y_true[i - 1]) / timeBase_s > 1.5;
+                    inSurge[i] = (Y_true[i] - Y_true[i - 1]) / timeBase_s > 0.5   // actively opening
+                                 || Y_true[i] > uMinLocal + surgeDeadZone;           // sustained elevation
             }
 
             int nSurge = 0, nSafe = 0;
@@ -336,7 +470,7 @@ namespace KSpiceEngine
                 double scale  = Math.Max(1e-6, stdSd);
                 surgeProxy_mf = beta[0] / scale;
                 surgeProxy_a  = beta[1] / scale;
-                surgeProxy_b  = beta[2] / scale;
+                surgeProxy_b  = (beta[2] - meanSd) / scale;  // mean-centered: proxy ≈ 0 at training op-point
             }
 
             // Estimate kick and ramp rates from trace statistics
@@ -395,9 +529,9 @@ namespace KSpiceEngine
             double[] kickRateGrid = { 0.0, 2.0, 4.0, 6.0, 8.0, 10.0 };
             double[] gainGrid     = { 0.0, 0.5, 1.0, 1.5, 2.0 };
             double[] rampGrid     = { 0.0, 15.0, 30.0, 60.0 };
-            double[] tauRampGrid  = { 0.0, 30.0, 60.0, 100.0, 200.0 };
+            double[] tauRampGrid  = { 0.0, 5.0, 10.0, 20.0, 30.0, 60.0, 100.0, 200.0 };
             double[] thrGrid      = { -2.0, -1.0, -0.5, 0.0 };
-            double[] holdDeltas   = { 0.5, 1.0, 1.5, 2.0, 3.0, 5.0 };
+            double[] holdDeltas   = { 0.0, 0.5, 1.0, 1.5, 2.0, 3.0, 5.0 };
             double[] tauMargGrid  = { 0.0, 5.0, 15.0, 30.0 };
             const double peakPenalty = 0.4;
 
@@ -429,7 +563,7 @@ namespace KSpiceEngine
             double[] paramVec   = { bestKickRate, bestKickGain, bestRamp, bestRampTau, bestMargLP, bestThr, bestHoldThr };
             double[] paramSteps = { 1.0, 0.25, 5.0, 20.0, 5.0, 1.0, 2.0 };
             double[] paramMin   = { 0.0, 0.0,  0.0,  0.0,  0.0, -20.0, -20.0 };
-            double[] paramMax   = { 25.0, 5.0, 300.0, 500.0, 60.0, 10.0, 50.0 };
+            double[] paramMax   = { 100.0, 5.0, 300.0, 500.0, 60.0, 10.0, 50.0 };
             int nMoves = 0;
 
             for (int iter = 0; iter < 60; iter++)
@@ -509,6 +643,129 @@ namespace KSpiceEngine
                                                 + (bestRampTau > 0 ? $" + u/{bestRampTau:F1}" : "") + ") %/s·dt"
             };
             return (yKick, bestKickFit, kickParams, entry);
+        }
+
+        // ---- ARX: U[t] = alpha*U[t-1] + beta*LP(PR) + gamma*LP(MF) + const ----
+
+        private static (double[] y, double fitScore, JObject @params) IdentifyARX(
+            string id,
+            double[] Y_true,
+            double[] pIn, double[] pOut, double[] flow,
+            double timeBase_s, int M,
+            double openTime_s = 5.0,
+            double closeTime_s = 60.0)
+        {
+            double bestFit = double.NegativeInfinity;
+            double[] bestY = null;
+            JObject bestParams = null;
+
+            foreach (double tau in new[] { 2.0, 3.0, 5.0 })
+            {
+                double lpAlpha = (tau > 1e-9) ? 1.0 - Math.Exp(-timeBase_s / tau) : 1.0;
+
+                double[] lpPR = new double[M];
+                double[] lpMF = new double[M];
+                lpPR[0] = (pIn[0] > 0.1) ? pOut[0] / pIn[0] : 1.0;
+                lpMF[0] = flow[0];
+                for (int i = 1; i < M; i++)
+                {
+                    double prRaw = (pIn[i] > 0.1) ? pOut[i] / pIn[i] : 1.0;
+                    lpPR[i] = lpPR[i - 1] + lpAlpha * (prRaw - lpPR[i - 1]);
+                    lpMF[i] = lpMF[i - 1] + lpAlpha * (flow[i] - lpMF[i - 1]);
+                }
+
+                // OLS with teacher forcing: columns = [Y_true[t-1], LP_PR[t], LP_MF[t], 1]
+                const int K = 4;
+                double[,] XtX = new double[K, K];
+                double[]  Xty = new double[K];
+                for (int i = 1; i < M; i++)
+                {
+                    double[] row = { Y_true[i - 1], lpPR[i], lpMF[i], 1.0 };
+                    for (int p = 0; p < K; p++)
+                    {
+                        Xty[p] += row[p] * Y_true[i];
+                        for (int q = 0; q < K; q++) XtX[p, q] += row[p] * row[q];
+                    }
+                }
+                for (int p = 0; p < K; p++) XtX[p, p] += 1e-9;
+
+                double[] w = DynamicPlantRunner.SolveLinearSystem(XtX, Xty, K);
+                if (w == null) continue;
+
+                // Cap alpha at 0.95: reduces steady-state PR gain from ~44 to ~37 for ASC1001
+                // (natural alpha=0.958) and leaves ASC0001 (alpha=0.942) unchanged.
+                // Rate-limiter handles high-frequency oscillation; alpha cap handles slow drift.
+                w[0] = Math.Min(0.95, Math.Max(0.0, w[0]));
+
+                // Cap effective PR gain dU_ss/dPR = w[1]/(1-w[0]) to limit CL feedback amplification.
+                // Uncapped gain ~44 amplifies small CL PR errors into sustained slow oscillation.
+                // Cap at 25: PR change of 0.3 unit → delta_U_ss = 7.5%, still tracking genuine surge.
+                const double maxEffGain = 25.0;
+                double effGain = (1.0 - w[0]) > 1e-6 ? w[1] / (1.0 - w[0]) : 100.0;
+                if (effGain > maxEffGain && w[1] > 0)
+                    w[1] = maxEffGain * (1.0 - w[0]);
+
+                // Operating-point centering: force U_ss = UMin at mean training inputs.
+                // Without this, small PR/MF shifts at testset time cause the ARX steady-state
+                // to drift, giving -100% test fit even when CL training fit is good.
+                double sortedMin5Arx = Y_true.OrderBy(y => y).Skip((int)(Y_true.Length * 0.05)).First();
+                double uMinArx = (sortedMin5Arx >= 2.0) ? sortedMin5Arx : 0.0;
+                double meanLpPR = lpPR.Average();
+                double meanLpMF = lpMF.Average();
+                w[3] = uMinArx * (1.0 - w[0]) - w[1] * meanLpPR - w[2] * meanLpMF;
+
+                // FREE-RUNNING simulation for honest CL estimate.
+                // Asymmetric rate-limiter matches real valve behavior: slow close (60s)
+                // prevents rapid oscillation; fast open (5s) preserves surge response.
+                double maxOpen_s  = openTime_s  > 0 ? 100.0 / openTime_s  * timeBase_s : 100.0;
+                double maxClose_s = closeTime_s > 0 ? 100.0 / closeTime_s * timeBase_s : 100.0;
+                double[] ySim = new double[M];
+                ySim[0] = Y_true[0];
+                double prLP_fr = (pIn[0] > 0.1) ? pOut[0] / pIn[0] : 1.0;
+                double mfLP_fr = flow[0];
+                for (int i = 1; i < M; i++)
+                {
+                    double prRaw = (pIn[i] > 0.1) ? pOut[i] / pIn[i] : 1.0;
+                    prLP_fr += lpAlpha * (prRaw - prLP_fr);
+                    mfLP_fr += lpAlpha * (flow[i] - mfLP_fr);
+                    double uNext = w[0] * ySim[i - 1] + w[1] * prLP_fr + w[2] * mfLP_fr + w[3];
+                    double delta = uNext - ySim[i - 1];
+                    if (delta >  maxOpen_s)  uNext = ySim[i - 1] + maxOpen_s;
+                    if (delta < -maxClose_s) uNext = ySim[i - 1] - maxClose_s;
+                    ySim[i] = Math.Max(0.0, Math.Min(100.0, uNext));
+                }
+
+                double mean = Y_true.Average();
+                double sse = 0, tss = 0;
+                for (int i = 0; i < M; i++)
+                {
+                    double r  = Y_true[i] - ySim[i]; sse += r * r;
+                    double dm = Y_true[i] - mean;     tss += dm * dm;
+                }
+                double fit = tss > 0 ? Math.Max(-100, 100.0 * (1 - sse / tss)) : 0;
+
+                Console.WriteLine($"[Model] {id}:   ARX_LP{tau:F0}s  fit(free-run)={fit:F2}%  alpha={w[0]:F3}  beta_PR={w[1]:F4}  beta_MF={w[2]:F4}  const={w[3]:F4}");
+
+                if (fit > bestFit)
+                {
+                    bestFit = fit;
+                    bestY   = ySim;
+                    bestParams = new JObject
+                    {
+                        ["ModelType"]      = "AntiSurgePhysicalModel",
+                        ["Architecture"]   = "ARX",
+                        ["FeatureNames"]   = new JArray("U_prev", "LP_PR", "LP_MF", "Const"),
+                        ["FeatureWeights"] = new JArray(w[0], w[1], w[2], w[3]),
+                        ["LPFilter_Tau_s"] = tau,
+                        ["OpenTime_s"]     = openTime_s,
+                        ["CloseTime_s"]    = closeTime_s,
+                        ["FitScore"]       = fit,
+                        ["Formula"]        = $"U[t]={w[0]:F3}*U[t-1]+{w[1]:F4}*LP(PR,{tau:F0}s)+{w[2]:F4}*LP(MF,{tau:F0}s)+{w[3]:F4} [rate-limited open={openTime_s:F0}s close={closeTime_s:F0}s]"
+                    };
+                }
+            }
+
+            return (bestY, bestFit > double.NegativeInfinity ? bestFit : -100.0, bestParams);
         }
     }
 }

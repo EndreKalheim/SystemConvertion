@@ -103,6 +103,8 @@ namespace KSpiceEngine.CustomModels
         private double uPrev = 0.0;
         private double targetLP = 0.0;
         private bool lpInitialized = false;
+        private double mfLP = 0.0;           // ARX: LP state for MF input
+        private bool mfLPInitialized = false;
         private double surgeMarginLP = 0.0;
         private bool surgeMarginLPInitialized = false;
         private bool wasInSurge = false;
@@ -278,6 +280,32 @@ namespace KSpiceEngine.CustomModels
                     }
                 }
             }
+            else if (p.Architecture == "ARX")
+            {
+                // ARX: U[t] = α·U[t-1] + β·LP(PR[t]) + γ·LP(MF[t]) + const
+                // FeatureWeights = [alpha, beta_PR, beta_MF, const]
+                double prRaw   = (P_in > 0.1) ? P_out / P_in : 1.0;
+                double lpAlpha = (p.LPFilter_Tau_s > 1e-9) ? 1.0 - Math.Exp(-timeBase_s / p.LPFilter_Tau_s) : 1.0;
+                if (!lpInitialized)   { targetLP = prRaw;    lpInitialized   = true; }
+                if (!mfLPInitialized) { mfLP     = MassFlow; mfLPInitialized = true; }
+                targetLP += lpAlpha * (prRaw    - targetLP);
+                mfLP     += lpAlpha * (MassFlow - mfLP);
+                uOut = p.FeatureWeights[0] * uPrev
+                     + p.FeatureWeights[1] * targetLP
+                     + p.FeatureWeights[2] * mfLP
+                     + p.FeatureWeights[3];
+                // Asymmetric rate-limiter: real ASC valves open fast, close slowly.
+                // Slow close (CloseTime_s) breaks the CL oscillation feedback loop.
+                double rlOpen  = (p.OpenTime_s  > 0) ? 100.0 / p.OpenTime_s  * timeBase_s : 100.0;
+                double rlClose = (p.CloseTime_s > 0) ? 100.0 / p.CloseTime_s * timeBase_s : 100.0;
+                double rlDelta = uOut - uPrev;
+                if (rlDelta >  rlOpen)  uOut = uPrev + rlOpen;
+                if (rlDelta < -rlClose) uOut = uPrev - rlClose;
+                // Use 0 not UMin: centering anchors U_ss=UMin at training mean;
+                // at lower testset PR the model computes sub-UMin values that are
+                // physically correct (valve fully closed), so clip to 0, not UMin.
+                uOut = Math.Max(0.0, Math.Min(p.UMax, uOut));
+            }
             else // LinearOLS (default fallback)
             {
                 if (p.FeatureNames == null || p.FeatureWeights == null
@@ -320,9 +348,14 @@ namespace KSpiceEngine.CustomModels
 
         public void WarmStart(double[] inputs, double output)
         {
-            uPrev = Math.Max(modelParameters.UMin, Math.Min(modelParameters.UMax, output));
+            // ARX has no hard UMin floor (centering anchors U_ss=UMin at nominal inputs).
+            // Clamping to UMin here would start free-running from the wrong state when
+            // the testset begins with the valve fully closed (output=0 < training UMin).
+            double lo = (modelParameters.Architecture == "ARX") ? 0.0 : modelParameters.UMin;
+            uPrev = Math.Max(lo, Math.Min(modelParameters.UMax, output));
             targetLP = uPrev;
             lpInitialized = true;
+            mfLPInitialized = false;          // initialized lazily on first Iterate
             surgeMarginLPInitialized = false; // initialized lazily on first Iterate
             surgePhase = SurgePhase.Hold;
             wasInSurge = false;

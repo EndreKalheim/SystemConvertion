@@ -23,6 +23,12 @@ namespace KSpiceEngine
 
             string[] ignoreTypes = { "Alarm", "Transmitter", "Indicator", "SignalSwitch", "ProfileViewer" };
 
+            // Pre-pass: build component-name → KSpiceType lookup so the valve pass can
+            // detect ASC-controlled anti-surge valves regardless of their name.
+            var typeByComp = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var node in systemMap.Models)
+                typeByComp[(string)node["Name"] ?? ""] = (string)node["KSpiceType"] ?? "";
+
             // First pass: collect valid base components (de-duplicated, _pf stripped)
             var baseProps = new Dictionary<string, dynamic>();
             foreach (var node in systemMap.Models)
@@ -104,10 +110,13 @@ namespace KSpiceEngine
 
                 if (ktype.Contains("Separator") || ktype.Contains("Tank"))
                 {
-                    AddState("Pressure",    "dP/dt = k * (m_in - m_out)",           new[] { "UPSTREAM_FLOW", "DOWNSTREAM_FLOW" });
+                    AddState("Pressure",    "dP/dt = k * (m_in - m_out)",           new[] { "UPSTREAM_FLOW", "DOWNSTREAM_COMPRESSOR_FLOW", "DOWNSTREAM_LIQUID_OUTFLOWS", "ANTISURGE_INFLOW" });
                     AddState("WaterLevel",  "dL_w/dt = (1/A) * (m_in - m_out)",     new[] { "UPSTREAM_FLOW", "DOWNSTREAM_FLOW" });
                     AddState("OilLevel",    "dL_o/dt = (1/A) * (m_in - m_out)",     new[] { "UPSTREAM_FLOW", "DOWNSTREAM_FLOW" });
-                    AddState("Temperature", "T_out = f(T_in, m_in, m_out)",          new[] { "UPSTREAM_FLOW", "UPSTREAM_TEMP", "DOWNSTREAM_FLOW" });
+                    // Downstream flows are excluded: including them creates large
+                    // OLS canceling gains that blow up CL when outlet flows are mispredicted.
+                    // Feed temperature + flow are stable boundaries sufficient for T_sep.
+                    AddState("Temperature", "T_out ≈ LP(T_in, Tc)",                   new[] { "UPSTREAM_TEMP", "UPSTREAM_FLOW" });
                 }
                 else if (ktype.Contains("HeatExchanger"))
                 {
@@ -121,7 +130,31 @@ namespace KSpiceEngine
                 }
                 else if (ktype.Contains("ControlValve") || ktype.Contains("PipeFlow") || ktype.Contains("BlockValve"))
                 {
-                    if (baseName.ToUpper().Contains("UV"))
+                    // Detect anti-surge recirculation valves by name ("UV") OR by being
+                    // driven by an ASC controller — the latter is more robust when the
+                    // naming convention differs between systems.
+                    bool isAntiSurge = baseName.ToUpper().Contains("UV");
+                    if (!isAntiSurge)
+                    {
+                        var nodeInputs = node["Inputs"] as JArray;
+                        if (nodeInputs != null)
+                        {
+                            foreach (var ninp in nodeInputs)
+                            {
+                                string src = (string)ninp["Source"] ?? "";
+                                int colon = src.IndexOf(':');
+                                if (colon > 0)
+                                {
+                                    string srcComp = src.Substring(0, colon);
+                                    if (typeByComp.TryGetValue(srcComp, out string srcType)
+                                        && srcType.IndexOf("ASC", StringComparison.OrdinalIgnoreCase) >= 0)
+                                    { isAntiSurge = true; break; }
+                                }
+                            }
+                        }
+                    }
+
+                    if (isAntiSurge)
                     {
                         // Anti-surge recirculation valve: gas flows from discharge side (HX outlet)
                         // back to the compressor suction separator.
@@ -142,12 +175,11 @@ namespace KSpiceEngine
                 }
                 else if (ktype.Contains("Compressor"))
                 {
-                    // Compressor flow = conservation of mass from downstream HX/valves.
-                    // Using DOWNSTREAM_FLOW_SUM (same as HX equation) avoids the circular
-                    // dependency that arises when UPSTREAM_PRESSURE leaks through the UV
-                    // recirculation loop and picks up the discharge-side HX pressure, which
-                    // itself uses KA_MassFlow as a local_var input.
-                    AddState("MassFlow",    "F = sum(m_downstream)",                 new[] { "SUCTION_PRESSURE", "LOCAL_CONTROL" });
+                    // Compressor flow modeled as f(suction pressure, speed controller output).
+                    // Downstream flow approaches were tried but failed due to operating-point
+                    // mismatch between training and test sets (different speed ranges) and
+                    // UV anti-correlation (UV high when KA flow is low during surge events).
+                    AddState("MassFlow",    "F = f(P_suction, N_speed, P_discharge)", new[] { "SUCTION_PRESSURE", "LOCAL_CONTROL", $"{baseName}_Pressure" });
                     AddState("Pressure",    "P_out = P_in + Head(F, N)",             new[] { "SUCTION_PRESSURE", $"{baseName}_MassFlow", "LOCAL_CONTROL" });
                     AddState("Temperature", "T_out = T_in * (P_out/P_in)^((k-1)/k)", new[] { "UPSTREAM_TEMP", $"{baseName}_Pressure", "UPSTREAM_PRESSURE" });
                     // Speed is commanded by the speed controller; identify as linear function
@@ -173,7 +205,7 @@ namespace KSpiceEngine
                     // PUMP_SPEED wires to the predicted Speed state (not CSV boundary) once the
                     // Speed equation exists; the topology builder only adds a boundary node when
                     // speed_key is absent from equation_ids.
-                    AddState("MassFlow",    "F = f(F_ds, P_sep)",                    new[] { "UPSTREAM_PRESSURE", "DOWNSTREAM_FLOW" });
+                    AddState("MassFlow",    "F = F_ds",                              new[] { "DOWNSTREAM_FLOW" });
                     AddState("Pressure",    "P_out = P_in + Head(F, N)",             new[] { "SUCTION_PRESSURE", "LOCAL_CONTROL", "PUMP_SPEED" });
                     AddState("Temperature", "T_out = f(T_in, P_out, P_in)",          new[] { "UPSTREAM_TEMP", $"{baseName}_Pressure", "UPSTREAM_PRESSURE" });
                     // Motor speed is driven by torque balance (no external speed controller for

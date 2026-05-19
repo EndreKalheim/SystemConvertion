@@ -64,13 +64,77 @@ namespace KSpiceEngine
                 string kspiceType     = compToType.ContainsKey(comp) ? compToType[comp] : "Unknown";
 
                 string mapKey = $"{comp}_{state}";
-                if (!signalMap.ContainsKey(mapKey))
+                string targetCsvHeader = signalMap.ContainsKey(mapKey) ? signalMap[mapKey] : null;
+                bool hasCsvTruth = targetCsvHeader != null && dataset.ContainsKey(targetCsvHeader);
+
+                if (!hasCsvTruth)
                 {
-                    Console.WriteLine($"[WARNING] No actual mapping found for {id}. Skipping...");
+                    // Truth column absent (either no signalMap entry, or column not in CSV).
+                    // For MassFlow equations: try synthesizing Y_true from m_in/m_out
+                    // topology edges. This handles components like PV_0001 whose CSV
+                    // columns are missing in partial-coverage datasets (LP-only training).
+                    if (state == "MassFlow")
+                    {
+                        // Use direct topology resolution (no proxy) to avoid physically
+                        // spurious signals (e.g. HX1001 proxied to ESV0005) corrupting
+                        // the synthesized mass balance. Only include edges whose fromNode
+                        // maps to an actual CSV column in the dataset.
+                        var mInCols  = new List<(string name, double[] data)>();
+                        var mOutCols = new List<(string name, double[] data)>();
+                        if (inputEdges.ContainsKey(id))
+                        {
+                            var usedCols = new HashSet<string>();
+                            foreach (var (fromNode, label) in inputEdges[id])
+                            {
+                                if (label != "m_in" && label != "m_out") continue;
+                                string resolvedKey = signalMap.ContainsKey(fromNode) ? fromNode : null;
+                                if (resolvedKey == null)
+                                {
+                                    int li = fromNode.LastIndexOf('_');
+                                    if (li > 0)
+                                    {
+                                        string altKey = $"{fromNode.Substring(0, li)}_{fromNode.Substring(li + 1)}";
+                                        if (signalMap.ContainsKey(altKey)) resolvedKey = altKey;
+                                    }
+                                }
+                                if (resolvedKey == null) continue;
+                                string csvCol = signalMap[resolvedKey];
+                                if (!dataset.ContainsKey(csvCol) || usedCols.Contains(csvCol)) continue;
+                                usedCols.Add(csvCol);
+                                var entry = ($"{resolvedKey}({label})", dataset[csvCol]);
+                                if (label == "m_in")  mInCols .Add(entry);
+                                else                  mOutCols.Add(entry);
+                            }
+                        }
+                        if (mInCols.Count > 0)
+                        {
+                            Console.WriteLine($"[Model] {id}: No CSV truth — synthesizing Y_true from {mInCols.Count} m_in, {mOutCols.Count} m_out topology edges.");
+                            double[] Y_synth = new double[numRows];
+                            for (int si = 0; si < numRows; si++)
+                            {
+                                double mIn  = mInCols .Sum(c => si < c.data.Length && !double.IsNaN(c.data[si]) ? c.data[si] : 0.0);
+                                double mOut = mOutCols.Sum(c => si < c.data.Length && !double.IsNaN(c.data[si]) ? c.data[si] : 0.0);
+                                Y_synth[si] = mIn - mOut;
+                            }
+                            var synthResult = IdentifyMassBalanceValve(id, Y_synth, numRows, mInCols, mOutCols);
+                            predictions[id]      = synthResult.pred;
+                            identifiedParams[id] = synthResult.pars;
+                        }
+                        else
+                        {
+                            Console.WriteLine($"[WARNING] {id}: No CSV truth and no m_in topology edges — skipping.");
+                        }
+                    }
+                    else if (targetCsvHeader == null)
+                    {
+                        Console.WriteLine($"[WARNING] No actual mapping found for {id}. Skipping...");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[WARNING] {id}: No CSV data for state={state} — skipping.");
+                    }
                     continue;
                 }
-                string targetCsvHeader = signalMap[mapKey];
-                if (!dataset.ContainsKey(targetCsvHeader)) continue;
                 double[] Y_true = dataset[targetCsvHeader];
 
                 if (formula.Contains("Boundary"))
@@ -441,6 +505,14 @@ namespace KSpiceEngine
 
             if (uData == null) { uData = Enumerable.Repeat(100.0, numRows).ToArray(); uCol = "Assumed_100%"; }
 
+            // Mass balance mode: topology gave m_in/m_out flow edges instead of P_out.
+            // This happens for discharge-side internal valves (e.g. inter-stage ESV) whose
+            // downstream pressure BFS overshot to the next compressor's discharge pressure.
+            var mInCols  = inputCols.Where(c => c.name.EndsWith("(m_in)")).ToList();
+            var mOutCols = inputCols.Where(c => c.name.EndsWith("(m_out)")).ToList();
+            if (pOut == null && mInCols.Count > 0)
+                return IdentifyMassBalanceValve(id, Y_true, numRows, mInCols, mOutCols);
+
             if (pIn == null || pOut == null)
             {
                 Console.WriteLine($"[WARNING] {id}: Missing Pressure data. P_in={pInCol ?? "none"}, P_out={pOutCol ?? "none"}. Falling back.");
@@ -495,6 +567,78 @@ namespace KSpiceEngine
                 ["InputNames"]         = new JArray { pOutCol },
                 ["LinearGains"]        = new JArray { -1.0 },
                 ["SimInputs"]          = new JArray { pInCol, pOutCol, uCol }
+            });
+        }
+
+        private static (double[] pred, JObject pars) IdentifyMassBalanceValve(
+            string id, double[] Y_true, int numRows,
+            List<(string name, double[] data)> mInCols,
+            List<(string name, double[] data)> mOutCols)
+        {
+            Console.WriteLine($"[Model] {id}: MassBalance valve identification (F = Gain*(m_in - sum(m_out)))");
+
+            // OLS: Gain = Σ(Y_true · X) / Σ(X²)  where X = sum(m_in) - sum(m_out)
+            double sumYX = 0.0, sumXX = 0.0;
+            int validSamples = 0;
+            int safeRows = Math.Min(numRows, Y_true.Length);
+
+            for (int i = 0; i < safeRows; i++)
+            {
+                if (double.IsNaN(Y_true[i])) continue;
+                double mIn  = mInCols .Sum(c => i < c.data.Length && !double.IsNaN(c.data[i]) ? c.data[i] : 0.0);
+                double mOut = mOutCols.Sum(c => i < c.data.Length && !double.IsNaN(c.data[i]) ? c.data[i] : 0.0);
+                double x = mIn - mOut;
+                if (double.IsNaN(x)) continue;
+                sumYX += Y_true[i] * x;
+                sumXX += x * x;
+                validSamples++;
+            }
+
+            if (validSamples == 0)
+            {
+                Console.WriteLine($"[WARNING] {id}: MassBalance — no valid samples. Falling back.");
+                return ((double[])Y_true.Clone(), Fallback("MassBalance: all-NaN inputs"));
+            }
+
+            double gain = sumXX > 1e-9 ? sumYX / sumXX : 1.0;
+
+            // Compute predictions and fit score
+            double[] Y_pred = new double[safeRows];
+            double sumSqErr = 0.0, sumTotSq = 0.0;
+            double meanTrue = 0.0; int meanCnt = 0;
+            for (int i = 0; i < safeRows; i++) { if (!double.IsNaN(Y_true[i])) { meanTrue += Y_true[i]; meanCnt++; } }
+            if (meanCnt > 0) meanTrue /= meanCnt;
+
+            for (int i = 0; i < safeRows; i++)
+            {
+                double mIn  = mInCols .Sum(c => i < c.data.Length && !double.IsNaN(c.data[i]) ? c.data[i] : 0.0);
+                double mOut = mOutCols.Sum(c => i < c.data.Length && !double.IsNaN(c.data[i]) ? c.data[i] : 0.0);
+                Y_pred[i] = gain * (mIn - mOut);
+                if (!double.IsNaN(Y_true[i]))
+                {
+                    double res = Y_true[i] - Y_pred[i]; sumSqErr += res * res;
+                    double dm  = Y_true[i] - meanTrue;  sumTotSq += dm  * dm;
+                }
+            }
+            double fitScore = sumTotSq > 0 ? Math.Max(-100.0, 100.0 * (1.0 - sumSqErr / sumTotSq)) : 0.0;
+            Console.WriteLine($"[SUCCESS] {id}: MassBalance identified. FitScore={fitScore:F1}% (Gain={gain:F4}, samples={validSamples})");
+
+            // Build InputNames list: "key(m_in)" and "key(m_out)" — the evaluator uses
+            // UnitIdentifier_SignedFlows which negates m_out inputs automatically,
+            // so the same positive gain applies to all entries.
+            var inputNames = new JArray();
+            var linearGains = new JArray();
+            foreach (var col in mInCols)  { inputNames.Add(col.name); linearGains.Add(gain); }
+            foreach (var col in mOutCols) { inputNames.Add(col.name); linearGains.Add(gain); }
+
+            return (Y_pred, new JObject
+            {
+                ["ModelType"]    = "UnitIdentifier_SignedFlows",
+                ["FitScore"]     = fitScore,
+                ["Formula"]      = $"F = {gain:F4} * (sum(m_in) - sum(m_out))",
+                ["InputNames"]   = inputNames,
+                ["LinearGains"]  = linearGains,
+                ["Bias"]         = 0.0
             });
         }
 
@@ -560,13 +704,23 @@ namespace KSpiceEngine
                 }
 
                 double fitScore = model.modelParameters.Fitting.FitScorePrc;
-                Console.WriteLine($"[SUCCESS] {id}: Identified. FitScore={fitScore:F1}%, Tc={model.modelParameters.TimeConstant_s:F2}s");
+                // Speed models feed back into their own controller's measurement port.
+                // A zero-TC (static gain) speed model creates an algebraic loop that
+                // oscillates in closed-loop simulation. Clamp to min 2×dt so the PID
+                // integral action sees a properly lagged speed signal.
+                double tc = model.modelParameters.TimeConstant_s;
+                if (state == "Speed" && tc < 2.0 * timeBase_s)
+                {
+                    tc = 2.0 * timeBase_s;
+                    Console.WriteLine($"[Model] {id}: Speed TC enforced to {tc:F2}s (min 2×dt for CL stability)");
+                }
+                Console.WriteLine($"[SUCCESS] {id}: Identified. FitScore={fitScore:F1}%, Tc={tc:F2}s");
                 var modelParams = new JObject
                 {
                     ["ModelType"]      = "UnitIdentifier",
                     ["FitScore"]       = fitScore,
-                    ["TimeConstant_s"] = model.modelParameters.TimeConstant_s,
-                    ["Formula"]        = $"Dynamic MISO: {inputCols.Count} inputs, Tc={model.modelParameters.TimeConstant_s:F2}s"
+                    ["TimeConstant_s"] = tc,
+                    ["Formula"]        = $"Dynamic MISO: {inputCols.Count} inputs, Tc={tc:F2}s"
                 };
                 if (model.modelParameters.LinearGains != null)
                 {
@@ -599,17 +753,9 @@ namespace KSpiceEngine
             Dictionary<string, string> compToType,
             string nodeId)
         {
-            return inputCols.Where(x => {
-                if (!x.name.Contains("(m_out)") && !x.name.Contains("(m_sum)")) return true;
-                int paren = x.name.IndexOf('(');
-                string sigKey  = paren > 0 ? x.name.Substring(0, paren) : x.name;
-                int lastUs     = sigKey.LastIndexOf('_');
-                string srcComp = lastUs > 0 ? sigKey.Substring(0, lastUs) : sigKey;
-                string ktype   = compToType.ContainsKey(srcComp) ? compToType[srcComp] : "";
-                bool isLiquid  = ktype.IndexOf("Pump", StringComparison.OrdinalIgnoreCase) >= 0;
-                if (isLiquid) Console.WriteLine($"  [FILTER] Excluding liquid outflow {sigKey} from gas pressure {nodeId}");
-                return !isLiquid;
-            }).ToList();
+            // Topology already correctly identifies which m_out signals belong to the gas
+            // pressure model — no additional type-based filtering needed here.
+            return inputCols;
         }
 
         private static JObject Fallback(string reason) =>

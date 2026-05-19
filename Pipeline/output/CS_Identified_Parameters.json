@@ -302,24 +302,25 @@
   },
   "23ASC0001_Control": {
     "ModelType": "AntiSurgePhysicalModel",
-    "Architecture": "LinearOLS",
+    "Architecture": "ARX",
     "FeatureNames": [
-      "P_out",
-      "MF",
-      "P_in",
+      "U_prev",
+      "LP_PR",
+      "LP_MF",
       "Const"
     ],
     "FeatureWeights": [
-      -0.19075189997458358,
-      0.9495707301692019,
-      -0.02093677039716526,
-      11.305406263931983
+      0.94214782198915,
+      1.4463044502712492,
+      -0.05260452859284571,
+      0.6801982482508415
     ],
-    "LPFilter_Tau_s": 0.0,
+    "LPFilter_Tau_s": 2.0,
     "OpenTime_s": 5.0,
     "CloseTime_s": 60.0,
-    "FitScore": 99.9246810850182,
-    "Formula": "target = Σ w·feature(P_in,P_out,MF) over [P_out, MF, P_in, Const]; LP(τ=0,0s) → asymmetric rate-limit (open 20,0 %/s, close 1,67 %/s).",
+    "FitScore": 52.00272237835832,
+    "Formula": "U[t]=0,942*U[t-1]+1,4463*LP(PR,2s)+-0,0526*LP(MF,2s)+0,6802 [rate-limited open=5s close=60s]",
+    "UMin": 9.85,
     "Benchmark": [
       {
         "Architecture": "LinearOLS",
@@ -330,12 +331,12 @@
           "Const"
         ],
         "LPFilter_Tau_s": 0.0,
-        "FitScore": 99.9246810850182,
+        "FitScore": 61.69943609327164,
         "Weights": {
-          "P_out": -0.19075189997458358,
-          "MF": 0.9495707301692019,
-          "P_in": -0.02093677039716526,
-          "Const": 11.305406263931983
+          "P_out": 0.2710938506460401,
+          "MF": -0.24396445459365665,
+          "P_in": -1.4742230204465658,
+          "Const": 57.04039543424823
         }
       },
       {
@@ -347,12 +348,12 @@
           "Const"
         ],
         "LPFilter_Tau_s": 1.0,
-        "FitScore": 99.72985048843371,
+        "FitScore": 63.60097912801707,
         "Weights": {
-          "P_out": -0.19075189997458358,
-          "MF": 0.9495707301692019,
-          "P_in": -0.02093677039716526,
-          "Const": 11.305406263931983
+          "P_out": 0.2710938506460401,
+          "MF": -0.24396445459365665,
+          "P_in": -1.4742230204465658,
+          "Const": 57.04039543424823
         }
       },
       {
@@ -364,12 +365,12 @@
           "Const"
         ],
         "LPFilter_Tau_s": 2.0,
-        "FitScore": 98.83813497108834,
+        "FitScore": 65.27218447554478,
         "Weights": {
-          "P_out": -0.19075189997458358,
-          "MF": 0.9495707301692019,
-          "P_in": -0.02093677039716526,
-          "Const": 11.305406263931983
+          "P_out": 0.2710938506460401,
+          "MF": -0.24396445459365665,
+          "P_in": -1.4742230204465658,
+          "Const": 57.04039543424823
         }
       },
       {
@@ -381,12 +382,12 @@
           "Const"
         ],
         "LPFilter_Tau_s": 3.0,
-        "FitScore": 97.49179373489666,
+        "FitScore": 66.43082040747018,
         "Weights": {
-          "P_out": -0.19075189997458358,
-          "MF": 0.9495707301692019,
-          "P_in": -0.02093677039716526,
-          "Const": 11.305406263931983
+          "P_out": 0.2710938506460401,
+          "MF": -0.24396445459365665,
+          "P_in": -1.4742230204465658,
+          "Const": 57.04039543424823
         }
       },
       {
@@ -398,12 +399,12 @@
           "Const"
         ],
         "LPFilter_Tau_s": 5.0,
-        "FitScore": 94.1672003768837,
+        "FitScore": 67.54196004611906,
         "Weights": {
-          "P_out": -0.19075189997458358,
-          "MF": 0.9495707301692019,
-          "P_in": -0.02093677039716526,
-          "Const": 11.305406263931983
+          "P_out": 0.2710938506460401,
+          "MF": -0.24396445459365665,
+          "P_in": -1.4742230204465658,
+          "Const": 57.04039543424823
         }
       },
       {
@@ -414,11 +415,11 @@
           "Const"
         ],
         "LPFilter_Tau_s": 2.0,
-        "FitScore": 98.24431672357483,
+        "FitScore": 48.154379567741834,
         "Weights": {
-          "DP": -0.45016443925414595,
-          "MF": 0.9879400464995164,
-          "Const": 12.695785320693352
+          "DP": -1.4692319506856883,
+          "MF": -0.2627442863228092,
+          "Const": 78.57714831970434
         }
       },
       {
@@ -429,11 +430,11 @@
           "Const"
         ],
         "LPFilter_Tau_s": 3.0,
-        "FitScore": 96.81524407895633,
+        "FitScore": 48.94912891840576,
         "Weights": {
-          "DP": -0.45016443925414595,
-          "MF": 0.9879400464995164,
-          "Const": 12.695785320693352
+          "DP": -1.4692319506856883,
+          "MF": -0.2627442863228092,
+          "Const": 78.57714831970434
         }
       },
       {
@@ -446,13 +447,13 @@
           "Const"
         ],
         "LPFilter_Tau_s": 2.0,
-        "FitScore": 98.34052679043539,
+        "FitScore": 85.06930887767045,
         "Weights": {
-          "DP": -0.4290882258954773,
-          "MF": 0.818455814301638,
-          "MF2": 0.0036787132748240113,
-          "DP_over_MF2": 0.48904696376823764,
-          "Const": 13.520253604474574
+          "DP": -0.5492060804394888,
+          "MF": -3.4252082669422084,
+          "MF2": 0.02875708261123799,
+          "DP_over_MF2": 686.1726111782195,
+          "Const": 125.14296747497131
         }
       },
       {
@@ -465,28 +466,75 @@
           "Const"
         ],
         "LPFilter_Tau_s": 3.0,
-        "FitScore": 96.9748886267058,
+        "FitScore": 86.81354040931043,
         "Weights": {
-          "DP": -0.4290882258954773,
-          "MF": 0.818455814301638,
-          "MF2": 0.0036787132748240113,
-          "DP_over_MF2": 0.48904696376823764,
-          "Const": 13.520253604474574
+          "DP": -0.5492060804394888,
+          "MF": -3.4252082669422084,
+          "MF2": 0.02875708261123799,
+          "DP_over_MF2": 686.1726111782195,
+          "Const": 125.14296747497131
+        }
+      },
+      {
+        "Architecture": "LinearPR_LP2s",
+        "FeatureNames": [
+          "PR",
+          "MF",
+          "Const"
+        ],
+        "LPFilter_Tau_s": 2.0,
+        "FitScore": 65.14137721315927,
+        "Weights": {
+          "PR": 40.74552221453423,
+          "MF": -0.27965802638147585,
+          "Const": -54.691502835536916
+        }
+      },
+      {
+        "Architecture": "LinearPR_LP3s",
+        "FeatureNames": [
+          "PR",
+          "MF",
+          "Const"
+        ],
+        "LPFilter_Tau_s": 3.0,
+        "FitScore": 66.4489705733446,
+        "Weights": {
+          "PR": 40.74552221453423,
+          "MF": -0.27965802638147585,
+          "Const": -54.691502835536916
+        }
+      },
+      {
+        "Architecture": "LinearPR_NL_LP2s",
+        "FeatureNames": [
+          "PR",
+          "MF",
+          "MF2",
+          "Const"
+        ],
+        "LPFilter_Tau_s": 2.0,
+        "FitScore": 86.12016969483169,
+        "Weights": {
+          "PR": 11.474822910904626,
+          "MF": -4.07301526854592,
+          "MF2": 0.032048798450628274,
+          "Const": 116.3292153712952
         }
       },
       {
         "Architecture": "KickBased",
-        "SurgeProxy_MF_Coeff": -0.1459291671615058,
-        "SurgeProxy_a": 13.011454875057533,
-        "SurgeProxy_b": -23.473496989885405,
-        "KickThreshold": 0.5,
-        "HoldThreshold": 4.5,
+        "SurgeProxy_MF_Coeff": 0.1291951757710661,
+        "SurgeProxy_a": 6.880362619666582,
+        "SurgeProxy_b": -21.805424980500792,
+        "KickThreshold": -0.5,
+        "HoldThreshold": 0.0,
         "KickRate_PrcPerSec": 0.0,
-        "KickGain_PrcPerSecPerUnit": 0.42584228515625,
+        "KickGain_PrcPerSecPerUnit": 2.546875,
         "RampDown_PrcPerMin": 0.0,
-        "RampDecay_Tau_s": 30.0,
-        "SurgeMargin_LP_Tau_s": 51.35833740234375,
-        "FitScore": 0.8511748225146776,
+        "RampDecay_Tau_s": 63.28125,
+        "SurgeMargin_LP_Tau_s": 26.875,
+        "FitScore": 55.58963768137903,
         "SurgeTruthSource": "K-Spice NormalizedFlow vs NormalizedAsymmetricLimit"
       }
     ]
@@ -538,51 +586,57 @@
   },
   "23PV_0001_MassFlow": {
     "ModelType": "ValvePhysicsModel",
-    "FitScore": -100.0,
+    "FitScore": 95.01874299608156,
     "Cv": 3000.0,
-    "DensityTuningFactor": 1.0,
-    "Formula": "Q = 1,0000 * 3000 * U * sqrt(max(0, P_in - P_out))",
+    "DensityTuningFactor": 0.05197483135004629,
+    "Formula": "Q = 0,0520 * 3000 * U * sqrt(max(0, P_in - P_out))",
     "InputNames": [
-      "23KA2001_Pressure(P_out)"
+      "23PV_0001_pf:OutletStream.p"
     ],
     "LinearGains": [
       -1.0
     ],
     "SimInputs": [
       "23HX1001_Pressure(P_in)",
-      "23KA2001_Pressure(P_out)",
+      "23PV_0001_pf:OutletStream.p",
       "Assumed_100%"
     ]
   },
   "23PV_0001_Temperature": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 93.732,
-    "TimeConstant_s": 2.2326,
-    "Formula": "Dynamic MISO: 6 inputs, Tc=2,23s",
+    "FitScore": 92.723,
+    "TimeConstant_s": 0.0,
+    "Formula": "Dynamic MISO: 8 inputs, Tc=0,00s",
     "LinearGains": [
-      0.56312,
-      0.50203,
-      -4.8688,
-      4.8565,
-      -1.0201,
-      -0.52648
+      0.44089,
+      0.59544,
+      0.072667,
+      -0.081827,
+      -0.034589,
+      0.0081302,
+      0.0074201,
+      -0.031112
     ],
     "InputNames": [
       "23HX0001_Temperature(T_in)",
       "23HX1001_Temperature(T_in)",
       "23HX0001_Pressure(P_in)",
       "23HX1001_Pressure(P_in)",
-      "23KA3001_Pressure(P_out)",
-      "23KA2001_Pressure(P_out)"
+      "23HX0001_MassFlow(m_in)",
+      "23UV0001_MassFlow(m_out)",
+      "23HX1001_MassFlow(m_in)",
+      "23UV1001_MassFlow(m_out)"
     ],
-    "Bias": 36.709,
+    "Bias": 36.691,
     "U0": [
       36.673,
       37.059,
       66.491,
       66.473,
-      150.12,
-      150.07
+      58.851,
+      15.819,
+      58.764,
+      18.258
     ],
     "UNorm": [
       1.0,
@@ -590,7 +644,19 @@
       1.0,
       1.0,
       1.0,
+      1.0,
+      1.0,
       1.0
+    ],
+    "Curvatures": [
+      "NaN",
+      "NaN",
+      "NaN",
+      "NaN",
+      "NaN",
+      "NaN",
+      "NaN",
+      "NaN"
     ]
   },
   "23ESV1005_MassFlow": {
@@ -707,24 +773,25 @@
   },
   "23ASC1001_Control": {
     "ModelType": "AntiSurgePhysicalModel",
-    "Architecture": "LinearOLS",
+    "Architecture": "ARX",
     "FeatureNames": [
-      "P_out",
-      "MF",
-      "P_in",
+      "U_prev",
+      "LP_PR",
+      "LP_MF",
       "Const"
     ],
     "FeatureWeights": [
-      -0.26059327288067047,
-      0.9382795602490985,
-      0.030760688243665655,
-      14.139910338678238
+      0.95,
+      1.250000000000001,
+      -0.04547648839346147,
+      0.6489153480469798
     ],
-    "LPFilter_Tau_s": 0.0,
+    "LPFilter_Tau_s": 2.0,
     "OpenTime_s": 5.0,
     "CloseTime_s": 60.0,
-    "FitScore": 99.89242633525292,
-    "Formula": "target = Σ w·feature(P_in,P_out,MF) over [P_out, MF, P_in, Const]; LP(τ=0,0s) → asymmetric rate-limit (open 20,0 %/s, close 1,67 %/s).",
+    "FitScore": 47.787828886426176,
+    "Formula": "U[t]=0,950*U[t-1]+1,2500*LP(PR,2s)+-0,0455*LP(MF,2s)+0,6489 [rate-limited open=5s close=60s]",
+    "UMin": 11.12,
     "Benchmark": [
       {
         "Architecture": "LinearOLS",
@@ -735,12 +802,12 @@
           "Const"
         ],
         "LPFilter_Tau_s": 0.0,
-        "FitScore": 99.89242633525292,
+        "FitScore": 67.97028731983583,
         "Weights": {
-          "P_out": -0.26059327288067047,
-          "MF": 0.9382795602490985,
-          "P_in": 0.030760688243665655,
-          "Const": 14.139910338678238
+          "P_out": 0.7127333443448785,
+          "MF": -0.2927037092112231,
+          "P_in": -2.250713888222412,
+          "Const": 57.64538645169587
         }
       },
       {
@@ -752,12 +819,12 @@
           "Const"
         ],
         "LPFilter_Tau_s": 1.0,
-        "FitScore": 99.76821402613591,
+        "FitScore": 69.0053018211358,
         "Weights": {
-          "P_out": -0.26059327288067047,
-          "MF": 0.9382795602490985,
-          "P_in": 0.030760688243665655,
-          "Const": 14.139910338678238
+          "P_out": 0.7127333443448785,
+          "MF": -0.2927037092112231,
+          "P_in": -2.250713888222412,
+          "Const": 57.64538645169587
         }
       },
       {
@@ -769,12 +836,12 @@
           "Const"
         ],
         "LPFilter_Tau_s": 2.0,
-        "FitScore": 99.213942141428,
+        "FitScore": 70.15679769880767,
         "Weights": {
-          "P_out": -0.26059327288067047,
-          "MF": 0.9382795602490985,
-          "P_in": 0.030760688243665655,
-          "Const": 14.139910338678238
+          "P_out": 0.7127333443448785,
+          "MF": -0.2927037092112231,
+          "P_in": -2.250713888222412,
+          "Const": 57.64538645169587
         }
       },
       {
@@ -786,12 +853,12 @@
           "Const"
         ],
         "LPFilter_Tau_s": 3.0,
-        "FitScore": 98.37625439398737,
+        "FitScore": 71.04276632484934,
         "Weights": {
-          "P_out": -0.26059327288067047,
-          "MF": 0.9382795602490985,
-          "P_in": 0.030760688243665655,
-          "Const": 14.139910338678238
+          "P_out": 0.7127333443448785,
+          "MF": -0.2927037092112231,
+          "P_in": -2.250713888222412,
+          "Const": 57.64538645169587
         }
       },
       {
@@ -803,12 +870,12 @@
           "Const"
         ],
         "LPFilter_Tau_s": 5.0,
-        "FitScore": 96.15635843586512,
+        "FitScore": 72.1988684081405,
         "Weights": {
-          "P_out": -0.26059327288067047,
-          "MF": 0.9382795602490985,
-          "P_in": 0.030760688243665655,
-          "Const": 14.139910338678238
+          "P_out": 0.7127333443448785,
+          "MF": -0.2927037092112231,
+          "P_in": -2.250713888222412,
+          "Const": 57.64538645169587
         }
       },
       {
@@ -819,11 +886,11 @@
           "Const"
         ],
         "LPFilter_Tau_s": 2.0,
-        "FitScore": 98.76613597030561,
+        "FitScore": 48.65809204788215,
         "Weights": {
-          "DP": -0.5379659796199732,
-          "MF": 0.9866261820476939,
-          "Const": 15.274816727041598
+          "DP": -1.4757578563787632,
+          "MF": -0.3840043159722618,
+          "Const": 87.85357093632585
         }
       },
       {
@@ -834,11 +901,11 @@
           "Const"
         ],
         "LPFilter_Tau_s": 3.0,
-        "FitScore": 97.88428934290002,
+        "FitScore": 49.35217939151861,
         "Weights": {
-          "DP": -0.5379659796199732,
-          "MF": 0.9866261820476939,
-          "Const": 15.274816727041598
+          "DP": -1.4757578563787632,
+          "MF": -0.3840043159722618,
+          "Const": 87.85357093632585
         }
       },
       {
@@ -851,13 +918,13 @@
           "Const"
         ],
         "LPFilter_Tau_s": 2.0,
-        "FitScore": 98.76310645767853,
+        "FitScore": 94.98271253491178,
         "Weights": {
-          "DP": -0.5318326781264312,
-          "MF": 0.7675120597309717,
-          "MF2": 0.003407816878128631,
-          "DP_over_MF2": -6.931103628386669,
-          "Const": 18.655454807828534
+          "DP": 1.848022955980332,
+          "MF": -17.590346923635337,
+          "MF2": 0.13108973398412116,
+          "DP_over_MF2": -6442.613780393949,
+          "Const": 593.8925933472372
         }
       },
       {
@@ -870,28 +937,75 @@
           "Const"
         ],
         "LPFilter_Tau_s": 3.0,
-        "FitScore": 97.8783985553729,
+        "FitScore": 95.33449816455976,
         "Weights": {
-          "DP": -0.5318326781264312,
-          "MF": 0.7675120597309717,
-          "MF2": 0.003407816878128631,
-          "DP_over_MF2": -6.931103628386669,
-          "Const": 18.655454807828534
+          "DP": 1.848022955980332,
+          "MF": -17.590346923635337,
+          "MF2": 0.13108973398412116,
+          "DP_over_MF2": -6442.613780393949,
+          "Const": 593.8925933472372
+        }
+      },
+      {
+        "Architecture": "LinearPR_LP2s",
+        "FeatureNames": [
+          "PR",
+          "MF",
+          "Const"
+        ],
+        "LPFilter_Tau_s": 2.0,
+        "FitScore": 69.91803625535138,
+        "Weights": {
+          "PR": 48.5893655980688,
+          "MF": -0.28443223059025596,
+          "Const": -68.61727361239615
+        }
+      },
+      {
+        "Architecture": "LinearPR_LP3s",
+        "FeatureNames": [
+          "PR",
+          "MF",
+          "Const"
+        ],
+        "LPFilter_Tau_s": 3.0,
+        "FitScore": 71.1814154590676,
+        "Weights": {
+          "PR": 48.5893655980688,
+          "MF": -0.28443223059025596,
+          "Const": -68.61727361239615
+        }
+      },
+      {
+        "Architecture": "LinearPR_NL_LP2s",
+        "FeatureNames": [
+          "PR",
+          "MF",
+          "MF2",
+          "Const"
+        ],
+        "LPFilter_Tau_s": 2.0,
+        "FitScore": 93.82406008946172,
+        "Weights": {
+          "PR": 6.624160522618517,
+          "MF": -7.2722392690221875,
+          "MF2": 0.06255773665815625,
+          "Const": 210.14032036944656
         }
       },
       {
         "Architecture": "KickBased",
-        "SurgeProxy_MF_Coeff": -0.152348628541003,
-        "SurgeProxy_a": 14.506808647677532,
-        "SurgeProxy_b": -25.9427200611232,
-        "KickThreshold": 0.5,
-        "HoldThreshold": 4.5,
+        "SurgeProxy_MF_Coeff": 0.15317556943642793,
+        "SurgeProxy_a": 7.511598086570449,
+        "SurgeProxy_b": -24.50136097608379,
+        "KickThreshold": -1.0,
+        "HoldThreshold": 1.0,
         "KickRate_PrcPerSec": 0.0,
-        "KickGain_PrcPerSecPerUnit": 0.6425933837890625,
-        "RampDown_PrcPerMin": 0.0,
-        "RampDecay_Tau_s": 30.0,
-        "SurgeMargin_LP_Tau_s": 28.75,
-        "FitScore": 0.8156721546914603,
+        "KickGain_PrcPerSecPerUnit": 1.8748779296875,
+        "RampDown_PrcPerMin": 15.0,
+        "RampDecay_Tau_s": 191.611328125,
+        "SurgeMargin_LP_Tau_s": 0.11474609375,
+        "FitScore": 79.301468474224,
         "SurgeTruthSource": "K-Spice NormalizedFlow vs NormalizedAsymmetricLimit"
       }
     ]
@@ -948,29 +1062,41 @@
   },
   "23VA0001_Pressure": {
     "ModelType": "UnitIdentifier_SignedFlows",
-    "FitScore": 60.678,
-    "TimeConstant_s": 100.65,
+    "FitScore": 86.983,
+    "TimeConstant_s": 99.747,
     "Formula": "Pressure(t) = LP(Bias + sum(gain_i * F_i), Tc)  [outflows pre-negated in evaluation]",
     "LinearGains": [
-      0.68357,
-      4.1854,
-      0.07459,
-      -1.9431
+      0.92764,
+      2.2118,
+      2.1992,
+      0.087173,
+      0.0086623,
+      2.9198,
+      1.368
     ],
     "InputNames": [
       "25ESV0001_MassFlow(m_in)",
-      "23ESV0002_MassFlow(m_out)",
+      "23KA1001_MassFlow(m_out)",
+      "23KA0001_MassFlow(m_out)",
+      "23PA0001_MassFlow(m_out)",
       "23LV0001_MassFlow(m_out)",
-      "23KA0001_MassFlow(m_out)"
+      "23UV1001_MassFlow(m_in)",
+      "23UV0001_MassFlow(m_in)"
     ],
-    "Bias": 32.974,
+    "Bias": 32.548,
     "U0": [
       205.1,
-      -43.037,
+      -58.764,
+      -58.852,
+      -91.689,
       -30.206,
-      -58.852
+      18.258,
+      15.819
     ],
     "UNorm": [
+      1.0,
+      1.0,
+      1.0,
       1.0,
       1.0,
       1.0,
@@ -1045,66 +1171,55 @@
   },
   "23VA0001_Temperature": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 86.479,
-    "TimeConstant_s": 84.435,
-    "Formula": "Dynamic MISO: 6 inputs, Tc=84,44s",
+    "FitScore": 82.776,
+    "TimeConstant_s": 47.078,
+    "Formula": "Dynamic MISO: 2 inputs, Tc=47,08s",
     "LinearGains": [
-      0.10528,
-      0.94973,
-      -0.66376,
-      -0.013914,
-      -0.015125,
-      0.26715
+      0.70479,
+      0.0034203
     ],
     "InputNames": [
-      "25ESV0001_MassFlow(m_in)",
       "25ESV0001_Temperature(T_in)",
-      "23ESV0002_MassFlow(m_out)",
-      "23PA0001_MassFlow(m_out)",
-      "23LV0001_MassFlow(m_out)",
-      "23KA0001_MassFlow(m_out)"
+      "25ESV0001_MassFlow(m_in)"
     ],
-    "Bias": 42.922,
+    "Bias": 42.862,
     "U0": [
-      205.1,
       42.69,
-      43.037,
-      91.689,
-      30.206,
-      58.852
+      205.1
     ],
     "UNorm": [
-      1.0,
-      1.0,
-      1.0,
-      1.0,
       1.0,
       1.0
     ]
   },
   "23KA1001_MassFlow": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 28.807,
+    "FitScore": 59.655,
     "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 2 inputs, Tc=0,00s",
+    "Formula": "Dynamic MISO: 3 inputs, Tc=0,00s",
     "LinearGains": [
-      1.4285,
-      2.429
+      4.7436,
+      2.9203,
+      -2.0986
     ],
     "InputNames": [
       "23VA0001_Pressure(P_in)",
-      "23SIC1001_Control(U(t))"
+      "23SIC1001_Control(U(t))",
+      "23KA1001_Pressure(local_var)"
     ],
-    "Bias": 58.765,
+    "Bias": 58.764,
     "U0": [
       32.401,
-      77.569
+      77.569,
+      66.523
     ],
     "UNorm": [
+      1.0,
       1.0,
       1.0
     ],
     "Curvatures": [
+      "NaN",
       "NaN",
       "NaN"
     ]
@@ -1181,8 +1296,8 @@
   "23KA1001_Speed": {
     "ModelType": "UnitIdentifier",
     "FitScore": 97.515,
-    "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 1 inputs, Tc=0,00s",
+    "TimeConstant_s": 2.0,
+    "Formula": "Dynamic MISO: 1 inputs, Tc=2,00s",
     "LinearGains": [
       95.034
     ],
@@ -1202,28 +1317,23 @@
   },
   "23HX1001_MassFlow": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 72.476,
+    "FitScore": 99.806,
     "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 2 inputs, Tc=0,00s",
+    "Formula": "Dynamic MISO: 1 inputs, Tc=0,00s",
     "LinearGains": [
-      0.57777,
-      0.38594
+      0.99966
     ],
     "InputNames": [
-      "23UV1001_MassFlow(m_sum)",
-      "23PV_0001_MassFlow(m_sum)"
+      "23KA1001_MassFlow(m_sum)"
     ],
-    "Bias": 58.763,
+    "Bias": 58.764,
     "U0": [
-      18.258,
-      83.536
+      58.764
     ],
     "UNorm": [
-      1.0,
       1.0
     ],
     "Curvatures": [
-      "NaN",
       "NaN"
     ]
   },
@@ -1267,27 +1377,32 @@
   },
   "23KA0001_MassFlow": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 48.323,
+    "FitScore": 61.626,
     "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 2 inputs, Tc=0,00s",
+    "Formula": "Dynamic MISO: 3 inputs, Tc=0,00s",
     "LinearGains": [
-      1.3766,
-      2.0441
+      3.3338,
+      2.2467,
+      -1.2631
     ],
     "InputNames": [
       "23VA0001_Pressure(P_in)",
-      "23SIC0001_Control(U(t))"
+      "23SIC0001_Control(U(t))",
+      "23KA0001_Pressure(local_var)"
     ],
-    "Bias": 58.851,
+    "Bias": 58.85,
     "U0": [
       32.401,
-      77.627
+      77.627,
+      66.541
     ],
     "UNorm": [
+      1.0,
       1.0,
       1.0
     ],
     "Curvatures": [
+      "NaN",
       "NaN",
       "NaN"
     ]
@@ -1362,8 +1477,8 @@
   "23KA0001_Speed": {
     "ModelType": "UnitIdentifier",
     "FitScore": 81.568,
-    "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 1 inputs, Tc=0,00s",
+    "TimeConstant_s": 2.0,
+    "Formula": "Dynamic MISO: 1 inputs, Tc=2,00s",
     "LinearGains": [
       80.044
     ],
@@ -1383,28 +1498,23 @@
   },
   "23HX0001_MassFlow": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 72.763,
+    "FitScore": 99.834,
     "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 2 inputs, Tc=0,00s",
+    "Formula": "Dynamic MISO: 1 inputs, Tc=0,00s",
     "LinearGains": [
-      1.4468,
-      0.61738
+      0.99974
     ],
     "InputNames": [
-      "23UV0001_MassFlow(m_sum)",
-      "23PV_0001_MassFlow(m_sum)"
+      "23KA0001_MassFlow(m_sum)"
     ],
     "Bias": 58.852,
     "U0": [
-      15.819,
-      83.536
+      58.852
     ],
     "UNorm": [
-      1.0,
       1.0
     ],
     "Curvatures": [
-      "NaN",
       "NaN"
     ]
   },
@@ -1448,44 +1558,86 @@
   },
   "23ESV3002_MassFlow": {
     "ModelType": "ValvePhysicsModel",
-    "FitScore": -100.0,
+    "FitScore": 92.66478668155071,
     "Cv": 3000.0,
-    "DensityTuningFactor": 1.0,
-    "Formula": "Q = 1,0000 * 3000 * U * sqrt(max(0, P_in - P_out))",
+    "DensityTuningFactor": 0.023869753259802173,
+    "Formula": "Q = 0,0239 * 3000 * U * sqrt(max(0, P_in - P_out))",
     "InputNames": [
-      "23KA3001_Pressure(P_out)"
+      "23ESV3002_pf:OutletStream.p"
     ],
     "LinearGains": [
       -1.0
     ],
     "SimInputs": [
       "23HX1001_Pressure(P_in)",
-      "23KA3001_Pressure(P_out)",
+      "23ESV3002_pf:OutletStream.p",
       "Assumed_100%"
     ]
   },
   "23ESV3002_Temperature": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 78.024,
+    "FitScore": 82.956,
     "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 4 inputs, Tc=0,00s",
+    "Formula": "Dynamic MISO: 5 inputs, Tc=0,00s",
     "LinearGains": [
-      1.1543,
-      -28.276,
-      28.272,
-      -5.3784
+      0.97558,
+      -16.187,
+      16.199,
+      0.066958,
+      -0.073305
     ],
     "InputNames": [
       "23PV_0001_Temperature(T_in)",
       "23HX0001_Pressure(P_in)",
       "23HX1001_Pressure(P_in)",
-      "23KA3001_Pressure(P_out)"
+      "23PV_0001_MassFlow(m_in)",
+      "23ESV2002_MassFlow(m_out)"
     ],
-    "Bias": 36.428,
+    "Bias": 36.412,
     "U0": [
       36.69,
       66.491,
       66.473,
+      83.536,
+      41.878
+    ],
+    "UNorm": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Curvatures": [
+      "NaN",
+      "NaN",
+      "NaN",
+      "NaN",
+      "NaN"
+    ]
+  },
+  "23KA3001_MassFlow": {
+    "ModelType": "UnitIdentifier",
+    "FitScore": 67.73,
+    "TimeConstant_s": 0.0,
+    "Formula": "Dynamic MISO: 4 inputs, Tc=0,00s",
+    "LinearGains": [
+      18.733,
+      -19.508,
+      -0.26827,
+      2.4247
+    ],
+    "InputNames": [
+      "23HX0001_Pressure(P_in)",
+      "23HX1001_Pressure(P_in)",
+      "23SIC3001_Control(U(t))",
+      "23KA3001_Pressure(local_var)"
+    ],
+    "Bias": 48.518,
+    "U0": [
+      66.491,
+      66.473,
+      77.085,
       150.12
     ],
     "UNorm": [
@@ -1493,35 +1645,9 @@
       1.0,
       1.0,
       1.0
-    ]
-  },
-  "23KA3001_MassFlow": {
-    "ModelType": "UnitIdentifier",
-    "FitScore": 63.259,
-    "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 3 inputs, Tc=0,00s",
-    "LinearGains": [
-      11.934,
-      -12.503,
-      0.19738
-    ],
-    "InputNames": [
-      "23HX0001_Pressure(P_in)",
-      "23HX1001_Pressure(P_in)",
-      "23SIC3001_Control(U(t))"
-    ],
-    "Bias": 48.553,
-    "U0": [
-      66.491,
-      66.473,
-      77.085
-    ],
-    "UNorm": [
-      1.0,
-      1.0,
-      1.0
     ],
     "Curvatures": [
+      "NaN",
       "NaN",
       "NaN",
       "NaN"
@@ -1614,8 +1740,8 @@
   "23KA3001_Speed": {
     "ModelType": "UnitIdentifier",
     "FitScore": 99.011,
-    "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 1 inputs, Tc=0,00s",
+    "TimeConstant_s": 2.0,
+    "Formula": "Dynamic MISO: 1 inputs, Tc=2,00s",
     "LinearGains": [
       94.887
     ],
@@ -1635,28 +1761,23 @@
   },
   "23HX3001_MassFlow": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 71.557,
+    "FitScore": 99.805,
     "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 2 inputs, Tc=0,00s",
+    "Formula": "Dynamic MISO: 1 inputs, Tc=0,00s",
     "LinearGains": [
-      0.69394,
-      0.29018
+      1.0001
     ],
     "InputNames": [
-      "23UV3001_MassFlow(m_sum)",
-      "23PV_1002_MassFlow(m_sum)"
+      "23KA3001_MassFlow(m_sum)"
     ],
-    "Bias": 48.556,
+    "Bias": 48.557,
     "U0": [
-      6.8966,
-      83.621
+      48.557
     ],
     "UNorm": [
-      1.0,
       1.0
     ],
     "Curvatures": [
-      "NaN",
       "NaN"
     ]
   },
@@ -1708,42 +1829,42 @@
   },
   "23UV3001_MassFlow": {
     "ModelType": "ValvePhysicsModel",
-    "FitScore": 99.18272175791431,
+    "FitScore": 99.2282588888856,
     "Cv": 400.0,
-    "DensityTuningFactor": 0.08157833831715305,
-    "Formula": "Q = 0,0816 * 400 * U * sqrt(max(0, P_in - P_out))",
+    "DensityTuningFactor": 0.09355378490617476,
+    "Formula": "Q = 0,0936 * 400 * U * sqrt(max(0, P_in - P_out))",
     "InputNames": [
-      "23VA0001_Pressure(P_out)"
+      "23HX0001_Pressure(P_out)"
     ],
     "LinearGains": [
       -1.0
     ],
     "SimInputs": [
       "23HX3001_Pressure(P_in)",
-      "23VA0001_Pressure(P_out)",
+      "23HX0001_Pressure(P_out)",
       "23ASC3001_Control(U(t))"
     ]
   },
   "23UV3001_Temperature": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 80.592,
-    "TimeConstant_s": 1.8335,
-    "Formula": "Dynamic MISO: 3 inputs, Tc=1,83s",
+    "FitScore": 85.046,
+    "TimeConstant_s": 1.5157,
+    "Formula": "Dynamic MISO: 3 inputs, Tc=1,52s",
     "LinearGains": [
-      1.2062,
-      4.1241,
-      0.6884
+      1.1598,
+      4.2714,
+      0.46798
     ],
     "InputNames": [
       "23HX3001_Temperature(T_in)",
       "23HX3001_Pressure(P_in)",
-      "23VA0001_Pressure(P_out)"
+      "23HX0001_Pressure(P_out)"
     ],
-    "Bias": 8.5322,
+    "Bias": 8.5305,
     "U0": [
       37.12,
       150.11,
-      32.401
+      66.491
     ],
     "UNorm": [
       1.0,
@@ -1753,44 +1874,86 @@
   },
   "23ESV2002_MassFlow": {
     "ModelType": "ValvePhysicsModel",
-    "FitScore": -100.0,
+    "FitScore": 91.4019187131067,
     "Cv": 3000.0,
-    "DensityTuningFactor": 1.0,
-    "Formula": "Q = 1,0000 * 3000 * U * sqrt(max(0, P_in - P_out))",
+    "DensityTuningFactor": 0.024096695652076606,
+    "Formula": "Q = 0,0241 * 3000 * U * sqrt(max(0, P_in - P_out))",
     "InputNames": [
-      "23KA2001_Pressure(P_out)"
+      "23ESV2002_pf:OutletStream.p"
     ],
     "LinearGains": [
       -1.0
     ],
     "SimInputs": [
       "23HX1001_Pressure(P_in)",
-      "23KA2001_Pressure(P_out)",
+      "23ESV2002_pf:OutletStream.p",
       "Assumed_100%"
     ]
   },
   "23ESV2002_Temperature": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 73.752,
+    "FitScore": 74.068,
     "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 4 inputs, Tc=0,00s",
+    "Formula": "Dynamic MISO: 5 inputs, Tc=0,00s",
     "LinearGains": [
-      1.1465,
-      -7.2472,
-      7.2637,
-      3.7956
+      1.0177,
+      -17.675,
+      17.713,
+      0.081889,
+      -0.039933
     ],
     "InputNames": [
       "23PV_0001_Temperature(T_in)",
       "23HX0001_Pressure(P_in)",
       "23HX1001_Pressure(P_in)",
-      "23KA2001_Pressure(P_out)"
+      "23PV_0001_MassFlow(m_in)",
+      "23ESV3002_MassFlow(m_out)"
     ],
-    "Bias": 36.163,
+    "Bias": 36.147,
     "U0": [
       36.69,
       66.491,
       66.473,
+      83.536,
+      41.659
+    ],
+    "UNorm": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Curvatures": [
+      "NaN",
+      "NaN",
+      "NaN",
+      "NaN",
+      "NaN"
+    ]
+  },
+  "23KA2001_MassFlow": {
+    "ModelType": "UnitIdentifier",
+    "FitScore": 48.868,
+    "TimeConstant_s": 0.0,
+    "Formula": "Dynamic MISO: 4 inputs, Tc=0,00s",
+    "LinearGains": [
+      17.404,
+      -17.92,
+      0.55656,
+      1.582
+    ],
+    "InputNames": [
+      "23HX0001_Pressure(P_in)",
+      "23HX1001_Pressure(P_in)",
+      "23SIC2001_Control(U(t))",
+      "23KA2001_Pressure(local_var)"
+    ],
+    "Bias": 50.12,
+    "U0": [
+      66.491,
+      66.473,
+      77.217,
       150.07
     ],
     "UNorm": [
@@ -1798,35 +1961,9 @@
       1.0,
       1.0,
       1.0
-    ]
-  },
-  "23KA2001_MassFlow": {
-    "ModelType": "UnitIdentifier",
-    "FitScore": 48.168,
-    "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 3 inputs, Tc=0,00s",
-    "LinearGains": [
-      11.897,
-      -12.339,
-      0.64964
-    ],
-    "InputNames": [
-      "23HX0001_Pressure(P_in)",
-      "23HX1001_Pressure(P_in)",
-      "23SIC2001_Control(U(t))"
-    ],
-    "Bias": 50.113,
-    "U0": [
-      66.491,
-      66.473,
-      77.217
-    ],
-    "UNorm": [
-      1.0,
-      1.0,
-      1.0
     ],
     "Curvatures": [
+      "NaN",
       "NaN",
       "NaN",
       "NaN"
@@ -1919,8 +2056,8 @@
   "23KA2001_Speed": {
     "ModelType": "UnitIdentifier",
     "FitScore": 84.254,
-    "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 1 inputs, Tc=0,00s",
+    "TimeConstant_s": 2.0,
+    "Formula": "Dynamic MISO: 1 inputs, Tc=2,00s",
     "LinearGains": [
       81.295
     ],
@@ -1940,28 +2077,23 @@
   },
   "23HX2001_MassFlow": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 82.93,
+    "FitScore": 99.71,
     "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 2 inputs, Tc=0,00s",
+    "Formula": "Dynamic MISO: 1 inputs, Tc=0,00s",
     "LinearGains": [
-      1.0029,
-      0.52199
+      1.0002
     ],
     "InputNames": [
-      "23UV2001_MassFlow(m_sum)",
-      "23PV_1002_MassFlow(m_sum)"
+      "23KA2001_MassFlow(m_sum)"
     ],
     "Bias": 50.114,
     "U0": [
-      8.24,
-      83.621
+      50.115
     ],
     "UNorm": [
-      1.0,
       1.0
     ],
     "Curvatures": [
-      "NaN",
       "NaN"
     ]
   },
@@ -2005,47 +2137,52 @@
   },
   "23UV2001_MassFlow": {
     "ModelType": "ValvePhysicsModel",
-    "FitScore": 99.46537235981384,
+    "FitScore": 99.54754183782882,
     "Cv": 400.0,
-    "DensityTuningFactor": 0.08116442413570815,
-    "Formula": "Q = 0,0812 * 400 * U * sqrt(max(0, P_in - P_out))",
+    "DensityTuningFactor": 0.09343333289650722,
+    "Formula": "Q = 0,0934 * 400 * U * sqrt(max(0, P_in - P_out))",
     "InputNames": [
-      "23VA0001_Pressure(P_out)"
+      "23HX0001_Pressure(P_out)"
     ],
     "LinearGains": [
       -1.0
     ],
     "SimInputs": [
       "23HX2001_Pressure(P_in)",
-      "23VA0001_Pressure(P_out)",
+      "23HX0001_Pressure(P_out)",
       "23ASC2001_Control(U(t))"
     ]
   },
   "23UV2001_Temperature": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 76.676,
-    "TimeConstant_s": 2.9192,
-    "Formula": "Dynamic MISO: 3 inputs, Tc=2,92s",
+    "FitScore": 80.725,
+    "TimeConstant_s": 0.0,
+    "Formula": "Dynamic MISO: 3 inputs, Tc=0,00s",
     "LinearGains": [
-      1.3761,
-      0.49519,
-      0.72816
+      1.2435,
+      0.95628,
+      0.43398
     ],
     "InputNames": [
       "23HX2001_Temperature(T_in)",
       "23HX2001_Pressure(P_in)",
-      "23VA0001_Pressure(P_out)"
+      "23HX0001_Pressure(P_out)"
     ],
-    "Bias": 8.5804,
+    "Bias": 8.5521,
     "U0": [
       37.049,
       150.05,
-      32.401
+      66.491
     ],
     "UNorm": [
       1.0,
       1.0,
       1.0
+    ],
+    "Curvatures": [
+      "NaN",
+      "NaN",
+      "NaN"
     ]
   },
   "23ESV2005_MassFlow": {
@@ -2111,28 +2248,23 @@
   },
   "23PA0001_MassFlow": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 99.843,
+    "FitScore": 99.861,
     "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 2 inputs, Tc=0,00s",
+    "Formula": "Dynamic MISO: 1 inputs, Tc=0,00s",
     "LinearGains": [
-      -0.012087,
-      1.0007
+      0.99971
     ],
     "InputNames": [
-      "23VA0001_Pressure(P_in)",
       "23LV0002_MassFlow(m_out)"
     ],
     "Bias": 91.688,
     "U0": [
-      32.401,
       91.689
     ],
     "UNorm": [
-      1.0,
       1.0
     ],
     "Curvatures": [
-      "NaN",
       "NaN"
     ]
   },
@@ -2198,8 +2330,8 @@
   "23PA0001_Speed": {
     "ModelType": "UnitIdentifier",
     "FitScore": 78.252,
-    "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 2 inputs, Tc=0,00s",
+    "TimeConstant_s": 2.0,
+    "Formula": "Dynamic MISO: 2 inputs, Tc=2,00s",
     "LinearGains": [
       -0.13237,
       -0.070184
@@ -2339,24 +2471,25 @@
   },
   "23ASC2001_Control": {
     "ModelType": "AntiSurgePhysicalModel",
-    "Architecture": "LinearOLS",
+    "Architecture": "LinearPR_NL_LP2s",
     "FeatureNames": [
-      "P_out",
+      "PR",
       "MF",
-      "P_in",
+      "MF2",
       "Const"
     ],
     "FeatureWeights": [
-      0.1790573029613844,
-      -0.23492355846651375,
-      -0.25144793096204604,
-      2.0405366651319823
+      11.863628802611675,
+      0.453495388644102,
+      -0.003926452213118997,
+      -37.36042858886394
     ],
-    "LPFilter_Tau_s": 0.0,
+    "LPFilter_Tau_s": 2.0,
     "OpenTime_s": 5.0,
     "CloseTime_s": 60.0,
-    "FitScore": 93.79066976476165,
-    "Formula": "target = Σ w·feature(P_in,P_out,MF) over [P_out, MF, P_in, Const]; LP(τ=0,0s) → asymmetric rate-limit (open 20,0 %/s, close 1,67 %/s).",
+    "FitScore": 55.58431246562151,
+    "Formula": "target = Σ w·feature(P_in,P_out,MF) over [PR, MF, MF2, Const]; LP(τ=2,0s) → asymmetric rate-limit (open 20,0 %/s, close 1,67 %/s).",
+    "UMin": 0.0,
     "Benchmark": [
       {
         "Architecture": "LinearOLS",
@@ -2367,12 +2500,12 @@
           "Const"
         ],
         "LPFilter_Tau_s": 0.0,
-        "FitScore": 93.79066976476165,
+        "FitScore": 67.28504070671492,
         "Weights": {
-          "P_out": 0.1790573029613844,
-          "MF": -0.23492355846651375,
-          "P_in": -0.25144793096204604,
-          "Const": 2.0405366651319823
+          "P_out": -3.4336575215706984,
+          "MF": 0.07069283240235111,
+          "P_in": -0.31120729748254483,
+          "Const": 534.7812614587407
         }
       },
       {
@@ -2384,12 +2517,12 @@
           "Const"
         ],
         "LPFilter_Tau_s": 1.0,
-        "FitScore": 93.69064064292968,
+        "FitScore": 66.42911152907247,
         "Weights": {
-          "P_out": 0.1790573029613844,
-          "MF": -0.23492355846651375,
-          "P_in": -0.25144793096204604,
-          "Const": 2.0405366651319823
+          "P_out": -3.4336575215706984,
+          "MF": 0.07069283240235111,
+          "P_in": -0.31120729748254483,
+          "Const": 534.7812614587407
         }
       },
       {
@@ -2401,12 +2534,12 @@
           "Const"
         ],
         "LPFilter_Tau_s": 2.0,
-        "FitScore": 92.85561014078154,
+        "FitScore": 65.98349230789272,
         "Weights": {
-          "P_out": 0.1790573029613844,
-          "MF": -0.23492355846651375,
-          "P_in": -0.25144793096204604,
-          "Const": 2.0405366651319823
+          "P_out": -3.4336575215706984,
+          "MF": 0.07069283240235111,
+          "P_in": -0.31120729748254483,
+          "Const": 534.7812614587407
         }
       },
       {
@@ -2418,12 +2551,12 @@
           "Const"
         ],
         "LPFilter_Tau_s": 3.0,
-        "FitScore": 91.76103200648095,
+        "FitScore": 65.0581448263507,
         "Weights": {
-          "P_out": 0.1790573029613844,
-          "MF": -0.23492355846651375,
-          "P_in": -0.25144793096204604,
-          "Const": 2.0405366651319823
+          "P_out": -3.4336575215706984,
+          "MF": 0.07069283240235111,
+          "P_in": -0.31120729748254483,
+          "Const": 534.7812614587407
         }
       },
       {
@@ -2435,12 +2568,12 @@
           "Const"
         ],
         "LPFilter_Tau_s": 5.0,
-        "FitScore": 88.88265028360188,
+        "FitScore": 61.79439720379764,
         "Weights": {
-          "P_out": 0.1790573029613844,
-          "MF": -0.23492355846651375,
-          "P_in": -0.25144793096204604,
-          "Const": 2.0405366651319823
+          "P_out": -3.4336575215706984,
+          "MF": 0.07069283240235111,
+          "P_in": -0.31120729748254483,
+          "Const": 534.7812614587407
         }
       },
       {
@@ -2451,11 +2584,11 @@
           "Const"
         ],
         "LPFilter_Tau_s": 2.0,
-        "FitScore": 92.8930249700078,
+        "FitScore": 49.59725472111863,
         "Weights": {
-          "DP": 0.25185031347993336,
-          "MF": -0.23652988707798853,
-          "Const": -8.78915997789469
+          "DP": 0.4339385659180468,
+          "MF": 0.03357014974191539,
+          "Const": -35.590235823658375
         }
       },
       {
@@ -2466,11 +2599,11 @@
           "Const"
         ],
         "LPFilter_Tau_s": 3.0,
-        "FitScore": 91.81037521069389,
+        "FitScore": 49.405090785274844,
         "Weights": {
-          "DP": 0.25185031347993336,
-          "MF": -0.23652988707798853,
-          "Const": -8.78915997789469
+          "DP": 0.4339385659180468,
+          "MF": 0.03357014974191539,
+          "Const": -35.590235823658375
         }
       },
       {
@@ -2483,13 +2616,13 @@
           "Const"
         ],
         "LPFilter_Tau_s": 2.0,
-        "FitScore": 93.19445894140296,
+        "FitScore": 51.041817455502134,
         "Weights": {
-          "DP": 0.2148813447743037,
-          "MF": -0.38007921129428557,
-          "MF2": 0.002005208166602291,
-          "DP_over_MF2": -0.025476019069252506,
-          "Const": -3.3993356087900306
+          "DP": 0.1927552621367133,
+          "MF": 2.7118903107579015,
+          "MF2": -0.019206606413993778,
+          "DP_over_MF2": 463.48295904533984,
+          "Const": -116.52434541614896
         }
       },
       {
@@ -2502,13 +2635,60 @@
           "Const"
         ],
         "LPFilter_Tau_s": 3.0,
-        "FitScore": 92.22239369622095,
+        "FitScore": 50.58285976644138,
         "Weights": {
-          "DP": 0.2148813447743037,
-          "MF": -0.38007921129428557,
-          "MF2": 0.002005208166602291,
-          "DP_over_MF2": -0.025476019069252506,
-          "Const": -3.3993356087900306
+          "DP": 0.1927552621367133,
+          "MF": 2.7118903107579015,
+          "MF2": -0.019206606413993778,
+          "DP_over_MF2": 463.48295904533984,
+          "Const": -116.52434541614896
+        }
+      },
+      {
+        "Architecture": "LinearPR_LP2s",
+        "FeatureNames": [
+          "PR",
+          "MF",
+          "Const"
+        ],
+        "LPFilter_Tau_s": 2.0,
+        "FitScore": 55.34322868283594,
+        "Weights": {
+          "PR": 12.32878806525948,
+          "MF": 0.01194842189728353,
+          "Const": -26.315149473020668
+        }
+      },
+      {
+        "Architecture": "LinearPR_LP3s",
+        "FeatureNames": [
+          "PR",
+          "MF",
+          "Const"
+        ],
+        "LPFilter_Tau_s": 3.0,
+        "FitScore": 54.92265595310337,
+        "Weights": {
+          "PR": 12.32878806525948,
+          "MF": 0.01194842189728353,
+          "Const": -26.315149473020668
+        }
+      },
+      {
+        "Architecture": "LinearPR_NL_LP2s",
+        "FeatureNames": [
+          "PR",
+          "MF",
+          "MF2",
+          "Const"
+        ],
+        "LPFilter_Tau_s": 2.0,
+        "FitScore": 55.58431246562151,
+        "Weights": {
+          "PR": 11.863628802611675,
+          "MF": 0.453495388644102,
+          "MF2": -0.003926452213118997,
+          "Const": -37.36042858886394
         }
       },
       {
@@ -2517,13 +2697,13 @@
         "SurgeProxy_a": 0.0,
         "SurgeProxy_b": -35.0,
         "KickThreshold": -2.0,
-        "HoldThreshold": -1.5,
+        "HoldThreshold": -2.0,
         "KickRate_PrcPerSec": 0.0,
         "KickGain_PrcPerSecPerUnit": 0.5,
         "RampDown_PrcPerMin": 0.0,
-        "RampDecay_Tau_s": 30.0,
+        "RampDecay_Tau_s": 500.0,
         "SurgeMargin_LP_Tau_s": 0.0,
-        "FitScore": -100.0,
+        "FitScore": -31.754542178747226,
         "SurgeTruthSource": "K-Spice NormalizedFlow vs NormalizedAsymmetricLimit"
       }
     ]
@@ -2631,24 +2811,25 @@
   },
   "23ASC3001_Control": {
     "ModelType": "AntiSurgePhysicalModel",
-    "Architecture": "LinearOLS_LP1s",
+    "Architecture": "LinearPR_NL_LP2s",
     "FeatureNames": [
-      "P_out",
+      "PR",
       "MF",
-      "P_in",
+      "MF2",
       "Const"
     ],
     "FeatureWeights": [
-      0.5656233423358973,
-      -0.25827022891927465,
-      -0.20371621905217668,
-      -58.65663898978735
+      13.87104140055036,
+      -3.1703726535346455,
+      0.029805612754344298,
+      53.290386313403054
     ],
-    "LPFilter_Tau_s": 1.0,
+    "LPFilter_Tau_s": 2.0,
     "OpenTime_s": 5.0,
     "CloseTime_s": 60.0,
-    "FitScore": 95.9225652111549,
-    "Formula": "target = Σ w·feature(P_in,P_out,MF) over [P_out, MF, P_in, Const]; LP(τ=1,0s) → asymmetric rate-limit (open 20,0 %/s, close 1,67 %/s).",
+    "FitScore": 65.2243366399115,
+    "Formula": "target = Σ w·feature(P_in,P_out,MF) over [PR, MF, MF2, Const]; LP(τ=2,0s) → asymmetric rate-limit (open 20,0 %/s, close 1,67 %/s).",
+    "UMin": 0.0,
     "Benchmark": [
       {
         "Architecture": "LinearOLS",
@@ -2659,12 +2840,12 @@
           "Const"
         ],
         "LPFilter_Tau_s": 0.0,
-        "FitScore": 95.92239531969086,
+        "FitScore": 70.56099627090573,
         "Weights": {
-          "P_out": 0.5656233423358973,
-          "MF": -0.25827022891927465,
-          "P_in": -0.20371621905217668,
-          "Const": -58.65663898978735
+          "P_out": -8.961930583137457,
+          "MF": 0.1844024917372927,
+          "P_in": -0.27417396913607084,
+          "Const": 1356.6196198514263
         }
       },
       {
@@ -2676,12 +2857,12 @@
           "Const"
         ],
         "LPFilter_Tau_s": 1.0,
-        "FitScore": 95.9225652111549,
+        "FitScore": 71.60065038860125,
         "Weights": {
-          "P_out": 0.5656233423358973,
-          "MF": -0.25827022891927465,
-          "P_in": -0.20371621905217668,
-          "Const": -58.65663898978735
+          "P_out": -8.961930583137457,
+          "MF": 0.1844024917372927,
+          "P_in": -0.27417396913607084,
+          "Const": 1356.6196198514263
         }
       },
       {
@@ -2693,12 +2874,12 @@
           "Const"
         ],
         "LPFilter_Tau_s": 2.0,
-        "FitScore": 95.41026447252612,
+        "FitScore": 70.6039993283901,
         "Weights": {
-          "P_out": 0.5656233423358973,
-          "MF": -0.25827022891927465,
-          "P_in": -0.20371621905217668,
-          "Const": -58.65663898978735
+          "P_out": -8.961930583137457,
+          "MF": 0.1844024917372927,
+          "P_in": -0.27417396913607084,
+          "Const": 1356.6196198514263
         }
       },
       {
@@ -2710,12 +2891,12 @@
           "Const"
         ],
         "LPFilter_Tau_s": 3.0,
-        "FitScore": 94.6471056194377,
+        "FitScore": 69.17073197711751,
         "Weights": {
-          "P_out": 0.5656233423358973,
-          "MF": -0.25827022891927465,
-          "P_in": -0.20371621905217668,
-          "Const": -58.65663898978735
+          "P_out": -8.961930583137457,
+          "MF": 0.1844024917372927,
+          "P_in": -0.27417396913607084,
+          "Const": 1356.6196198514263
         }
       },
       {
@@ -2727,12 +2908,12 @@
           "Const"
         ],
         "LPFilter_Tau_s": 5.0,
-        "FitScore": 92.66290936279641,
+        "FitScore": 65.68820643806892,
         "Weights": {
-          "P_out": 0.5656233423358973,
-          "MF": -0.25827022891927465,
-          "P_in": -0.20371621905217668,
-          "Const": -58.65663898978735
+          "P_out": -8.961930583137457,
+          "MF": 0.1844024917372927,
+          "P_in": -0.27417396913607084,
+          "Const": 1356.6196198514263
         }
       },
       {
@@ -2743,11 +2924,11 @@
           "Const"
         ],
         "LPFilter_Tau_s": 2.0,
-        "FitScore": 95.36523735867647,
+        "FitScore": 57.16842235637982,
         "Weights": {
-          "DP": 0.20400629724120578,
-          "MF": -0.2558484936598542,
-          "Const": -4.4513600130347335
+          "DP": 0.3455199122511414,
+          "MF": 0.1568281477666804,
+          "Const": -34.55605832908666
         }
       },
       {
@@ -2758,11 +2939,11 @@
           "Const"
         ],
         "LPFilter_Tau_s": 3.0,
-        "FitScore": 94.59747906032689,
+        "FitScore": 56.04947071993989,
         "Weights": {
-          "DP": 0.20400629724120578,
-          "MF": -0.2558484936598542,
-          "Const": -4.4513600130347335
+          "DP": 0.3455199122511414,
+          "MF": 0.1568281477666804,
+          "Const": -34.55605832908666
         }
       },
       {
@@ -2775,13 +2956,13 @@
           "Const"
         ],
         "LPFilter_Tau_s": 2.0,
-        "FitScore": 95.50875451685243,
+        "FitScore": 72.21955582268471,
         "Weights": {
-          "DP": 0.20482429227567248,
-          "MF": -0.2661395139509374,
-          "MF2": 3.869037206487401E-05,
-          "DP_over_MF2": -0.01649004228344239,
-          "Const": -4.138773459163678
+          "DP": 2.5194866974402217,
+          "MF": -23.315064318225968,
+          "MF2": 0.16176433307974253,
+          "DP_over_MF2": -4996.134499308638,
+          "Const": 717.9885529178875
         }
       },
       {
@@ -2794,13 +2975,60 @@
           "Const"
         ],
         "LPFilter_Tau_s": 3.0,
-        "FitScore": 94.7798116299142,
+        "FitScore": 70.42704408918352,
         "Weights": {
-          "DP": 0.20482429227567248,
-          "MF": -0.2661395139509374,
-          "MF2": 3.869037206487401E-05,
-          "DP_over_MF2": -0.01649004228344239,
-          "Const": -4.138773459163678
+          "DP": 2.5194866974402217,
+          "MF": -23.315064318225968,
+          "MF2": 0.16176433307974253,
+          "DP_over_MF2": -4996.134499308638,
+          "Const": 717.9885529178875
+        }
+      },
+      {
+        "Architecture": "LinearPR_LP2s",
+        "FeatureNames": [
+          "PR",
+          "MF",
+          "Const"
+        ],
+        "LPFilter_Tau_s": 2.0,
+        "FitScore": 62.01307505487617,
+        "Weights": {
+          "PR": 10.695239175222184,
+          "MF": 0.09450020212284214,
+          "Const": -26.99970820151473
+        }
+      },
+      {
+        "Architecture": "LinearPR_LP3s",
+        "FeatureNames": [
+          "PR",
+          "MF",
+          "Const"
+        ],
+        "LPFilter_Tau_s": 3.0,
+        "FitScore": 60.833518836797865,
+        "Weights": {
+          "PR": 10.695239175222184,
+          "MF": 0.09450020212284214,
+          "Const": -26.99970820151473
+        }
+      },
+      {
+        "Architecture": "LinearPR_NL_LP2s",
+        "FeatureNames": [
+          "PR",
+          "MF",
+          "MF2",
+          "Const"
+        ],
+        "LPFilter_Tau_s": 2.0,
+        "FitScore": 65.2243366399115,
+        "Weights": {
+          "PR": 13.87104140055036,
+          "MF": -3.1703726535346455,
+          "MF2": 0.029805612754344298,
+          "Const": 53.290386313403054
         }
       },
       {
@@ -2809,13 +3037,13 @@
         "SurgeProxy_a": 0.0,
         "SurgeProxy_b": -35.0,
         "KickThreshold": -2.0,
-        "HoldThreshold": -1.5,
+        "HoldThreshold": -2.0,
         "KickRate_PrcPerSec": 0.0,
         "KickGain_PrcPerSecPerUnit": 0.5,
         "RampDown_PrcPerMin": 0.0,
-        "RampDecay_Tau_s": 30.0,
+        "RampDecay_Tau_s": 500.0,
         "SurgeMargin_LP_Tau_s": 0.0,
-        "FitScore": -100.0,
+        "FitScore": -23.974409614010405,
         "SurgeTruthSource": "K-Spice NormalizedFlow vs NormalizedAsymmetricLimit"
       }
     ]

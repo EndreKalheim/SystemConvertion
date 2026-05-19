@@ -73,6 +73,9 @@ namespace KSpiceEngine
         private double pidYMin = 0.0;
         private double pidYMax = 100.0;
 
+        // ConstantUMin: always returns the fitted floor value — no inputs required.
+        private double? constantUMinValue;
+
         // Last good output for fallback returns.
         private double lastOutput;
 
@@ -117,6 +120,9 @@ namespace KSpiceEngine
                     slots.Add(new InputSlot { SourceKey = $"@Setpoint:{comp}",   Label = "y_set"  });
                     slots.Add(new InputSlot { SourceKey = $"@Measurement:{comp}", Label = "y_meas" });
                     return slots;
+
+                case "ConstantUMin":
+                    return slots;   // no inputs — always returns the fitted constant
 
                 case "AntiSurgePhysicalModel":
                     // ASC always wants three signals in this order: P_in, P_out, MassFlow.
@@ -208,6 +214,10 @@ namespace KSpiceEngine
                     return;
                 }
 
+                case "ConstantUMin":
+                    constantUMinValue = (double?)p["Value"] ?? 0.0;
+                    return;
+
                 case "AntiSurgePhysicalModel":
                 {
                     ascModel = new CustomModels.AntiSurgePhysicalModel(
@@ -226,6 +236,7 @@ namespace KSpiceEngine
                         ascModel.modelParameters.RampDown_PrcPerMin        = (double?)p["RampDown_PrcPerMin"]        ?? 60.0;
                         ascModel.modelParameters.RampDecay_Tau_s           = (double?)p["RampDecay_Tau_s"]           ?? 0.0;
                         ascModel.modelParameters.SurgeMargin_LP_Tau_s      = (double?)p["SurgeMargin_LP_Tau_s"]      ?? 0.0;
+                        ascModel.modelParameters.UMin               = (double?)p["UMin"]               ?? 0.0;
                     }
                     else
                     {
@@ -236,6 +247,7 @@ namespace KSpiceEngine
                         ascModel.modelParameters.LPFilter_Tau_s = (double?)p["LPFilter_Tau_s"] ?? 0.0;
                         ascModel.modelParameters.OpenTime_s     = (double?)p["OpenTime_s"]     ?? 5.0;
                         ascModel.modelParameters.CloseTime_s    = (double?)p["CloseTime_s"]    ?? 60.0;
+                        ascModel.modelParameters.UMin           = (double?)p["UMin"]           ?? 0.0;
                     }
                     return;
                 }
@@ -357,6 +369,12 @@ namespace KSpiceEngine
         {
             if (ModelType == "Boundary" || ModelType == "Fallback")
                 return lastOutput; // runner is responsible for filling these from CSV
+
+            if (constantUMinValue.HasValue)
+            {
+                lastOutput = constantUMinValue.Value;
+                return lastOutput;
+            }
 
             if (pidActive)
             {

@@ -145,10 +145,6 @@ namespace KSpiceEngine
             if (ktype.IndexOf("Controller", StringComparison.OrdinalIgnoreCase) >= 0
                 || ktype.IndexOf("Pid", StringComparison.OrdinalIgnoreCase) >= 0)
             {
-                // Only the Measurement port has a clean equivalence — Setpoint is
-                // operator input, ControllerOutput is the controller's *output*
-                // (which is itself modelled as the controller's prediction), and
-                // DcsFeedback / InputSwitch are HMI plumbing.
                 if (string.Equals(port, "Measurement", StringComparison.OrdinalIgnoreCase))
                 {
                     foreach (var inp in inputs)
@@ -157,6 +153,45 @@ namespace KSpiceEngine
                         if (string.Equals(dst, "Measurement", StringComparison.OrdinalIgnoreCase))
                             return ResolveRecursive((string)inp["Source"], visited);
                     }
+                    return null;
+                }
+                // Setpoint-related ports (SetpointUsed, ExternalSetpoint, Setpoint):
+                // trace through K-Spice setpoint wiring so cascade PIDs (PIC output →
+                // SIC setpoint) and follow-mode PIDs (KA0001 speed → SIC1001 setpoint)
+                // resolve to a predicted model instead of falling back to raw CSV.
+                if (port.IndexOf("Setpoint", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    string[] spDst = { "ExternalSetpoint", "Setpoint", "CascadeSetpoint" };
+                    foreach (var inp in inputs)
+                    {
+                        string dst = (string)inp["Destination"] ?? "";
+                        bool match = false;
+                        foreach (var d in spDst)
+                            if (string.Equals(d, dst, StringComparison.OrdinalIgnoreCase)) { match = true; break; }
+                        if (!match) continue;
+                        string resolved = ResolveRecursive((string)inp["Source"], visited);
+                        if (resolved != null) return resolved;
+                    }
+                    return null;
+                }
+                return null;
+            }
+
+            // Motor (ControlledAsynchronousMachine / SynchronousMachine): speed-related
+            // ports (MachineSpeed, Speed, RPM) are equivalent to the associated
+            // compressor or pump speed. Convention: motor is named "{base}_m".
+            if (ktype.IndexOf("AsynchronousMachine", StringComparison.OrdinalIgnoreCase) >= 0
+                || ktype.IndexOf("SynchronousMachine", StringComparison.OrdinalIgnoreCase) >= 0
+                || (ktype.IndexOf("Motor", StringComparison.OrdinalIgnoreCase) >= 0
+                    && ktype.IndexOf("Transmitter", StringComparison.OrdinalIgnoreCase) < 0))
+            {
+                if (port.IndexOf("Speed", StringComparison.OrdinalIgnoreCase) >= 0
+                    || port.IndexOf("RPM",   StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    // Strip "_m" suffix to get the parent compressor / pump name.
+                    string baseComp = comp.EndsWith("_m", StringComparison.OrdinalIgnoreCase)
+                                    ? comp.Substring(0, comp.Length - 2) : comp;
+                    return ResolveRecursive($"{baseComp}:Speed", visited);
                 }
                 return null;
             }

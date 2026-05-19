@@ -64,6 +64,15 @@ def _trace_signal_to_model(start, comp_inputs, csv_to_predicted_model, max_hops=
         if port in inp_dict:
             current = inp_dict[port]
             continue
+        # Motor shortcut: MachineSpeed/Speed port on a {base}_m component maps
+        # directly to the parent compressor/pump Speed model — don't trace inputs
+        # (which would find the SIC controller output instead of KA speed).
+        if comp.endswith('_m'):
+            base = comp[:-2]
+            candidate = f"{base}:Speed"
+            if candidate in csv_to_predicted_model:
+                return csv_to_predicted_model[candidate]
+
         # Port is an output (e.g. transmitter's MeasuredValue): check all inputs of
         # the component for a direct predicted-model hit, else follow the first one.
         first_src = None
@@ -153,7 +162,7 @@ def plot_validation(predictions_csv=None, kspice_csv=None, out_dir=None):
             candidate = open(state_file).read().strip()
             kspice_csv = candidate if os.path.exists(candidate) else None
         if kspice_csv is None:
-            kspice_csv = os.path.join(base_dir, "data", "raw", "KspiceBigSimFixed.csv")
+            kspice_csv = os.path.join(base_dir, "data", "raw", "KspiceSim.csv")
     if out_dir is None:
         out_dir = os.path.join(base_dir, "output", "validation_plots")
     mapping_json    = os.path.join(base_dir, "output", "diagrams", "SignalMapping.json")
@@ -284,13 +293,43 @@ def plot_validation(predictions_csv=None, kspice_csv=None, out_dir=None):
                 inputs_by_csv[sp_csv] = f"Setpoint: {sp_csv}"
             if meas_csv and meas_csv in df_raw.columns:
                 inputs_by_csv[meas_csv] = f"Measurement: {meas_csv}"
-                # Walk the K-Spice wiring from the measurement port through any
-                # transmitter pass-throughs to the actual predicted state column
-                # (e.g. 23LIC0001:Measurement → 23LT0001:MeasuredValue →
-                #  23VA0001:LevelHeavyPhaseFeedSideWeir → 23VA0001_WaterLevel).
-                meas_model = _trace_signal_to_model(meas_csv, comp_inputs, csv_to_predicted_model)
+                # Prefer the topology y_meas edge — it is authoritative (set by
+                # the CL runner) and avoids wrong traces through pipe volumes
+                # with multiple stream inlets (e.g. pv_23L0003 → 23ESV0002_Temperature).
+                meas_model = None
+                for edge_info in input_edges.get(model_id, []):
+                    if edge_info.get('label') == 'y_meas':
+                        candidate = edge_info['from']
+                        if f"{candidate}_Predicted" in df_pred.columns:
+                            meas_model = candidate
+                            break
+                if meas_model is None:
+                    meas_model = _trace_signal_to_model(meas_csv, comp_inputs, csv_to_predicted_model)
                 if meas_model:
                     src_node_by_csv[meas_csv] = meas_model
+            # Resolve setpoint to its predicted source for accurate CL plots.
+            if sp_csv and sp_csv in df_raw.columns:
+                # 1. cascade_sp topology edge — PIC output → SIC setpoint
+                for edge_info in input_edges.get(model_id, []):
+                    if edge_info['label'] == 'cascade_sp':
+                        cascade_src = edge_info['from']
+                        if f"{cascade_src}_Predicted" in df_pred.columns:
+                            src_node_by_csv[sp_csv] = cascade_src
+                            break
+                # 2. K-Spice wiring fallback — start from the ExternalSetpoint/Setpoint port
+                # source directly, NOT from sp_csv (SetpointUsed is virtual and not an
+                # input port, so starting there falls through to Measurement and traces
+                # to the pressure model for PICs that have no setpoint wiring).
+                # PICs with operator setpoints have no ExternalSetpoint wiring → skip.
+                if sp_csv not in src_node_by_csv:
+                    comp_wiring = comp_inputs.get(comp, {})
+                    sp_src = (comp_wiring.get('ExternalSetpoint') or
+                              comp_wiring.get('CascadeSetpoint') or
+                              comp_wiring.get('Setpoint'))
+                    if sp_src:
+                        sp_model = _trace_signal_to_model(sp_src, comp_inputs, csv_to_predicted_model)
+                        if sp_model:
+                            src_node_by_csv[sp_csv] = sp_model
         elif model_type == "ValvePhysicsModel":
             # ValvePhysicsModel only contributes the local pipe outlet pressure as a unique
             # signal — P_in (upstream comp) and U(t) (controller output) come from the
@@ -308,7 +347,7 @@ def plot_validation(predictions_csv=None, kspice_csv=None, out_dir=None):
             # signal (the one actually fed to PidIdentifier) is already shown
             # via SignalMapping above. Topology y_meas can point to a different
             # internal state signal and would just clutter the plot.
-            if model_type == "PID" and edge_label == "y_meas":
+            if model_type == "PID" and edge_label in ("y_meas", "cascade_sp"):
                 continue
 
             csv_col    = signal_map.get(src_node) or signal_map.get(src_node.replace('_pf', ''))
@@ -374,6 +413,10 @@ def plot_validation(predictions_csv=None, kspice_csv=None, out_dir=None):
         else:
             formula_display = formula
         title_str = f"{model_id}  [{model_type}{fit_str}{tc_str}]\n{formula_display}"
+        if model_type == "PID":
+            cl_meas_sources = [e['from'] for e in input_edges.get(model_id, []) if e.get('label') == 'y_meas']
+            if cl_meas_sources:
+                title_str += f"\n(CL measurement ≈ {cl_meas_sources[0]} [topology est.])"
 
         # ── Layout ────────────────────────────────────────────────────────────
         n_inputs  = len(input_signals)

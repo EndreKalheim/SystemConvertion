@@ -693,7 +693,9 @@
     "Formula": "dP/dt = k * (m_in - m_out)",
     "Inputs": [
       "UPSTREAM_FLOW",
-      "DOWNSTREAM_FLOW"
+      "DOWNSTREAM_COMPRESSOR_FLOW",
+      "DOWNSTREAM_LIQUID_OUTFLOWS",
+      "ANTISURGE_INFLOW"
     ],
     "Role": "Volume",
     "Param": "D: 3,5 L: 5"
@@ -724,11 +726,10 @@
     "ID": "23VA0001_Temperature",
     "Component": "23VA0001",
     "State": "Temperature",
-    "Formula": "T_out = f(T_in, m_in, m_out)",
+    "Formula": "T_out ≈ LP(T_in, Tc)",
     "Inputs": [
-      "UPSTREAM_FLOW",
       "UPSTREAM_TEMP",
-      "DOWNSTREAM_FLOW"
+      "UPSTREAM_FLOW"
     ],
     "Role": "FlowEquipment"
   },
@@ -736,10 +737,11 @@
     "ID": "23KA1001_MassFlow",
     "Component": "23KA1001",
     "State": "MassFlow",
-    "Formula": "F = sum(m_downstream)",
+    "Formula": "F = f(P_suction, N_speed, P_discharge)",
     "Inputs": [
       "SUCTION_PRESSURE",
-      "LOCAL_CONTROL"
+      "LOCAL_CONTROL",
+      "23KA1001_Pressure"
     ],
     "Role": "FlowEquipment"
   },
@@ -815,10 +817,11 @@
     "ID": "23KA0001_MassFlow",
     "Component": "23KA0001",
     "State": "MassFlow",
-    "Formula": "F = sum(m_downstream)",
+    "Formula": "F = f(P_suction, N_speed, P_discharge)",
     "Inputs": [
       "SUCTION_PRESSURE",
-      "LOCAL_CONTROL"
+      "LOCAL_CONTROL",
+      "23KA0001_Pressure"
     ],
     "Role": "FlowEquipment"
   },
@@ -918,10 +921,11 @@
     "ID": "23KA3001_MassFlow",
     "Component": "23KA3001",
     "State": "MassFlow",
-    "Formula": "F = sum(m_downstream)",
+    "Formula": "F = f(P_suction, N_speed, P_discharge)",
     "Inputs": [
       "SUCTION_PRESSURE",
-      "LOCAL_CONTROL"
+      "LOCAL_CONTROL",
+      "23KA3001_Pressure"
     ],
     "Role": "FlowEquipment"
   },
@@ -1069,10 +1073,11 @@
     "ID": "23KA2001_MassFlow",
     "Component": "23KA2001",
     "State": "MassFlow",
-    "Formula": "F = sum(m_downstream)",
+    "Formula": "F = f(P_suction, N_speed, P_discharge)",
     "Inputs": [
       "SUCTION_PRESSURE",
-      "LOCAL_CONTROL"
+      "LOCAL_CONTROL",
+      "23KA2001_Pressure"
     ],
     "Role": "FlowEquipment"
   },
@@ -1244,9 +1249,8 @@
     "ID": "23PA0001_MassFlow",
     "Component": "23PA0001",
     "State": "MassFlow",
-    "Formula": "F = f(F_ds, P_sep)",
+    "Formula": "F = F_ds",
     "Inputs": [
-      "UPSTREAM_PRESSURE",
       "DOWNSTREAM_FLOW"
     ],
     "Role": "FlowEquipment"

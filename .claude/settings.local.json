@@ -20,7 +20,28 @@
       "Bash(git stash *)",
       "Bash(Select-String -Pattern \"23PIC0001|23PIC2001|normalising|SUCCESS.*PID|WARN.*PIC\")",
       "Bash(findstr /I \"PIC0001 PIC2001 normalising\")",
-      "Bash(Select-String -Pattern \"23PIC|23SIC|Error|error\")"
+      "Bash(Select-String -Pattern \"23PIC|23SIC|Error|error\")",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Endre\\\\OneDrive\\\\Dokumenter\\\\sem3\\\\TSA\\\\SystemConvertion\" -Recurse -Directory)",
+      "Bash(Select-Object -First 30)",
+      "Bash(Format-Table FullName)",
+      "Bash(Select-Object FullName)",
+      "Bash(cd \"/c/Users/Endre/OneDrive/Dokumenter/sem3/TSA/SystemConvertion\" && find . -type d -name \"*\" | head -30)",
+      "Read(//c/c/Users/Endre/OneDrive/Dokumenter/sem3/TSA/**)",
+      "Bash(grep -E \"\\\\.cs$|\\\\.md$\")",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Endre\\\\OneDrive\\\\Dokumenter\\\\sem3\\\\TSA\\\\SystemConvertion\\\\\" -Recurse -Include \"*.json\" | Select-Object FullName | head -30)",
+      "Bash(find \"C:/Users/Endre\" -name \"UnitModel.cs\" -not -path \"*/obj/*\" 2>/dev/null | head -5)",
+      "Read(//c/Users/Endre/**)",
+      "Bash(Select-String -Pattern \"23PV_0001|SUCCESS|WARNING|MassBalance|ValvePhysics\")",
+      "Bash(Select-String -Pattern \"PV_0001|PV0001|23PV\")",
+      "Bash(ls data/raw/)",
+      "Bash(dir data/raw/)",
+      "Bash(Select-String -Path 'C:\\\\Users\\\\Endre\\\\OneDrive\\\\Dokumenter\\\\sem3\\\\TSA\\\\SystemConvertion\\\\Pipeline\\\\output\\\\diagrams\\\\TSA_Explicit_Topology.json' -Pattern '\"to\":\\\\s*\"23VA0001_Pressure\"' -Context 1)",
+      "Bash(powershell -Command ' *)",
+      "Bash(Select-String -Pattern \"ASC|UMin|estimatedU|SUCCESS.*ASC|DONE\")",
+      "Bash(Select-Object -Last 30)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Endre\\\\OneDrive\\\\Dokumenter\\\\sem3\\\\TSA\\\\SystemConvertion\\\\Pipeline\\\\src\\\\CSharp_Engine\\\\KSpiceEngine\" -Filter \"*.cs\")",
+      "Bash(Select-Object -First 20)",
+      "Bash(powershell -NoProfile -Command ' *)"
     ]
   }
 }
