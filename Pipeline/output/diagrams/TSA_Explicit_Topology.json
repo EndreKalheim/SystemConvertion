@@ -2935,15 +2935,6 @@
       }
     },
     {
-      "from": "23HX1001_Pressure",
-      "to": "23KA3001_MassFlow",
-      "label": "P_in",
-      "arrows": "to",
-      "font": {
-        "size": 8
-      }
-    },
-    {
       "from": "23SIC3001_Control",
       "to": "23KA3001_MassFlow",
       "label": "U(t)",
@@ -2963,15 +2954,6 @@
     },
     {
       "from": "23HX0001_Pressure",
-      "to": "23KA3001_Pressure",
-      "label": "P_in",
-      "arrows": "to",
-      "font": {
-        "size": 8
-      }
-    },
-    {
-      "from": "23HX1001_Pressure",
       "to": "23KA3001_Pressure",
       "label": "P_in",
       "arrows": "to",
@@ -3259,15 +3241,6 @@
       }
     },
     {
-      "from": "23HX1001_Pressure",
-      "to": "23KA2001_MassFlow",
-      "label": "P_in",
-      "arrows": "to",
-      "font": {
-        "size": 8
-      }
-    },
-    {
       "from": "23SIC2001_Control",
       "to": "23KA2001_MassFlow",
       "label": "U(t)",
@@ -3287,15 +3260,6 @@
     },
     {
       "from": "23HX0001_Pressure",
-      "to": "23KA2001_Pressure",
-      "label": "P_in",
-      "arrows": "to",
-      "font": {
-        "size": 8
-      }
-    },
-    {
-      "from": "23HX1001_Pressure",
       "to": "23KA2001_Pressure",
       "label": "P_in",
       "arrows": "to",

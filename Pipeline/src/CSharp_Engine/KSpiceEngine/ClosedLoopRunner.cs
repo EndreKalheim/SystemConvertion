@@ -13,8 +13,8 @@ namespace KSpiceEngine
     /// when there's an algebraic loop), with only a small set of "free" boundary
     /// signals coming from the CSV:
     ///
-    ///   - FreeCsvColumns (see below): exit-valve outlet pressures + COLD0001 reservoir
-    ///     + 25ESV0001 system inlet (mass flow and temperature)
+    ///   - freeCsvColumns (built dynamically in Run): CSV columns for boundary-formula
+    ///     model IDs + topology nodes labelled "[boundary]"
     ///   - Equations marked "Boundary" (Feed1/Feed2/PSV0001/COLD0001 models)
     ///   - All controller setpoints (resolved via signalMap)
     ///
@@ -23,22 +23,6 @@ namespace KSpiceEngine
     /// </summary>
     public static class ClosedLoopRunner
     {
-        // Raw CSV column names that bypass the model system — no model ID maps to these.
-        // Includes exit-valve downstream pressures (outside the plant boundary), the cold
-        // reservoir properties, and the system inlet flow/temperature from 25ESV0001
-        // (external feed, no model is identified for it).
-        // Plant-specific: update when the K-Spice topology changes.
-        private static readonly HashSet<string> FreeCsvColumns = new(StringComparer.OrdinalIgnoreCase)
-        {
-            "23COLD0001:OutletStream.p",
-            "23COLD0001:OutletStream.t",
-            "23ESV0005_pf:OutletStream.p",
-            "23LV0001_pf:OutletStream.p",
-            "23LV0002_pf:OutletStream.p",
-            "23TV0003_pf:OutletStream.p",
-            "25ESV0001_pf:MassFlow",
-            "25ESV0001_pf:OutletStream.t",
-        };
 
         public static void Run(string csvPath, string systemMapPath, string equationsPath,
                                string mappingPath, string identifiedParamsPath,
@@ -86,8 +70,52 @@ namespace KSpiceEngine
             foreach (var inletId in new[] { "25ESV0001_MassFlow", "25ESV0001_Temperature" })
                 freeModelIds.Add(inletId);
 
+            // DISABLED: Making Speed states free changes the topological sort and shifts
+            // cycle-back edges, cascading failures into unrelated signals (TV0003, TIC0003).
+            // Investigate before re-enabling.
+            // foreach (var eq in equations)
+            // {
+            //     string state   = (string)eq.State   ?? "";
+            //     string formula = (string)eq.Formula ?? "";
+            //     if (state.Equals("Speed", StringComparison.OrdinalIgnoreCase)
+            //         && formula.IndexOf("speed controller", StringComparison.OrdinalIgnoreCase) >= 0)
+            //     {
+            //         freeModelIds.Add((string)eq.ID);
+            //     }
+            // }
+
             Console.WriteLine($"[ClosedLoop] {freeModelIds.Count} free (boundary) model IDs: "
                             + string.Join(", ", freeModelIds.OrderBy(x => x)));
+
+            // Build the set of raw CSV columns that must bypass model predictions.
+            // Two sources:
+            //   1. Each freeModelId (Boundary-formula equation): its signal-map CSV column
+            //      is an external boundary that has no identified model.
+            //   2. Each topology node labelled "[boundary]": signals outside the plant
+            //      boundary (e.g. downstream pressures of exit valves) that the K-Spice
+            //      equivalence tracer cannot correctly resolve via InletStream wiring.
+            var freeCsvColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var fid in freeModelIds)
+            {
+                if (signalMap.TryGetValue(fid, out string fcol) && !string.IsNullOrEmpty(fcol))
+                    freeCsvColumns.Add(fcol);
+            }
+            var topoNodes = (JArray)topology["nodes"];
+            if (topoNodes != null)
+            {
+                foreach (var node in topoNodes)
+                {
+                    string nodeLabel = (string)node["label"] ?? "";
+                    if (!nodeLabel.Contains("[boundary]", StringComparison.OrdinalIgnoreCase)) continue;
+                    string nodeId = (string)node["id"] ?? "";
+                    if (!string.IsNullOrEmpty(nodeId)
+                        && signalMap.TryGetValue(nodeId, out string bcol)
+                        && !string.IsNullOrEmpty(bcol))
+                        freeCsvColumns.Add(bcol);
+                }
+            }
+            Console.WriteLine($"[ClosedLoop] {freeCsvColumns.Count} free CSV columns (boundary signals): "
+                            + string.Join(", ", freeCsvColumns.OrderBy(x => x)));
 
             // Collect the set of *predicted* model_ids first — these are the only
             // valid substitution targets. signalMap has extra convenience entries
@@ -203,7 +231,8 @@ namespace KSpiceEngine
                 {
                     var slot = eval.InputContract[k];
                     step0[k] = ResolveSlotValue(slot, id, 0, false, predictions, dataset,
-                                                signalMap, csvToModelId, inputEdges, physicalNeighbors, equiv);
+                                                signalMap, csvToModelId, inputEdges, physicalNeighbors, equiv,
+                                                freeCsvColumns);
                 }
                 eval.Iterate(step0, dt); // priming call — its return value is unused
                 eval.WarmStart(predictions[id][0]); // re-anchor "lastOutput" to truth so post-prime fallback returns are correct
@@ -263,7 +292,7 @@ namespace KSpiceEngine
                             useLastStep = true;
                         step[k] = ResolveSlotValue(slot, id, t, useLastStep, predictions, dataset,
                                                    signalMap, csvToModelId, inputEdges, physicalNeighbors, equiv,
-                                                   computedThisStep);
+                                                   freeCsvColumns, computedThisStep);
                     }
                     predictions[id][t] = eval.Iterate(step, dt);
                     computedThisStep.Add(id);
@@ -322,6 +351,7 @@ namespace KSpiceEngine
             Dictionary<string, List<(string fromNode, string label)>> inputEdges,
             Dictionary<string, HashSet<string>> physicalNeighbors,
             SignalEquivalenceMap? equiv,
+            HashSet<string> freeCsvColumns,
             HashSet<string>? computedThisStep = null)
         {
             string key = slot.SourceKey;
@@ -352,7 +382,7 @@ namespace KSpiceEngine
             {
                 if (csvCol == null) return double.NaN;
                 // 1. Free boundary signal — must come from CSV regardless.
-                if (FreeCsvColumns.Contains(csvCol))
+                if (freeCsvColumns.Contains(csvCol))
                 {
                     if (dataset.TryGetValue(csvCol, out var farr)) return SafeAt(farr, t);
                 }
@@ -419,7 +449,7 @@ namespace KSpiceEngine
             }
 
             // Source is a CSV column directly.
-            if (dataset.ContainsKey(key) || FreeCsvColumns.Contains(key))
+            if (dataset.ContainsKey(key) || freeCsvColumns.Contains(key))
                 return FromCsvCol(key);
 
             // Source is a model_id (signal-map key) — direct prediction read.

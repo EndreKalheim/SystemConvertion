@@ -208,13 +208,16 @@ namespace KSpiceEngine
                                    openTime_s: 5.0, closeTime_s: closeTime_s);
 
             // Selection: (a) KickBased if active-period fit > 50% and not over-triggering;
-            //            (b) ARX if free-run fit > 0 and > 15% of best LinearPR training fit;
+            //            (b) ARX if free-run fit > 0 and > 50% of best LinearPR training fit;
             //            (c) LinearPR; (d) best OLS.
             // KickBased threshold is 50%: 30-50% active-period fit means marginal tracking;
             // ARX is more CL-stable in those borderline cases (alpha cap prevents runaway).
             bool kickIsGood = kick.fitScore > 0.0 && activeFitKick > 50.0 && !kickOverTriggering;
-            // ARX has alpha≈0.95 memory; when inputs are from predicted models (not CSV),
-            // error accumulation destabilises CL. Restrict to direct-input ASCs only.
+            // ARX uses HP-filtered PR (HP_PR→0 at any steady state) which prevents the
+            // absolute-PR positive feedback loop: PR↑ → UV opens → KA flow↓ → VA_P↓ → PR↑.
+            // LinearPR uses LP(PR) absolute level which CAN enter this runaway loop in CL.
+            // The 0.50 discount ensures ARX wins unless LinearPR's training fit is >2x ARX.
+            // In practice: ARX(70%)>LinearPR(86%)*0.50=43% → ARX wins and CL stays stable.
             bool arxWins    = arx.y != null && arx.fitScore > 0.0
                               && arx.fitScore > Math.Max(0.0, bestPRFit) * 0.50
                               && !usingPredicted;
@@ -232,7 +235,8 @@ namespace KSpiceEngine
             else if (bestPRFit > double.NegativeInfinity)
             {
                 bestFit = bestPRFit; bestY = bestPRY; bestParams = bestPRParams;
-                Console.WriteLine($"  [ASC] {id}: -> LinearPR selected (fit={bestPRFit:F1}%)");
+                string bestLinearName = (string)bestPRParams?["Architecture"] ?? "LinearPR";
+                Console.WriteLine($"  [ASC] {id}: -> {bestLinearName} selected (fit={bestPRFit:F1}%, ARX fit={arx.fitScore:F1}%)");
             }
             else
             {
@@ -762,6 +766,125 @@ namespace KSpiceEngine
                         ["FitScore"]       = fit,
                         ["Formula"]        = $"U[t]={w[0]:F3}*U[t-1]+{w[1]:F4}*LP(PR,{tau:F0}s)+{w[2]:F4}*LP(MF,{tau:F0}s)+{w[3]:F4} [rate-limited open={openTime_s:F0}s close={closeTime_s:F0}s]"
                     };
+                }
+            }
+
+            // HP-filtered PR variants: HP_PR[t] = LP_fast(PR)[t] - LP_slow(PR)[t]
+            // At any steady state LP_fast ≈ LP_slow → HP_PR ≈ 0 → model predicts UMin regardless
+            // of the absolute operating-point PR level. This makes the model regime-shift robust:
+            // training at PR≈2.06 and evaluating at PR≈1.51 both start with HP_PR=0 (valve closed),
+            // and the valve only opens when PR *rises quickly* — i.e. a real surge transient.
+            {
+                const double slowTau  = 60.0;
+                double       slowAlpha = 1.0 - Math.Exp(-timeBase_s / slowTau);
+
+                foreach (double fastTau in new[] { 2.0, 3.0, 5.0 })
+                {
+                    double fastAlpha = 1.0 - Math.Exp(-timeBase_s / fastTau);
+
+                    double[] lpPRFast = new double[M];
+                    double[] lpPRSlow = new double[M];
+                    double[] hpPR     = new double[M];
+                    double[] lpMFhp   = new double[M];
+
+                    double pr0 = (pIn[0] > 0.1) ? pOut[0] / pIn[0] : 1.0;
+                    lpPRFast[0] = pr0;
+                    lpPRSlow[0] = pr0;   // fast==slow at t=0 → hpPR[0]=0
+                    hpPR[0]     = 0.0;
+                    lpMFhp[0]   = flow[0];
+                    for (int i = 1; i < M; i++)
+                    {
+                        double prRaw  = (pIn[i] > 0.1) ? pOut[i] / pIn[i] : 1.0;
+                        lpPRFast[i]   = lpPRFast[i - 1] + fastAlpha * (prRaw     - lpPRFast[i - 1]);
+                        lpPRSlow[i]   = lpPRSlow[i - 1] + slowAlpha * (prRaw     - lpPRSlow[i - 1]);
+                        hpPR[i]       = lpPRFast[i] - lpPRSlow[i];
+                        lpMFhp[i]     = lpMFhp[i - 1]   + fastAlpha * (flow[i]   - lpMFhp[i - 1]);
+                    }
+
+                    const int Khp = 4;
+                    double[,] XtXhp = new double[Khp, Khp];
+                    double[]  Xtyhp = new double[Khp];
+                    for (int i = 1; i < M; i++)
+                    {
+                        double[] row = { Y_true[i - 1], hpPR[i], lpMFhp[i], 1.0 };
+                        for (int pp = 0; pp < Khp; pp++)
+                        {
+                            Xtyhp[pp] += row[pp] * Y_true[i];
+                            for (int qq = 0; qq < Khp; qq++) XtXhp[pp, qq] += row[pp] * row[qq];
+                        }
+                    }
+                    for (int pp = 0; pp < Khp; pp++) XtXhp[pp, pp] += 1e-9;
+
+                    double[] w = DynamicPlantRunner.SolveLinearSystem(XtXhp, Xtyhp, Khp);
+                    if (w == null) continue;
+
+                    w[0] = Math.Min(0.95, Math.Max(0.0, w[0]));
+                    // No effective-gain cap for HP variants: HP_PR≈0 at steady state means large
+                    // β_HP does not cause any steady-state output offset. The gain cap is only
+                    // needed for LP variants to prevent operating-point drift bias.
+
+                    // For HP variants, w[3] (const) is set adaptively at runtime based on the
+                    // initial valve position. Don't override here — store the OLS const and let
+                    // the runtime adapt it in WarmStart. See the adaptedConst logic in
+                    // AntiSurgePhysicalModel.Iterate() (HPFilter_Tau_s > 0 branch).
+                    // The training free-run below also uses an adaptive const (starting from Y_true[0])
+                    // so the free-run selection criterion is consistent with runtime evaluation.
+                    double meanLpMFhp = lpMFhp.Average();
+
+                    double maxOpen_s  = openTime_s  > 0 ? 100.0 / openTime_s  * timeBase_s : 100.0;
+                    double maxClose_s = closeTime_s > 0 ? 100.0 / closeTime_s * timeBase_s : 100.0;
+                    double[] ySimHp = new double[M];
+                    ySimHp[0] = Y_true[0];
+                    double prFastFr = pr0;
+                    double prSlowFr = pr0;
+                    double mfFr     = flow[0];
+                    // Adaptive const: set U_ss = initial valve position at initial MF.
+                    // Equivalent to uMinArx centering when Y_true[0]≈UMin, and to uMinArx=0
+                    // centering when Y_true[0]=0 — handles both training and testset regimes.
+                    double adaptConstFr = ySimHp[0] * (1.0 - w[0]) - w[2] * mfFr;
+                    for (int i = 1; i < M; i++)
+                    {
+                        double prRaw = (pIn[i] > 0.1) ? pOut[i] / pIn[i] : 1.0;
+                        prFastFr += fastAlpha * (prRaw   - prFastFr);
+                        prSlowFr += slowAlpha * (prRaw   - prSlowFr);
+                        mfFr     += fastAlpha * (flow[i] - mfFr);
+                        double hpFr  = prFastFr - prSlowFr;
+                        double uNext = w[0] * ySimHp[i - 1] + w[1] * hpFr + w[2] * mfFr + adaptConstFr;
+                        double delta = uNext - ySimHp[i - 1];
+                        if (delta >  maxOpen_s)  uNext = ySimHp[i - 1] + maxOpen_s;
+                        if (delta < -maxClose_s) uNext = ySimHp[i - 1] - maxClose_s;
+                        ySimHp[i] = Math.Max(0.0, Math.Min(100.0, uNext));
+                    }
+
+                    double meanHp = Y_true.Average();
+                    double sseHp = 0, tssHp = 0;
+                    for (int i = 0; i < M; i++)
+                    {
+                        double r  = Y_true[i] - ySimHp[i]; sseHp += r * r;
+                        double dm = Y_true[i] - meanHp;    tssHp += dm * dm;
+                    }
+                    double fitHp = tssHp > 0 ? Math.Max(-100, 100.0 * (1 - sseHp / tssHp)) : 0;
+
+                    Console.WriteLine($"[Model] {id}:   ARX_HP{slowTau:F0}s_LP{fastTau:F0}s  fit(free-run)={fitHp:F2}%  alpha={w[0]:F3}  beta_HP={w[1]:F4}  beta_MF={w[2]:F4}  const={w[3]:F4}");
+
+                    if (fitHp > bestFit)
+                    {
+                        bestFit = fitHp;
+                        bestY   = ySimHp;
+                        bestParams = new JObject
+                        {
+                            ["ModelType"]      = "AntiSurgePhysicalModel",
+                            ["Architecture"]   = "ARX",
+                            ["FeatureNames"]   = new JArray("U_prev", "HP_PR", "LP_MF", "Const"),
+                            ["FeatureWeights"] = new JArray(w[0], w[1], w[2], w[3]),
+                            ["LPFilter_Tau_s"] = fastTau,
+                            ["HPFilter_Tau_s"] = slowTau,
+                            ["OpenTime_s"]     = openTime_s,
+                            ["CloseTime_s"]    = closeTime_s,
+                            ["FitScore"]       = fitHp,
+                            ["Formula"]        = $"U[t]={w[0]:F3}*U[t-1]+{w[1]:F4}*HP(PR,fast={fastTau:F0}s,slow={slowTau:F0}s)+{w[2]:F4}*LP(MF,{fastTau:F0}s)+{w[3]:F4} [RL open={openTime_s:F0}s close={closeTime_s:F0}s]"
+                        };
+                    }
                 }
             }
 

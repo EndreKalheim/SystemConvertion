@@ -22,6 +22,10 @@ namespace KSpiceEngine.CustomModels
         public string[] FeatureNames   { get; set; }
         public double[] FeatureWeights { get; set; }
         public double LPFilter_Tau_s   { get; set; } = 0.0;
+        // HP-filter: slow LP tau for HP_PR = LP_fast(PR) - LP_slow(PR).
+        // At steady state HP_PR=0 regardless of absolute PR → regime-shift robust.
+        // Set to 0 to use raw LP_PR (original LP variant).
+        public double HPFilter_Tau_s   { get; set; } = 0.0;
         public double OpenTime_s       { get; set; } = 5.0;
         public double CloseTime_s      { get; set; } = 60.0;
 
@@ -105,6 +109,10 @@ namespace KSpiceEngine.CustomModels
         private bool lpInitialized = false;
         private double mfLP = 0.0;           // ARX: LP state for MF input
         private bool mfLPInitialized = false;
+        private double prLPSlow = 0.0;       // ARX HP-filter: slow LP state for PR
+        private bool prLPSlowInitialized = false;
+        private double adaptedConst = 0.0;  // ARX HP-filter: runtime-adapted const for regime-shift
+        private bool constAdapted = false;
         private double surgeMarginLP = 0.0;
         private bool surgeMarginLPInitialized = false;
         private bool wasInSurge = false;
@@ -136,6 +144,7 @@ namespace KSpiceEngine.CustomModels
                     FeatureNames        = (string[])this.modelParameters.FeatureNames?.Clone(),
                     FeatureWeights      = (double[])this.modelParameters.FeatureWeights?.Clone(),
                     LPFilter_Tau_s      = this.modelParameters.LPFilter_Tau_s,
+                    HPFilter_Tau_s      = this.modelParameters.HPFilter_Tau_s,
                     OpenTime_s          = this.modelParameters.OpenTime_s,
                     CloseTime_s         = this.modelParameters.CloseTime_s,
                     SurgeProxy_MF_Coeff       = this.modelParameters.SurgeProxy_MF_Coeff,
@@ -282,7 +291,9 @@ namespace KSpiceEngine.CustomModels
             }
             else if (p.Architecture == "ARX")
             {
-                // ARX: U[t] = α·U[t-1] + β·LP(PR[t]) + γ·LP(MF[t]) + const
+                // ARX: U[t] = α·U[t-1] + β·PR_feature[t] + γ·LP(MF[t]) + const
+                // PR_feature = LP_fast(PR) when HPFilter_Tau_s=0, else HP_PR = LP_fast - LP_slow.
+                // HP_PR is 0 at any steady state → regime-shift robust across operating points.
                 // FeatureWeights = [alpha, beta_PR, beta_MF, const]
                 double prRaw   = (P_in > 0.1) ? P_out / P_in : 1.0;
                 double lpAlpha = (p.LPFilter_Tau_s > 1e-9) ? 1.0 - Math.Exp(-timeBase_s / p.LPFilter_Tau_s) : 1.0;
@@ -290,10 +301,36 @@ namespace KSpiceEngine.CustomModels
                 if (!mfLPInitialized) { mfLP     = MassFlow; mfLPInitialized = true; }
                 targetLP += lpAlpha * (prRaw    - targetLP);
                 mfLP     += lpAlpha * (MassFlow - mfLP);
+
+                double prFeature;
+                if (p.HPFilter_Tau_s > 1e-9)
+                {
+                    double slowAlpha = 1.0 - Math.Exp(-timeBase_s / p.HPFilter_Tau_s);
+                    if (!prLPSlowInitialized) { prLPSlow = prRaw; prLPSlowInitialized = true; }
+                    prLPSlow += slowAlpha * (prRaw - prLPSlow);
+                    prFeature = targetLP - prLPSlow;
+
+                    // Adaptive const: on the first step after WarmStart, fix the steady-state
+                    // output to uPrev (the actual initial valve position) at the current MF.
+                    // This makes the model regime-shift robust: training (valve≈UMin>0) and
+                    // testset (valve=0%) both start at their real initial state and stay there
+                    // between surge events, regardless of the OLS-fitted const from training.
+                    if (!constAdapted)
+                    {
+                        adaptedConst = uPrev * (1.0 - p.FeatureWeights[0]) - p.FeatureWeights[2] * mfLP;
+                        constAdapted = true;
+                    }
+                }
+                else
+                {
+                    prFeature = targetLP;
+                }
+
+                double constTerm = (p.HPFilter_Tau_s > 1e-9) ? adaptedConst : p.FeatureWeights[3];
                 uOut = p.FeatureWeights[0] * uPrev
-                     + p.FeatureWeights[1] * targetLP
+                     + p.FeatureWeights[1] * prFeature
                      + p.FeatureWeights[2] * mfLP
-                     + p.FeatureWeights[3];
+                     + constTerm;
                 // Asymmetric rate-limiter: real ASC valves open fast, close slowly.
                 // Slow close (CloseTime_s) breaks the CL oscillation feedback loop.
                 double rlOpen  = (p.OpenTime_s  > 0) ? 100.0 / p.OpenTime_s  * timeBase_s : 100.0;
@@ -353,10 +390,40 @@ namespace KSpiceEngine.CustomModels
             // the testset begins with the valve fully closed (output=0 < training UMin).
             double lo = (modelParameters.Architecture == "ARX") ? 0.0 : modelParameters.UMin;
             uPrev = Math.Max(lo, Math.Min(modelParameters.UMax, output));
-            targetLP = uPrev;
-            lpInitialized = true;
+
+            if (modelParameters.Architecture == "ARX")
+            {
+                // Initialize LP states from the actual initial PR.
+                // Both fast and slow LP filters must start at the same value so HP_PR = 0
+                // at the evaluation start point regardless of operating-point level.
+                if (inputs != null && inputs.Length >= 2 && inputs[0] > 0.1)
+                {
+                    double prRaw = inputs[1] / inputs[0];
+                    targetLP = prRaw;
+                    prLPSlow = prRaw;
+                    lpInitialized        = true;
+                    prLPSlowInitialized  = true;
+                }
+                else
+                {
+                    // Inputs not available yet (IdentifiedModelEvaluator calls WarmStart(null, y0)).
+                    // Leave both LP filters uninitialized so they pick up the real initial PR
+                    // on the first Iterate() call. Avoids a spurious HP_PR spike from
+                    // (targetLP=uPrev) - (prLPSlow=realPR) at evaluation start.
+                    lpInitialized        = false;
+                    prLPSlowInitialized  = false;
+                }
+            }
+            else
+            {
+                targetLP = uPrev;
+                prLPSlow = 0.0;
+                lpInitialized        = true;
+                prLPSlowInitialized  = false;
+            }
             mfLPInitialized = false;          // initialized lazily on first Iterate
             surgeMarginLPInitialized = false; // initialized lazily on first Iterate
+            constAdapted = false;             // re-adapt HP const on first Iterate after WarmStart
             surgePhase = SurgePhase.Hold;
             wasInSurge = false;
         }

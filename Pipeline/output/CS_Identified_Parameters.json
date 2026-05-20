@@ -305,21 +305,22 @@
     "Architecture": "ARX",
     "FeatureNames": [
       "U_prev",
-      "LP_PR",
+      "HP_PR",
       "LP_MF",
       "Const"
     ],
     "FeatureWeights": [
-      0.94214782198915,
-      1.4463044502712492,
-      -0.05260452859284571,
-      0.6801982482508415
+      0.9419620206011088,
+      3.870685779639491,
+      -0.04745041654382479,
+      3.5347570041688416
     ],
     "LPFilter_Tau_s": 2.0,
+    "HPFilter_Tau_s": 60.0,
     "OpenTime_s": 5.0,
     "CloseTime_s": 60.0,
-    "FitScore": 52.00272237835832,
-    "Formula": "U[t]=0,942*U[t-1]+1,4463*LP(PR,2s)+-0,0526*LP(MF,2s)+0,6802 [rate-limited open=5s close=60s]",
+    "FitScore": 69.92568036260596,
+    "Formula": "U[t]=0,942*U[t-1]+3,8707*HP(PR,fast=2s,slow=60s)+-0,0475*LP(MF,2s)+3,5348 [RL open=5s close=60s]",
     "UMin": 9.85,
     "Benchmark": [
       {
@@ -776,21 +777,22 @@
     "Architecture": "ARX",
     "FeatureNames": [
       "U_prev",
-      "LP_PR",
+      "HP_PR",
       "LP_MF",
       "Const"
     ],
     "FeatureWeights": [
       0.95,
-      1.250000000000001,
-      -0.04547648839346147,
-      0.6489153480469798
+      3.2898838621075033,
+      -0.033702727457570913,
+      2.635418548880497
     ],
-    "LPFilter_Tau_s": 2.0,
+    "LPFilter_Tau_s": 3.0,
+    "HPFilter_Tau_s": 60.0,
     "OpenTime_s": 5.0,
     "CloseTime_s": 60.0,
-    "FitScore": 47.787828886426176,
-    "Formula": "U[t]=0,950*U[t-1]+1,2500*LP(PR,2s)+-0,0455*LP(MF,2s)+0,6489 [rate-limited open=5s close=60s]",
+    "FitScore": 69.6469656224219,
+    "Formula": "U[t]=0,950*U[t-1]+3,2899*HP(PR,fast=3s,slow=60s)+-0,0337*LP(MF,3s)+2,6354 [RL open=5s close=60s]",
     "UMin": 11.12,
     "Benchmark": [
       {
@@ -1618,36 +1620,31 @@
   },
   "23KA3001_MassFlow": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 67.73,
+    "FitScore": 60.55,
     "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 4 inputs, Tc=0,00s",
+    "Formula": "Dynamic MISO: 3 inputs, Tc=0,00s",
     "LinearGains": [
-      18.733,
-      -19.508,
-      -0.26827,
-      2.4247
+      -0.66403,
+      0.07367,
+      1.6416
     ],
     "InputNames": [
       "23HX0001_Pressure(P_in)",
-      "23HX1001_Pressure(P_in)",
       "23SIC3001_Control(U(t))",
       "23KA3001_Pressure(local_var)"
     ],
-    "Bias": 48.518,
+    "Bias": 48.553,
     "U0": [
       66.491,
-      66.473,
       77.085,
       150.12
     ],
     "UNorm": [
       1.0,
       1.0,
-      1.0,
       1.0
     ],
     "Curvatures": [
-      "NaN",
       "NaN",
       "NaN",
       "NaN"
@@ -1655,36 +1652,31 @@
   },
   "23KA3001_Pressure": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 27.172,
+    "FitScore": 22.23,
     "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 4 inputs, Tc=0,00s",
+    "Formula": "Dynamic MISO: 3 inputs, Tc=0,00s",
     "LinearGains": [
-      -0.71704,
-      0.7351,
-      0.0071946,
-      0.019732
+      0.01996,
+      0.0022475,
+      0.027331
     ],
     "InputNames": [
       "23HX0001_Pressure(P_in)",
-      "23HX1001_Pressure(P_in)",
       "23KA3001_MassFlow(local_var)",
       "23SIC3001_Control(U(t))"
     ],
     "Bias": 150.12,
     "U0": [
       66.491,
-      66.473,
       48.557,
       77.085
     ],
     "UNorm": [
       1.0,
       1.0,
-      1.0,
       1.0
     ],
     "Curvatures": [
-      "NaN",
       "NaN",
       "NaN",
       "NaN"
@@ -1934,36 +1926,31 @@
   },
   "23KA2001_MassFlow": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 48.868,
+    "FitScore": 47.569,
     "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 4 inputs, Tc=0,00s",
+    "Formula": "Dynamic MISO: 3 inputs, Tc=0,00s",
     "LinearGains": [
-      17.404,
-      -17.92,
-      0.55656,
-      1.582
+      -0.43861,
+      0.67614,
+      -0.74095
     ],
     "InputNames": [
       "23HX0001_Pressure(P_in)",
-      "23HX1001_Pressure(P_in)",
       "23SIC2001_Control(U(t))",
       "23KA2001_Pressure(local_var)"
     ],
-    "Bias": 50.12,
+    "Bias": 50.112,
     "U0": [
       66.491,
-      66.473,
       77.217,
       150.07
     ],
     "UNorm": [
       1.0,
       1.0,
-      1.0,
       1.0
     ],
     "Curvatures": [
-      "NaN",
       "NaN",
       "NaN",
       "NaN"
@@ -1971,36 +1958,31 @@
   },
   "23KA2001_Pressure": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 37.459,
+    "FitScore": 8.1162,
     "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 4 inputs, Tc=0,00s",
+    "Formula": "Dynamic MISO: 3 inputs, Tc=0,00s",
     "LinearGains": [
-      -3.6263,
-      3.6794,
-      0.011688,
-      0.05176
+      0.056776,
+      -0.0053929,
+      0.0684
     ],
     "InputNames": [
       "23HX0001_Pressure(P_in)",
-      "23HX1001_Pressure(P_in)",
       "23KA2001_MassFlow(local_var)",
       "23SIC2001_Control(U(t))"
     ],
     "Bias": 150.07,
     "U0": [
       66.491,
-      66.473,
       50.115,
       77.217
     ],
     "UNorm": [
       1.0,
       1.0,
-      1.0,
       1.0
     ],
     "Curvatures": [
-      "NaN",
       "NaN",
       "NaN",
       "NaN"

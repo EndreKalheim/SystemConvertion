@@ -182,8 +182,8 @@ namespace KSpiceEngine
                     AddState("MassFlow",    "F = f(P_suction, N_speed, P_discharge)", new[] { "SUCTION_PRESSURE", "LOCAL_CONTROL", $"{baseName}_Pressure" });
                     AddState("Pressure",    "P_out = P_in + Head(F, N)",             new[] { "SUCTION_PRESSURE", $"{baseName}_MassFlow", "LOCAL_CONTROL" });
                     AddState("Temperature", "T_out = T_in * (P_out/P_in)^((k-1)/k)", new[] { "UPSTREAM_TEMP", $"{baseName}_Pressure", "UPSTREAM_PRESSURE" });
-                    // Speed is commanded by the speed controller; identify as linear function
-                    // of LOCAL_CONTROL so the closed-loop uses predicted speed, not CSV data.
+                    // Speed is identified from the SIC controller output; marked as a free
+                    // (boundary) signal in ClosedLoopRunner so MassFlow gets CSV truth RPM.
                     AddState("Speed",       "N = f(speed controller output)",        new[] { "LOCAL_CONTROL" });
                 }
                 else if (ktype.Contains("Pump"))

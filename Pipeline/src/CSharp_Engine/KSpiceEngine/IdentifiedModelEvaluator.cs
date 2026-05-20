@@ -245,6 +245,7 @@ namespace KSpiceEngine
                         if (fNames != null) ascModel.modelParameters.FeatureNames   = fNames.Select(t => (string)t).ToArray();
                         if (fWts   != null) ascModel.modelParameters.FeatureWeights = fWts.Select(t => (double)t).ToArray();
                         ascModel.modelParameters.LPFilter_Tau_s = (double?)p["LPFilter_Tau_s"] ?? 0.0;
+                        ascModel.modelParameters.HPFilter_Tau_s = (double?)p["HPFilter_Tau_s"] ?? 0.0;
                         ascModel.modelParameters.OpenTime_s     = (double?)p["OpenTime_s"]     ?? 5.0;
                         ascModel.modelParameters.CloseTime_s    = (double?)p["CloseTime_s"]    ?? 60.0;
                         ascModel.modelParameters.UMin           = (double?)p["UMin"]           ?? 0.0;

@@ -304,7 +304,10 @@ def build_eq_topology():
                 # (UV-named components) so the BFS only follows the main suction path
                 # from the separator to the compressor inlet — blocking the discharge-side
                 # path that would otherwise find HX0001_Pressure (circular for P_out model).
-                for n in find_nearest_state(comp, 'Pressure', True, skip_comps=['UV', 'ASC']):
+                # [:1]: take only the nearest upstream pressure. Without the slice, multi-stage
+                # HP compressors (KA2001) receive both HX0001_P and HX1001_P as P_in inputs,
+                # giving UnitIdentifier two correlated features with cancelling OLS coefficients.
+                for n in find_nearest_state(comp, 'Pressure', True, skip_comps=['UV', 'ASC'])[:1]:
                     add_edge(f"{n}_Pressure", cid, "P_in")
 
             elif inp == "ANTISURGE_FLOW":
