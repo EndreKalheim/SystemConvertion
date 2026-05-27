@@ -43,7 +43,19 @@
       "Bash(Select-Object -First 20)",
       "Bash(powershell -NoProfile -Command ' *)",
       "Bash(Select-String \"23TV[0-9]003_MassFlow|free CSV columns\")",
-      "Bash(Select-String -Pattern \"ASC|ARX|fit\")"
+      "Bash(Select-String -Pattern \"ASC|ARX|fit\")",
+      "Bash(git checkout *)",
+      "Bash(grep -v \"^$\")",
+      "Bash(timeout 15)",
+      "PowerShell(Get-Content \"C:\\\\Users\\\\Endre\\\\OneDrive\\\\Dokumenter\\\\sem3\\\\TSA\\\\SystemConvertion\\\\Pipeline\\\\output\\\\ClosedLoop_Train_FitScores.json\" | ConvertFrom-Json | Get-Member -MemberType NoteProperty | ForEach-Object { $n = $_.Name; \"$n`: $\\(\\(Get-Content 'C:\\\\Users\\\\Endre\\\\OneDrive\\\\Dokumenter\\\\sem3\\\\TSA\\\\SystemConvertion\\\\Pipeline\\\\output\\\\ClosedLoop_Train_FitScores.json' | ConvertFrom-Json\\).$n\\)\" } | Select-String \"ASC|KA0001|KA1001|KA2001|KA3001\")",
+      "PowerShell(Get-Content \"C:\\\\Users\\\\Endre\\\\OneDrive\\\\Dokumenter\\\\sem3\\\\TSA\\\\SystemConvertion\\\\Pipeline\\\\output\\\\ClosedLoop_Train_FitScores.json\" | ConvertFrom-Json | Get-Member -MemberType NoteProperty | ForEach-Object { $n = $_.Name; \"$n`: $\\(\\(Get-Content 'C:\\\\Users\\\\Endre\\\\OneDrive\\\\Dokumenter\\\\sem3\\\\TSA\\\\SystemConvertion\\\\Pipeline\\\\output\\\\ClosedLoop_Train_FitScores.json' | ConvertFrom-Json\\).$n\\)\" } | Select-String \"ASC|KA0001|KA1001|KA2001|KA3001|HX0001\")",
+      "Bash(Select-String -Pattern \"PV_0001|junction vessel|FitScore\")",
+      "Bash(Select-String -Pattern \"KA2001|KA3001|KA0001|KA1001|PV_0001|Compression|Excluded|P_in gain|BoundaryAnchor\")",
+      "Bash(Select-String \"ASC_DBG|ASC.*Control|KA3001|KA2001\")",
+      "Bash(Select-String -Pattern \"PV_0001|Strategy|AllGains\")",
+      "Bash(Remove-Item \"c:\\\\Users\\\\Endre\\\\OneDrive\\\\Dokumenter\\\\sem3\\\\TSA\\\\SystemConvertion\\\\EJDS.cs\", \"c:\\\\Users\\\\Endre\\\\OneDrive\\\\Dokumenter\\\\sem3\\\\TSA\\\\SystemConvertion\\\\F6vn.cs\", \"c:\\\\Users\\\\Endre\\\\OneDrive\\\\Dokumenter\\\\sem3\\\\TSA\\\\SystemConvertion\\\\XBPm.cs\" -ErrorAction SilentlyContinue)",
+      "Bash(Write-Output \"CS duplicates removed\")",
+      "PowerShell(cd \"c:\\\\Users\\\\Endre\\\\OneDrive\\\\Dokumenter\\\\sem3\\\\TSA\\\\SystemConvertion\"; git status --short | Where-Object { $_ -match '^\\\\?\\\\?' })"
     ]
   }
 }

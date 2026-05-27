@@ -52,6 +52,7 @@ namespace KSpiceEngine
 
             var predictions      = new Dictionary<string, double[]>();
             var identifiedParams = new Dictionary<string, JObject>();
+            var allEquationIds   = new HashSet<string>(equations.Select(eq => (string)eq.ID));
 
             foreach (var eq in equations)
             {
@@ -178,6 +179,18 @@ namespace KSpiceEngine
                         result = SeparatorPressureIdentifier.Identify(id, Y_true, inputCols, timeBase_s);
                     }
                 }
+                else if (state == "Pressure" && formula.Contains("dP/dt")
+                    && (kspiceType.IndexOf("ControlValve", StringComparison.OrdinalIgnoreCase) >= 0
+                        || kspiceType.IndexOf("PipeFlow",    StringComparison.OrdinalIgnoreCase) >= 0
+                        || kspiceType.IndexOf("BlockValve",  StringComparison.OrdinalIgnoreCase) >= 0))
+                {
+                    // Inter-stage pipe junction: HP suction header modeled as a mass-balance vessel.
+                    var inputCols = FindInputSignals(id, inputEdges, signalMap, dataset, physicalNeighbors);
+                    Console.WriteLine($"[Model] {id}: Inter-stage junction vessel ({inputCols.Count} flow inputs)");
+                    result = inputCols.Count == 0
+                        ? (Enumerable.Repeat(0.0, numRows).ToArray(), Fallback("No flow inputs for inter-stage junction"))
+                        : SeparatorPressureIdentifier.Identify(id, Y_true, inputCols, timeBase_s);
+                }
                 else if (state.EndsWith("Level") && IsContainerType(kspiceType))
                 {
                     result = IdentifySeparatorLevel(id, Y_true, numRows, timeBase_s,
@@ -197,7 +210,29 @@ namespace KSpiceEngine
                 else
                 {
                     var inputCols = FindInputSignals(id, inputEdges, signalMap, dataset, physicalNeighbors);
+
                     result = IdentifyGeneral(id, state, Y_true, numRows, inputCols, timeBase_s);
+
+                    // For all compressors: if OLS gives a negative P_in gain it is a spurious
+                    // correlation (physical: higher inlet P → more flow → positive gain).
+                    // A negative P_in gain creates positive feedback with the upstream separator
+                    // NetMassBalance. Re-identify without P_in to prevent instability.
+                    if (state == "MassFlow"
+                        && kspiceType.IndexOf("Compressor", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        var inames = result.pars["InputNames"] as JArray;
+                        var gains  = result.pars["LinearGains"] as JArray;
+                        int pinIdx = -1;
+                        for (int k = 0; k < (inames?.Count ?? 0); k++)
+                            if (((string)inames[k]).EndsWith("(P_in)")) { pinIdx = k; break; }
+                        if (pinIdx >= 0 && (double)gains[pinIdx] < 0)
+                        {
+                            inputCols = inputCols.Where(c => !c.name.EndsWith("(P_in)")).ToList();
+                            Console.WriteLine($"[Model] {id}: P_in gain < 0 (non-physical OLS artifact) → excluded; re-identifying");
+                            result = IdentifyGeneral(id, state, Y_true, numRows, inputCols, timeBase_s);
+                        }
+                    }
+
                 }
 
                 predictions[id]      = result.pred;
@@ -229,14 +264,30 @@ namespace KSpiceEngine
 
             string measSignal = signalMap[measMapKey];
             string spSignal   = signalMap[spMapKey];
-            if (!dataset.ContainsKey(measSignal) || !dataset.ContainsKey(spSignal))
+            if (!dataset.ContainsKey(measSignal))
             {
-                Console.WriteLine($"[WARNING] {id}: Measurement or Setpoint signal not in CSV.");
-                return (Enumerable.Repeat(0.0, numRows).ToArray(), Fallback("Measurement or Setpoint not in CSV"));
+                Console.WriteLine($"[WARNING] {id}: Measurement signal not in CSV.");
+                return (Enumerable.Repeat(0.0, numRows).ToArray(), Fallback("Measurement not in CSV"));
             }
 
             double[] Y_meas = dataset[measSignal];
-            double[] Y_sp   = dataset[spSignal];
+            bool spFromCsv  = dataset.ContainsKey(spSignal);
+            double[] Y_sp;
+            double   spMean = double.NaN;
+            if (spFromCsv)
+            {
+                Y_sp = dataset[spSignal];
+            }
+            else
+            {
+                // Setpoint not in CSV (e.g. PIC2001, SIC2001/3001 in single-train-CSV datasets).
+                // Use mean(measurement) as a constant setpoint so K-Spice params can be identified
+                // and stored, and so CL evaluation has a valid fallback setpoint to regulate toward.
+                var validMeas = Y_meas.Where(v => !double.IsNaN(v)).ToArray();
+                spMean = validMeas.Length > 0 ? validMeas.Average() : 0.0;
+                Y_sp   = Enumerable.Repeat(spMean, numRows).ToArray();
+                Console.WriteLine($"[Model] {id}: Setpoint not in CSV — using mean(measurement)={spMean:F4} as constant SP fallback.");
+            }
             try
             {
                 // PidController.Iterate clips its output to [0, 100]. When the
@@ -381,18 +432,21 @@ namespace KSpiceEngine
 
                 Console.WriteLine($"[SUCCESS] {id}: PID FitScore={fitScore:F1}% ({source})");
 
-                return (Y_pred, new JObject
+                var pidPars = new JObject
                 {
-                    ["ModelType"] = "PID",
-                    ["Kp"]        = Kp,
-                    ["Ti_s"]      = Ti,
-                    ["Td_s"]      = Td,
-                    ["FitScore"]  = fitScore,
+                    ["ModelType"]   = "PID",
+                    ["Kp"]          = Kp,
+                    ["Ti_s"]        = Ti,
+                    ["Td_s"]        = Td,
+                    ["FitScore"]    = fitScore,
                     ["ParamSource"] = source,
-                    ["YMin"]      = needsNorm ? (double?)yMin : null,
-                    ["YMax"]      = needsNorm ? (double?)yMax : null,
-                    ["Formula"]   = "Incremental PI (TSA PidController): u(k) = u(k-1) + Kp*((e(k)-e(k-1)) + dt/Ti * e(k)),  e = SP - PV"
-                });
+                    ["YMin"]        = needsNorm ? (double?)yMin : null,
+                    ["YMax"]        = needsNorm ? (double?)yMax : null,
+                    ["Formula"]     = "Incremental PI (TSA PidController): u(k) = u(k-1) + Kp*((e(k)-e(k-1)) + dt/Ti * e(k)),  e = SP - PV"
+                };
+                if (!spFromCsv && !double.IsNaN(spMean))
+                    pidPars["SetpointMean"] = spMean;
+                return (Y_pred, pidPars);
             }
             catch (Exception ex)
             {
@@ -735,6 +789,82 @@ namespace KSpiceEngine
                 Console.WriteLine($"[WARNING] {id}: Identification exception: {ex.Message}");
                 return ((double[])Y_true.Clone(), Fallback(ex.Message));
             }
+        }
+
+        private static (double[] pred, JObject pars) IdentifyCompressionRatioPressure(
+            string id, double[] Y_true,
+            List<(string name, double[] data)> inputCols)
+        {
+            // Physics-based model: P_out = CR × P_in, where CR = mean(P_out) / mean(P_in).
+            // This ensures P_out/P_in = CR = constant in CL, so ASC never triggers spuriously
+            // from separator-pressure drift → UV stays near zero → PV_0001 stable.
+            //
+            // UnitIdentifier evaluates: y = Bias + gain × (u - U0)
+            // With Bias=meanY, gain=CR, U0=meanPin:
+            //   y = meanY + CR × (P_in - meanPin) = CR × P_in  [since meanY = CR×meanPin → offset=0]
+            //
+            // Side effect: P_out = CR × P_in → ΔP for PV_1002 (Cv=3000) becomes
+            // CR × PV_0001 − export_P = mean(KA_outlet) − export_P ≈ 0.12 bar at training mean,
+            // fixing the −100% CL fit caused by BoundaryAnchorPressure setting ΔP = 0.
+            double meanY = Y_true.Where(v => !double.IsNaN(v) && v > 0).DefaultIfEmpty(0).Average();
+
+            // Find the P_in input from topology-derived inputCols (edge labelled "(P_in)")
+            var pinCol = inputCols.FirstOrDefault(c => c.name.EndsWith("(P_in)"));
+            if (pinCol.data == null)
+            {
+                Console.WriteLine($"[WARNING] {id}: No P_in topology edge found for CompressionRatioPressure — using constant.");
+                double[] constPred = meanY > 0
+                    ? Y_true.Select(_ => meanY).ToArray()
+                    : (double[])Y_true.Clone();
+                double constFit = OpenLoopTestRunner.ComputeFit(Y_true, constPred);
+                return (constPred, new JObject
+                {
+                    ["ModelType"] = "ConstantUMin",
+                    ["FitScore"]  = constFit,
+                    ["Value"]     = meanY,
+                    ["Formula"]   = $"P_out = {meanY:F3} bar  [constant; no P_in edge found]"
+                });
+            }
+
+            double meanPin = pinCol.data.Where(v => !double.IsNaN(v) && v > 0).DefaultIfEmpty(0).Average();
+            if (meanPin <= 0 || meanY <= 0)
+            {
+                Console.WriteLine($"[WARNING] {id}: Invalid mean values (P_in={meanPin:F2}, P_out={meanY:F2}) — using constant.");
+                double[] constPred = meanY > 0
+                    ? Y_true.Select(_ => meanY).ToArray()
+                    : (double[])Y_true.Clone();
+                double constFit = OpenLoopTestRunner.ComputeFit(Y_true, constPred);
+                return (constPred, new JObject
+                {
+                    ["ModelType"] = "ConstantUMin",
+                    ["FitScore"]  = constFit,
+                    ["Value"]     = meanY,
+                    ["Formula"]   = $"P_out = {meanY:F3} bar  [constant; invalid mean pressures]"
+                });
+            }
+
+            double CR     = meanY / meanPin;
+            double[] pred = pinCol.data.Select(v => double.IsNaN(v) ? double.NaN : CR * v).ToArray();
+            double fit    = OpenLoopTestRunner.ComputeFit(Y_true, pred);
+
+            // Extract the source signal ID: strip the "(P_in)" suffix from the name
+            string pinId = pinCol.name.Substring(0, pinCol.name.LastIndexOf('('));
+
+            Console.WriteLine($"[Model] {id}: CompressionRatioPressure  P_in={pinId}  CR={CR:F4}  mean(P_in)={meanPin:F2} bar  OL fit={fit:F1}%");
+
+            var p = new JObject
+            {
+                ["ModelType"]      = "UnitIdentifier",
+                ["FitScore"]       = fit,
+                ["LinearGains"]    = JArray.FromObject(new double[] { CR }),
+                ["Bias"]           = meanY,
+                ["U0"]             = JArray.FromObject(new double[] { meanPin }),
+                ["TimeConstant_s"] = 0.0,
+                ["TimeDelay_s"]    = 0.0,
+                ["InputNames"]     = JArray.FromObject(new string[] { $"{pinId}(P_in_compression_ratio)" }),
+                ["Formula"]        = $"P_out = {CR:F4} × P_in  [compression ratio; P_in = {pinId}]"
+            };
+            return (pred, p);
         }
 
         // ── Routing helpers ──────────────────────────────────────────────────

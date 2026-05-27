@@ -117,8 +117,82 @@ namespace KSpiceEngine
                 }
 
                 // F) UnitIdentifier on raw signed flows — per-stream leaky integrator
+                // Group strongly collinear flows before fitting to prevent OLS from calculating massive 
+                // opposing unphysical gains (e.g. twin heat-exchanger paths), then unpack them back.
                 TryStrategy(id, "F) UnitIdent(raw signed)  ", "UnitIdentifier_SignedFlows",
-                    () => { var ds = DynamicPlantRunner.BuildUnitDataSet(signedInputs, Y_true, timeBase_s); var m = UnitIdentifier.IdentifyLinear(ref ds, null, false); return (ds, m); },
+                    () => { 
+                        var groupedInputs = new List<(string name, double[] data)>();
+                        var groupMap = new List<List<int>>();
+                        var unusedOrig = Enumerable.Range(0, signedInputs.Count).ToList();
+                        
+                        while (unusedOrig.Count > 0)
+                        {
+                            int currIdx = unusedOrig[0];
+                            unusedOrig.RemoveAt(0);
+                            var currGroupIdxs = new List<int> { currIdx };
+                            var remaining = new List<int>();
+                            
+                            double[] dataA = signedInputs[currIdx].data;
+                            double meanA = dataA.Average();
+                            bool isOutA = IsOutflow(signedInputs[currIdx].name);
+                            
+                            foreach (int otherIdx in unusedOrig)
+                            {
+                                double[] dataB = signedInputs[otherIdx].data;
+                                double meanB = dataB.Average();
+                                double num = 0, denA = 0, denB = 0;
+                                for (int i = 0; i < dataA.Length; i++)
+                                {
+                                    double dA = dataA[i] - meanA;
+                                    double dB = dataB[i] - meanB;
+                                    num += dA * dB;
+                                    denA += dA * dA;
+                                    denB += dB * dB;
+                                }
+                                double correlation = (denA > 0 && denB > 0) ? num / Math.Sqrt(denA * denB) : 0;
+                                
+                                if (correlation > 0.95 && isOutA == IsOutflow(signedInputs[otherIdx].name))
+                                    currGroupIdxs.Add(otherIdx);
+                                else
+                                    remaining.Add(otherIdx);
+                            }
+                            
+                            groupMap.Add(currGroupIdxs);
+                            string groupName = string.Join("+", currGroupIdxs.Select(i => signedInputs[i].name));
+                            double[] groupData = new double[dataA.Length];
+                            for (int i = 0; i < groupData.Length; i++)
+                            {
+                                foreach (int gIdx in currGroupIdxs)
+                                    groupData[i] += signedInputs[gIdx].data[i];
+                            }
+                            groupedInputs.Add((groupName, groupData));
+                            unusedOrig = remaining;
+                        }
+
+                        var ds = DynamicPlantRunner.BuildUnitDataSet(groupedInputs, Y_true, timeBase_s); 
+                        var m = UnitIdentifier.IdentifyLinear(ref ds, null, false); 
+                        
+                        // Unpack the group gains back to individual streams so downstream simulation transparently works
+                        if (m.modelParameters != null && m.modelParameters.Fitting.WasAbleToIdentify && m.modelParameters.LinearGains != null)
+                        {
+                            double[] unpackedGains = new double[signedInputs.Count];
+                            for (int g = 0; g < groupedInputs.Count; g++)
+                            {
+                                double groupGain = m.modelParameters.LinearGains[g];
+                                foreach (int originalIdx in groupMap[g])
+                                    unpackedGains[originalIdx] = groupGain;
+                            }
+                            m.modelParameters.LinearGains = unpackedGains;
+                            
+                            if (m.modelParameters.U0 != null) m.modelParameters.U0 = new double[signedInputs.Count];
+                            if (m.modelParameters.UNorm != null) 
+                            {
+                                m.modelParameters.UNorm = new double[signedInputs.Count];
+                                for (int i = 0; i < signedInputs.Count; i++) m.modelParameters.UNorm[i] = 1.0;
+                            }
+                        }
+                        return (ds, m); 
+                    },
                     "Pressure(t) = LP(Bias + sum(gain_i * F_i), Tc)  [outflows pre-negated in evaluation]",
                     inputCols, results);
 
@@ -151,7 +225,12 @@ namespace KSpiceEngine
                 var stratE = results.FirstOrDefault(r => r.name == "IdentifyLinear-rawFlows");
                 var stratC = results.FirstOrDefault(r => r.name == "NetMassBalance");
 
-                bool stratFOk = stratF.name != null && stratF.fit >= 20.0 && GainsOk(stratF.pars);
+                bool AllGainsNonNeg(JObject pars)
+                {
+                    var g = pars["LinearGains"] as JArray;
+                    return g == null || g.All(x => (double)x >= 0.0);
+                }
+                bool stratFOk = stratF.name != null && stratF.fit >= 20.0 && GainsOk(stratF.pars) && AllGainsNonNeg(stratF.pars);
                 bool stratEOk = stratE.name != null && stratE.fit >= 20.0;
                 bool stratCOk = stratC.name != null && stratC.fit >= 20.0;
 
@@ -165,11 +244,7 @@ namespace KSpiceEngine
                 {
                     best = stratE;
                     if (stratF.name != null)
-                    {
-                        var maxG = (stratF.pars["LinearGains"] as JArray)?
-                                       .Max(g => Math.Abs((double)g)) ?? 0.0;
-                        Console.WriteLine($"[Model] {id}: Strategy F rejected (maxGain={maxG:F1} > {MaxGain}). Using E.");
-                    }
+                        Console.WriteLine($"[Model] {id}: Strategy F unavailable. Using E fit={stratE.fit:F1}%.");
                     else Console.WriteLine($"[Model] {id}: Strategy F unavailable. Using E fit={stratE.fit:F1}%.");
                 }
                 else if (stratCOk)

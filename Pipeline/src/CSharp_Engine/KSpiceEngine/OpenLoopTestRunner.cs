@@ -107,7 +107,7 @@ namespace KSpiceEngine
                     for (int t = 0; t < numRows; t++)
                     {
                         for (int k = 0; k < inputArrays.Count; k++)
-                            step[k] = inputArrays[k][t];
+                            step[k] = inputArrays[k] != null ? inputArrays[k][t] : double.NaN;
                         yPred[t] = evaluator.Iterate(step, timeBase_s);
                     }
 
@@ -203,6 +203,11 @@ namespace KSpiceEngine
 
                 if (arr == null)
                 {
+                    if (slot.Optional)
+                    {
+                        result.Add(null); // optional — step loop fills NaN
+                        continue;
+                    }
                     Console.WriteLine($"  [MISS] {modelId} could not resolve input '{key}' in test CSV");
                     return null;
                 }

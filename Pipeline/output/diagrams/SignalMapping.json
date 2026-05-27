@@ -55,6 +55,7 @@
   "23UV0001_UpstreamPressure": "23UV0001_pf:InletStream.p",
   "23UV0001_ControlSignal": "23UV0001:LocalControlSignalIn",
   "23UV0001_Temperature": "23UV0001_pf:OutletStream.t",
+  "23PV_0001_Pressure": "23PV_0001_pf:OutletStream.p",
   "23PV_0001_MassFlow": "23PV_0001_pf:OutletStream.f",
   "23PV_0001_DownstreamPressure": "23PV_0001_pf:OutletStream.p",
   "23PV_0001_Temperature": "23PV_0001_pf:OutletStream.t",

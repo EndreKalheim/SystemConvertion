@@ -29,6 +29,120 @@ namespace KSpiceEngine
             foreach (var node in systemMap.Models)
                 typeByComp[(string)node["Name"] ?? ""] = (string)node["KSpiceType"] ?? "";
 
+            // Pre-pass: build downstream adjacency map (component → set of components that list it
+            // as an input source). Used by IsInterstageHX to detect inter-stage heat exchangers.
+            var downstreamOf = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var node in systemMap.Models)
+            {
+                string nodeName = (string)node["Name"] ?? "";
+                var nodeInputs2 = node["Inputs"] as JArray;
+                if (nodeInputs2 == null) continue;
+                foreach (var inp in nodeInputs2)
+                {
+                    string src = (string)inp["Source"] ?? "";
+                    int colon = src.IndexOf(':');
+                    if (colon <= 0) continue;
+                    string srcComp = src.Substring(0, colon);
+                    if (!downstreamOf.ContainsKey(srcComp))
+                        downstreamOf[srcComp] = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    downstreamOf[srcComp].Add(nodeName);
+                }
+            }
+
+            // Returns true if any Compressor is reachable downstream from compName,
+            // skipping anti-surge recirculation (UV) paths which create backward loops
+            // that would otherwise make HP after-coolers appear inter-stage.
+            bool IsInterstageHX(string compName)
+            {
+                var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var queue   = new Queue<string>();
+                if (downstreamOf.TryGetValue(compName, out var ds0))
+                    foreach (var d in ds0) queue.Enqueue(d);
+                while (queue.Count > 0)
+                {
+                    string curr = queue.Dequeue();
+                    if (!visited.Add(curr)) continue;
+                    string baseCurr2 = curr.Replace("_pf", "");
+                    // Anti-surge valves (UV) recirculate backwards — skip to avoid false positives.
+                    if (baseCurr2.ToUpper().Contains("UV")) continue;
+                    if (typeByComp.TryGetValue(curr, out string ct) && ct.Contains("Compressor"))
+                        return true;
+                    if (downstreamOf.TryGetValue(curr, out var nxt))
+                        foreach (var d in nxt) queue.Enqueue(d);
+                }
+                return false;
+            }
+
+            // Inverse adjacency map: component → set of components that feed INTO it.
+            var upstreamOf = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var kv in downstreamOf)
+                foreach (var ds in kv.Value)
+                {
+                    if (!upstreamOf.ContainsKey(ds))
+                        upstreamOf[ds] = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    upstreamOf[ds].Add(kv.Key);
+                }
+
+            // Returns true if this ControlValve/PipeFlow is the HP suction pressure junction node:
+            // a merge point where ≥ 2 distinct inter-stage heat exchangers converge upstream.
+            // A single valve on one LP train path returns false (only 1 inter-stage HX upstream).
+            // BFS upstream through transparent K-Spice pipe segments (pv_*, network-*, Network type)
+            // until all reachable equipment boundaries are found; requires ≥ 2 inter-stage HX
+            // components in the result set.
+            bool IsInterstageJunction(string compName)
+            {
+                var visited  = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var queue    = new Queue<string>();
+                var foundHXs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var seedKey in new[] { compName, compName + "_pf" })
+                    if (upstreamOf.TryGetValue(seedKey, out var init))
+                        foreach (var u in init) queue.Enqueue(u);
+
+                while (queue.Count > 0)
+                {
+                    string curr = queue.Dequeue();
+                    if (!visited.Add(curr)) continue;
+                    string baseCurr = curr.Replace("_pf", "");
+
+                    if (!typeByComp.TryGetValue(curr, out string ct) &&
+                        !typeByComp.TryGetValue(baseCurr, out ct))
+                        ct = "";
+
+                    // Also look up base component type (to classify _pf companions).
+                    typeByComp.TryGetValue(baseCurr, out string baseCt);
+
+                    if (ct.Contains("HeatExchanger") && IsInterstageHX(baseCurr))
+                    {
+                        foundHXs.Add(baseCurr);
+                        continue; // record but don't traverse through the HX
+                    }
+
+                    // Stop at equipment boundaries. Also stop at _pf companions of ControlValves
+                    // (e.g. 23PV_0001_pf is the pipe companion of ControlValve 23PV_0001;
+                    // traversing through it would incorrectly route ESV2002 back to HX0001).
+                    bool isEquipment = ct.Contains("Compressor") || ct.Contains("Separator")
+                        || ct.Contains("Tank") || ct.Contains("Pump")
+                        || ct.Contains("ControlValve") || ct.Contains("BlockValve")
+                        || ct.Contains("HeatExchanger")
+                        || (baseCt ?? "").Contains("ControlValve");
+                    if (isEquipment) continue;
+
+                    // Transparent: pipe volumes, PipeFlow companions of non-ControlValves, networks.
+                    string low = baseCurr.ToLower();
+                    bool isTransparent = low.StartsWith("pv") || low.StartsWith("pf_")
+                        || low.StartsWith("network-") || ct == "" || ct.Contains("Network")
+                        || ct.Contains("PipeFlow") || ct.Contains("PipeVolume")
+                        || curr.EndsWith("_pf", System.StringComparison.OrdinalIgnoreCase);
+                    if (isTransparent)
+                        foreach (var key in new[] { curr, baseCurr, curr + "_pf" })
+                            if (upstreamOf.TryGetValue(key, out var ups))
+                                foreach (var u in ups) queue.Enqueue(u);
+                }
+                // Only a true merge-point junction has ≥ 2 distinct inter-stage HX trains upstream.
+                return foundHXs.Count >= 2;
+            }
+
             // First pass: collect valid base components (de-duplicated, _pf stripped)
             var baseProps = new Dictionary<string, dynamic>();
             foreach (var node in systemMap.Models)
@@ -121,11 +235,7 @@ namespace KSpiceEngine
                 else if (ktype.Contains("HeatExchanger"))
                 {
                     AddState("MassFlow",    "F = sum(m_downstream)",                          new[] { "DOWNSTREAM_FLOW_SUM" });
-                    // Pressure drop across a heat exchanger is small and flow-independent
-                    // in practice; using {baseName}_MassFlow as a local_var input created a
-                    // cascade: HX_MassFlow → KA0001_MassFlow errors → HX_Pressure errors.
-                    // Upstream pressure alone gives a cleaner and more stable CL model.
-                    AddState("Pressure",    "P_out ≈ P_in  (small HX dP ignored)",           new[] { "UPSTREAM_PRESSURE" });
+                    AddState("Pressure", "P_out ≈ P_in  (small HX dP ignored)", new[] { "UPSTREAM_PRESSURE" });
                     AddState("Temperature", "T_out = f(T_in, T_cool, F, m_partner)",          new[] { "UPSTREAM_TEMP", $"{baseName}_MassFlow", "COOLING_TEMP", "PARTNER_FLOW" });
                 }
                 else if (ktype.Contains("ControlValve") || ktype.Contains("PipeFlow") || ktype.Contains("BlockValve"))
@@ -154,6 +264,8 @@ namespace KSpiceEngine
                         }
                     }
 
+                    bool isInterstageJunction = !isAntiSurge && IsInterstageJunction(baseName);
+
                     if (isAntiSurge)
                     {
                         // Anti-surge recirculation valve: gas flows from discharge side (HX outlet)
@@ -163,6 +275,22 @@ namespace KSpiceEngine
                         // suction separator pressure for P_out.
                         AddState("MassFlow",    "F = Cv * sqrt(dP * rho)",      new[] { "UPSTREAM_PRESSURE", "CONTAINER_PRESSURE", "LOCAL_CONTROL" });
                         AddState("Temperature", "T_out = f(T_in, P_in, P_out)", new[] { "UPSTREAM_TEMP", "UPSTREAM_PRESSURE", "CONTAINER_PRESSURE" });
+                    }
+                    else if (isInterstageJunction)
+                    {
+                        // Inter-stage pressure junction: HP suction header.
+                        // Modeled as a mass-balance vessel (same as separator pressure):
+                        //   UPSTREAM_FLOW            → HX0001_MF, HX1001_MF       (m_in, +)
+                        //   ANTISURGE_INFLOW         → UV2001_MF, UV3001_MF       (m_in, +)
+                        //   DOWNSTREAM_COMPRESSOR    → KA2001_MF, KA3001_MF       (m_out, −)
+                        //   SIBLING_ANTISURGE_FLOW   → UV0001_MF, UV1001_MF       (m_out, −)
+                        // NegateOutflows + SeparatorPressureIdentifier handle sign convention and fit.
+                        AddState("Pressure",    "dP/dt = k * (m_in - m_out)",
+                            new[] { "UPSTREAM_FLOW", "ANTISURGE_INFLOW", "DOWNSTREAM_COMPRESSOR_FLOW", "SIBLING_ANTISURGE_FLOW" });
+                        AddState("MassFlow",    "F = Cv * sqrt(dP * rho)",
+                            new[] { "UPSTREAM_PRESSURE", "DOWNSTREAM_PRESSURE", "LOCAL_CONTROL" });
+                        AddState("Temperature", "T_out = f(T_in, P_in, P_out)",
+                            new[] { "UPSTREAM_TEMP", "UPSTREAM_PRESSURE", "DOWNSTREAM_PRESSURE" });
                     }
                     else
                     {
@@ -179,8 +307,11 @@ namespace KSpiceEngine
                     // Downstream flow approaches were tried but failed due to operating-point
                     // mismatch between training and test sets (different speed ranges) and
                     // UV anti-correlation (UV high when KA flow is low during surge events).
-                    AddState("MassFlow",    "F = f(P_suction, N_speed, P_discharge)", new[] { "SUCTION_PRESSURE", "LOCAL_CONTROL", $"{baseName}_Pressure" });
-                    AddState("Pressure",    "P_out = P_in + Head(F, N)",             new[] { "SUCTION_PRESSURE", $"{baseName}_MassFlow", "LOCAL_CONTROL" });
+                    AddState("MassFlow",    "F = f(P_suction, N_speed, P_discharge, UV_recirc)", new[] { "SUCTION_PRESSURE", "LOCAL_CONTROL", $"{baseName}_Pressure", "ANTISURGE_RECIRC_FLOW" });
+                    // UV recirculation is excluded from Pressure: adding it creates a shorter
+                    // ASC→UV→Pressure→MassFlow→ASC feedback cycle that amplifies CL errors.
+                    // UV effect on pressure is already captured indirectly via MassFlow input.
+                    AddState("Pressure",    "P_out = P_in + Head(F, N)",   new[] { "SUCTION_PRESSURE", $"{baseName}_MassFlow", "LOCAL_CONTROL" });
                     AddState("Temperature", "T_out = T_in * (P_out/P_in)^((k-1)/k)", new[] { "UPSTREAM_TEMP", $"{baseName}_Pressure", "UPSTREAM_PRESSURE" });
                     // Speed is identified from the SIC controller output; marked as a free
                     // (boundary) signal in ClosedLoopRunner so MassFlow gets CSV truth RPM.
@@ -218,7 +349,7 @@ namespace KSpiceEngine
                          || ktype.Contains("Controller"))
                 {
                     if (ktype.Contains("GenericASC"))
-                        AddState("Control", "ASC: U(t) = f(Flow, Pressure)", new[] { "MEASURED_FLOW", "MEASURED_PRESSURE" });
+                        AddState("Control", "ASC: U(t) = DualModePI(NASP-NF) ~ f(MF, PR, N)", new[] { "MEASURED_FLOW", "MEASURED_PRESSURE", "MEASURED_SPEED" });
                     else
                         AddState("Control", "PID: U(t) = Kp*e + Ki*∫e dt",   new[] { "MEASURED_STATE" });
                 }

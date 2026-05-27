@@ -496,6 +496,33 @@ def build_eq_topology():
                         if is_uv:
                             add_edge(f"{u}_MassFlow", cid, "m_in")
 
+            elif inp == "ANTISURGE_RECIRC_FLOW":
+                # UV recirculation that discharges to the compressor inlet junction, not
+                # the separator.  In Rev4: UV → pv (pipe junction, transparent) → KA.
+                # Contrast: UV → pv → VA (separator) — handled by ANTISURGE_INFLOW instead.
+                # Adding UV_MassFlow lets the MISO model learn the +1 gain contribution.
+                # The UV→KA edge creates the cycle KA→ASC→UV→KA; ClosedLoopRunner
+                # breaks it automatically with a unit delay on the cycle-back edge.
+                for u, _ in get_upstream(comp, flow_only=True):
+                    if f"{u}_MassFlow" not in equation_ids:
+                        continue
+                    is_uv_r = 'UV' in u.upper()
+                    if not is_uv_r:
+                        for ctrl_comp, _ in raw_ins.get(u, []):
+                            if 'ASC' in base_types.get(ctrl_comp, ''):
+                                is_uv_r = True
+                                break
+                    if not is_uv_r:
+                        continue
+                    uv_ds = get_downstream(u, flow_only=True)
+                    feeds_compressor = any('Compressor' in base_types.get(d, '') for d in uv_ds)
+                    feeds_separator  = any(
+                        'Separator' in base_types.get(d, '') or 'Tank' in base_types.get(d, '')
+                        for d in uv_ds
+                    )
+                    if feeds_compressor and not feeds_separator:
+                        add_edge(f"{u}_MassFlow", cid, "uv_recirc")
+
             elif inp == "DOWNSTREAM_COMPRESSOR_FLOW":
                 # For separator/tank gas pressure: wire only actual compressor flows as
                 # m_out, bypassing intermediate valves (ESV, PipeFlow, ControlValve).
@@ -508,6 +535,51 @@ def build_eq_topology():
                                                                   'ControlValve', 'SafetyValve']):
                     if 'Compressor' in base_types.get(n, ''):
                         add_edge(f"{n}_MassFlow", cid, "m_out")
+
+            elif inp == "SIBLING_ANTISURGE_FLOW":
+                # Find LP anti-surge UV valves (UV0001, UV1001) that drain gas from the
+                # inter-stage pipe space back to the LP separator (net m_out from junction).
+                # They share a pipe connector with the ESV block valves upstream of this
+                # junction, not with PV_0001 itself.
+                # Full path: PV_0001 ← pv_L0007A(noise) ← ESV0005(passthru) ← pv_23L0005 → UV0001
+                # BFS goes upstream through noise pipe nodes and ESV/BlockValve pass-throughs.
+                # UV2001/UV3001 connect from a different HP-side connector and are not reached.
+                _sib_visited: set = set()
+                _sib_queue = [comp]
+                while _sib_queue:
+                    _scurr = _sib_queue.pop(0)
+                    if _scurr in _sib_visited:
+                        continue
+                    _sib_visited.add(_scurr)
+                    for _ssrc, _sport in raw_ins.get(_scurr, []):
+                        _ssrc_b = _ssrc.replace('_pf', '')
+                        if _ssrc_b == _scurr or _ssrc_b in _sib_visited:
+                            continue  # self-ref or already visited
+                        # Only follow flow ports, not valve parameter connections
+                        if any(t in _sport for t in ('Cv', 'FL', 'Fd', 'Valve', 'xT',
+                                                      'Control', 'Speed', 'Profile',
+                                                      'Factor', 'Temperature', 'Measured')):
+                            continue
+                        _ssrc_kt = base_types.get(_ssrc_b, '')
+                        _is_noise = _ssrc_b not in base_types
+                        # ESV/block valves have a companion _pf model (PipeFlow type) that
+                        # overwrites base_types — treat PipeFlow the same as BlockValve here.
+                        _is_pass  = any(t in _ssrc_kt for t in ('BlockValve', 'SafetyValve', 'PipeFlow'))
+                        if _is_noise:
+                            # Noise pipe connector: check siblings for UV drain valves
+                            for _sib, _ in raw_outs.get(_ssrc_b, []):
+                                _sib_b = _sib.replace('_pf', '')
+                                if _sib_b == comp or _sib_b in _sib_visited:
+                                    continue
+                                if 'UV' not in _sib_b.upper():
+                                    continue
+                                if f"{_sib_b}_MassFlow" not in equation_ids:
+                                    continue
+                                add_edge(f"{_sib_b}_MassFlow", cid, "m_out")
+                            _sib_queue.append(_ssrc_b)
+                        elif _is_pass:
+                            _sib_queue.append(_ssrc_b)
+                        # else: real equipment (HX, Compressor) — stop this branch
 
             elif inp == "DOWNSTREAM_LIQUID_OUTFLOWS":
                 # Oil/water liquid outflows from separator/tank (LV valves, overflow valves).
@@ -583,6 +655,21 @@ def build_eq_topology():
                         add_edge(f"{n}_Pressure", cid, "y_pres")
                     for n in find_nearest_state(comp, 'Pressure', False):
                         add_edge(f"{n}_Pressure", cid, "y_pres")
+
+            elif inp == "MEASURED_SPEED":
+                ctype = eq.get("ControllerType", "")
+                if ctype == "ASC":
+                    # Wire the protected compressor's Speed state to the ASC surge proxy.
+                    # Follow: ASC controls UV → UV outlet feeds compressor inlet → KA*.
+                    # Speed(N) shifts the surge limit (higher N → NASP at higher flow),
+                    # so including it in the 4-feature proxy improves generalization.
+                    for uv in get_downstream(comp):
+                        if 'UV' not in uv.upper():
+                            continue
+                        for ka in get_downstream(uv, flow_only=True):
+                            if 'Compressor' in base_types.get(ka, '') and f"{ka}_Speed" in equation_ids:
+                                add_edge(f"{ka}_Speed", cid, "y_speed")
+                                break
 
             elif inp == "MEASURED_STATE":
                 kt = base_types.get(comp.split('_')[0], '')

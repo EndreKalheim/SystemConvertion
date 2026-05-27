@@ -232,7 +232,7 @@ namespace KSpiceEngine
                     var slot = eval.InputContract[k];
                     step0[k] = ResolveSlotValue(slot, id, 0, false, predictions, dataset,
                                                 signalMap, csvToModelId, inputEdges, physicalNeighbors, equiv,
-                                                freeCsvColumns);
+                                                freeCsvColumns, freeModelIds);
                 }
                 eval.Iterate(step0, dt); // priming call — its return value is unused
                 eval.WarmStart(predictions[id][0]); // re-anchor "lastOutput" to truth so post-prime fallback returns are correct
@@ -292,7 +292,7 @@ namespace KSpiceEngine
                             useLastStep = true;
                         step[k] = ResolveSlotValue(slot, id, t, useLastStep, predictions, dataset,
                                                    signalMap, csvToModelId, inputEdges, physicalNeighbors, equiv,
-                                                   freeCsvColumns, computedThisStep);
+                                                   freeCsvColumns, freeModelIds, computedThisStep);
                     }
                     predictions[id][t] = eval.Iterate(step, dt);
                     computedThisStep.Add(id);
@@ -352,8 +352,14 @@ namespace KSpiceEngine
             Dictionary<string, HashSet<string>> physicalNeighbors,
             SignalEquivalenceMap? equiv,
             HashSet<string> freeCsvColumns,
+            HashSet<string> freeModelIds,
             HashSet<string>? computedThisStep = null)
         {
+            // TrainingOnly slots (NASP/NF for ASC) must be suppressed so the OLS proxy is
+            // used in closed-loop instead of truth-data injection from the training CSV.
+            if (slot.TrainingOnly)
+                return double.NaN;
+
             string key = slot.SourceKey;
 
             // Trainer sentinel for valves with no controller (BlockValves, hand-valves).
@@ -395,6 +401,13 @@ namespace KSpiceEngine
                 if (traced != null && predictions.TryGetValue(traced, out var parr2))
                     return SafeAt(parr2, IndexFor(traced));
                 // 4. Last resort — raw CSV reading. True boundary or unmodelled signal.
+                // BUT: do not allow controllers to cheat by using the actual measurement from truth data.
+                if (csvCol.EndsWith(":Measurement", StringComparison.OrdinalIgnoreCase) && csvCol.StartsWith("23"))
+                {
+                    // Returning NaN ensures the model doesn't artificially tighten to truth.
+                    Console.WriteLine($"[WARN] Measurement {csvCol} has no model prediction; returning NaN instead of truth.");
+                    return double.NaN;
+                }
                 if (dataset.TryGetValue(csvCol, out var arr)) return SafeAt(arr, t);
                 return double.NaN;
             }
@@ -409,8 +422,16 @@ namespace KSpiceEngine
                 {
                     if (what == "Setpoint")
                     {
-                        // 1. Cascade: a topology cascade_sp edge means another controller
-                        //    predicts this setpoint (e.g. PIC0001 → SIC0001 setpoint).
+                        // 1. Equivalence trace: if setpoint CSV column resolves (via K-Spice transmitter
+                        //    wiring) to a non-free predicted model, use the CL prediction.
+                        //    e.g. SIC1001/3001:SetpointUsed → 23KA0001/2001_Speed (speed-followers).
+                        string traced2 = equiv?.TryResolve(col);
+                        if (traced2 != null && !freeModelIds.Contains(traced2)
+                            && predictions.TryGetValue(traced2, out var followPred))
+                            return SafeAt(followPred, IndexFor(traced2));
+                        // 2. Cascade edge: another predicted controller supplies the setpoint.
+                        //    e.g. PIC0001_Control → SIC0001_Control (pressure→speed cascade).
+                        //    Checked before CSV so SIC uses the CL-predicted PIC output, not training truth.
                         if (inputEdges.TryGetValue(ownerId, out var spEdges))
                         {
                             var casc = spEdges.FirstOrDefault(e =>
@@ -419,14 +440,9 @@ namespace KSpiceEngine
                                 && predictions.TryGetValue(casc.fromNode, out var cascPred))
                                 return SafeAt(cascPred, IndexFor(casc.fromNode));
                         }
-                        // 2. Follow / ratio: the setpoint CSV column traces (via transmitter chain)
-                        //    to a modelled state being predicted — use the prediction.
-                        //    Handles SIC1001/SIC3001 whose setpoint is the measured speed of KA0001/KA2001.
-                        string traced2 = equiv?.TryResolve(col);
-                        if (traced2 != null && predictions.TryGetValue(traced2, out var followPred))
-                            return SafeAt(followPred, IndexFor(traced2));
-                        // 3. Operator input from CSV (true external setpoint).
-                        if (dataset.TryGetValue(col, out var arr)) return SafeAt(arr, t);
+                        // 3. CSV: operator setpoints (pressure targets for PIC, hand-set speed targets).
+                        //    Only reached when neither equivalence nor cascade_sp resolved the setpoint.
+                        if (dataset.TryGetValue(col, out var csvArr)) return SafeAt(csvArr, t);
                         return double.NaN;
                     }
                     return FromCsvCol(col);

@@ -196,6 +196,19 @@ namespace KSpiceEngine
                 return null;
             }
 
+            // Compressor / Pump: speed-related ports (Speed, RPM, MachineSpeed)
+            // are equivalent to the machine's own Speed state.
+            if (ktype.IndexOf("Compressor", StringComparison.OrdinalIgnoreCase) >= 0
+                || ktype.IndexOf("Pump", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                if (port.IndexOf("Speed", StringComparison.OrdinalIgnoreCase) >= 0
+                    || port.IndexOf("RPM", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return ResolveRecursive($"{comp}:Speed", visited);
+                }
+                return null;
+            }
+
             if (ktype.IndexOf("PipeVolume", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 // Collect all InletStream sources from this PipeVolume.

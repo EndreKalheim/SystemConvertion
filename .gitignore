@@ -1,0 +1,20 @@
+# Build artifacts
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+*.nupkg
+
+# Logs and temp outputs
+*.log
+*_output.txt
+*_trace*.txt
+sim_run.txt
+final_run.txt
+
+# Editor / OS
+.vs/
+.vscode/
+Thumbs.db
+.DS_Store

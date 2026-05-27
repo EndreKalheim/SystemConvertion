@@ -70,6 +70,7 @@ namespace KSpiceEngine
         private double netBalanceAnchor;
 
         private bool pidPrimed;
+        private double pidSetpointFallback = double.NaN; // constant SP when setpoint not in CSV
         private double pidYMin = 0.0;
         private double pidYMax = 100.0;
 
@@ -91,6 +92,14 @@ namespace KSpiceEngine
             // True if this slot represents an outflow whose sign must be flipped before
             // being fed to the integrator level model.
             public bool IsOutflow;
+            // Optional slots: if the runner cannot resolve this slot, fill with NaN
+            // (do not fail the whole model). Used for NASP/NF truth-injection in ASC.
+            public bool Optional;
+            // TrainingOnly slots are suppressed in closed-loop (ClosedLoopRunner returns
+            // NaN for them) so the OLS proxy is exercised instead of truth-data injection.
+            // Set for NASP/NF ASC inputs — these are K-Spice internal signals not available
+            // in a real simulation; forcing the proxy makes CL a genuine closed-loop test.
+            public bool TrainingOnly;
         }
 
         public IdentifiedModelEvaluator(string id, JObject p)
@@ -125,12 +134,25 @@ namespace KSpiceEngine
                     return slots;   // no inputs — always returns the fitted constant
 
                 case "AntiSurgePhysicalModel":
-                    // ASC always wants three signals in this order: P_in, P_out, MassFlow.
-                    // The trainer used FindInputSignals to pick them; in test runs we
-                    // re-resolve via the topology in the runner.
+                    // ASC input layout: [P_in, P_out, MassFlow, N_speed, NASP(opt), NF(opt)]
+                    // Speed at [3] feeds the 4-feature surge proxy (MF, PR, N, bias).
+                    // NASP/NF at [4]/[5] are TrainingOnly: suppressed in closed-loop so the
+                    // proxy is exercised. In open-loop (training/testset) they provide truth
+                    // error = NASP-NF directly to Iterate(), giving the high training fit.
                     slots.Add(new InputSlot { SourceKey = $"@P_in:{comp}",  Label = "P_in"  });
                     slots.Add(new InputSlot { SourceKey = $"@P_out:{comp}", Label = "P_out" });
                     slots.Add(new InputSlot { SourceKey = $"@Flow:{comp}",  Label = "MF"    });
+                    // Slot [3]: compressor speed (always from topology; 0 if unavailable).
+                    slots.Add(new InputSlot { SourceKey = $"{comp}_Speed", Label = "Speed", Optional = true });
+                    // Slots [4] and [5]: truth NASP and NF from K-Spice CSV (training only).
+                    {
+                        string naspK = (string?)p["NasSignalKey"] ?? "";
+                        string nfK   = (string?)p["NfSignalKey"]  ?? "";
+                        if (!string.IsNullOrEmpty(naspK))
+                            slots.Add(new InputSlot { SourceKey = naspK, Label = "NASP", Optional = true, TrainingOnly = true });
+                        if (!string.IsNullOrEmpty(nfK))
+                            slots.Add(new InputSlot { SourceKey = nfK,   Label = "NF",   Optional = true, TrainingOnly = true });
+                    }
                     return slots;
 
                 case "ValvePhysicsModel":
@@ -206,10 +228,11 @@ namespace KSpiceEngine
             {
                 case "PID":
                 {
-                    pidKp   = (double?)p["Kp"]    ?? 0.0;
-                    pidTi_s = (double?)p["Ti_s"]  ?? double.PositiveInfinity;
-                    pidYMin = (double?)p["YMin"]   ?? 0.0;
-                    pidYMax = (double?)p["YMax"]   ?? 100.0;
+                    pidKp               = (double?)p["Kp"]            ?? 0.0;
+                    pidTi_s             = (double?)p["Ti_s"]           ?? double.PositiveInfinity;
+                    pidYMin             = (double?)p["YMin"]            ?? 0.0;
+                    pidYMax             = (double?)p["YMax"]            ?? 100.0;
+                    pidSetpointFallback = (double?)p["SetpointMean"]   ?? double.NaN;
                     pidActive = true;
                     return;
                 }
@@ -222,34 +245,30 @@ namespace KSpiceEngine
                 {
                     ascModel = new CustomModels.AntiSurgePhysicalModel(
                         ID, new[] { "P_in", "P_out", "Flow" }, ID);
-                    var arch = (string)p["Architecture"] ?? "LinearOLS";
-                    ascModel.modelParameters.Architecture = arch;
-                    if (arch == "KickBased")
-                    {
-                        ascModel.modelParameters.SurgeProxy_MF_Coeff       = (double?)p["SurgeProxy_MF_Coeff"]       ?? 1.0;
-                        ascModel.modelParameters.SurgeProxy_a              = (double?)p["SurgeProxy_a"]              ?? 0.0;
-                        ascModel.modelParameters.SurgeProxy_b              = (double?)p["SurgeProxy_b"]              ?? -35.0;
-                        ascModel.modelParameters.KickThreshold             = (double?)p["KickThreshold"]             ?? 0.0;
-                        ascModel.modelParameters.HoldThreshold             = (double?)p["HoldThreshold"]             ?? 0.0;
-                        ascModel.modelParameters.KickRate_PrcPerSec        = (double?)p["KickRate_PrcPerSec"]        ?? 0.0;
-                        ascModel.modelParameters.KickGain_PrcPerSecPerUnit = (double?)p["KickGain_PrcPerSecPerUnit"] ?? 0.0;
-                        ascModel.modelParameters.RampDown_PrcPerMin        = (double?)p["RampDown_PrcPerMin"]        ?? 60.0;
-                        ascModel.modelParameters.RampDecay_Tau_s           = (double?)p["RampDecay_Tau_s"]           ?? 0.0;
-                        ascModel.modelParameters.SurgeMargin_LP_Tau_s      = (double?)p["SurgeMargin_LP_Tau_s"]      ?? 0.0;
-                        ascModel.modelParameters.UMin               = (double?)p["UMin"]               ?? 0.0;
-                    }
-                    else
-                    {
-                        var fNames = (JArray)p["FeatureNames"];
-                        var fWts   = (JArray)p["FeatureWeights"];
-                        if (fNames != null) ascModel.modelParameters.FeatureNames   = fNames.Select(t => (string)t).ToArray();
-                        if (fWts   != null) ascModel.modelParameters.FeatureWeights = fWts.Select(t => (double)t).ToArray();
-                        ascModel.modelParameters.LPFilter_Tau_s = (double?)p["LPFilter_Tau_s"] ?? 0.0;
-                        ascModel.modelParameters.HPFilter_Tau_s = (double?)p["HPFilter_Tau_s"] ?? 0.0;
-                        ascModel.modelParameters.OpenTime_s     = (double?)p["OpenTime_s"]     ?? 5.0;
-                        ascModel.modelParameters.CloseTime_s    = (double?)p["CloseTime_s"]    ?? 60.0;
-                        ascModel.modelParameters.UMin           = (double?)p["UMin"]           ?? 0.0;
-                    }
+                    ascModel.modelParameters.Architecture     = (string?)p["Architecture"]     ?? "KSpicePI";
+                    ascModel.modelParameters.Kp_Fast           = (double?)p["Kp_Fast"]           ?? 2.0;
+                    ascModel.modelParameters.Kp_Slow           = (double?)p["Kp_Slow"]           ?? 0.2;
+                    ascModel.modelParameters.Ti_Fast_s         = (double?)p["Ti_Fast_s"]         ?? 10.0;
+                    ascModel.modelParameters.Ti_Slow_s         = (double?)p["Ti_Slow_s"]         ?? 20.0;
+                    ascModel.modelParameters.OpenTime_s        = (double?)p["OpenTime_s"]        ?? 20.0;
+                    ascModel.modelParameters.CloseTime_s       = (double?)p["CloseTime_s"]       ?? 60.0;
+                    ascModel.modelParameters.OutputScale       = (double?)p["OutputScale"]       ?? 1.0;
+                    ascModel.modelParameters.ControlLineMargin    = (double?)p["ControlLineMargin"]    ?? 0.2;
+                    ascModel.modelParameters.AsymmetricLineMargin = (double?)p["AsymmetricLineMargin"] ?? 0.05;
+                    ascModel.modelParameters.NAS_target           = (double?)p["NAS_mean"]             ?? 1.0;
+                    ascModel.modelParameters.SurgeProxy_MF_Raw    = (double?)p["SurgeProxy_MF_Raw"]    ?? 0.0;
+                    ascModel.modelParameters.SurgeProxy_a_Raw     = (double?)p["SurgeProxy_a_Raw"]     ?? 0.0;
+                    ascModel.modelParameters.SurgeProxy_N_Raw     = (double?)p["SurgeProxy_N_Raw"]     ?? 0.0;
+                    ascModel.modelParameters.SurgeProxy_b_Raw          = (double?)p["SurgeProxy_b_Raw"]          ?? 0.0;
+                    ascModel.modelParameters.ProxyUsesNormalizedFlow    = (bool?)p["ProxyUsesNormalizedFlow"]    ?? false;
+                    ascModel.modelParameters.UMin                       = (double?)p["UMin"]                     ?? 0.0;
+                    // Legacy LinearOLS fields — kept for graceful loading of old param files
+                    var fNames = (JArray?)p["FeatureNames"];
+                    var fWts   = (JArray?)p["FeatureWeights"];
+                    if (fNames != null) ascModel.modelParameters.FeatureNames   = fNames.Select(t => (string?)t ?? "").ToArray();
+                    if (fWts   != null) ascModel.modelParameters.FeatureWeights = fWts.Select(t => (double)t).ToArray();
+                    ascModel.modelParameters.LPFilter_Tau_s    = (double?)p["LPFilter_Tau_s"]    ?? 0.0;
+                    ascModel.modelParameters.FastModeThreshold = (double?)p["FastModeThreshold"] ?? 1.0;
                     return;
                 }
 
@@ -381,6 +400,7 @@ namespace KSpiceEngine
             {
                 if (inputs == null || inputs.Length < 2) return lastOutput;
                 double sp = inputs[0];
+                if (double.IsNaN(sp) && !double.IsNaN(pidSetpointFallback)) sp = pidSetpointFallback;
                 double pv = inputs[1];
                 double yRange = pidYMax - pidYMin;
                 bool hasPhysRange = yRange > 100 + 1e-6;
@@ -406,7 +426,13 @@ namespace KSpiceEngine
             if (ascModel != null)
             {
                 if (inputs == null || inputs.Length < 3) return lastOutput;
-                double y = ascModel.Iterate(inputs, timeBase_s)[0];
+                double[] ascInputs = inputs;
+                // Layout: [0]=P_in, [1]=P_out, [2]=MF, [3]=Speed, [4]=NASP, [5]=NF.
+                // NASP/NF are TrainingOnly → NaN in closed-loop, non-NaN in open-loop.
+                // When both non-NaN: pass truth error = NASP-NF as inputs[4] to Iterate().
+                if (inputs.Length >= 6 && !double.IsNaN(inputs[4]) && !double.IsNaN(inputs[5]))
+                    ascInputs = new[] { inputs[0], inputs[1], inputs[2], inputs[3], inputs[4] - inputs[5] };
+                double y = ascModel.Iterate(ascInputs, timeBase_s)[0];
                 lastOutput = y;
                 return y;
             }
@@ -509,6 +535,11 @@ namespace KSpiceEngine
                     net += v;
                 }
                 netBalanceAccum += net * timeBase_s;
+                // Leaky integrator: slow restoring force toward equilibrium so that
+                // constant flow prediction bias in closed-loop does not cause unbounded
+                // drift. Time constant = 1/(0.1 × dt) ≈ 20 steps = 10 s at dt = 0.5 s,
+                // matching the physical gas manifold residence time (~380 kg / 44 kg/s).
+                netBalanceAccum *= (1.0 - 0.1 * timeBase_s);
                 double y = netBalanceAnchor + netBalanceGain * netBalanceAccum;
                 lastOutput = y;
                 return y;

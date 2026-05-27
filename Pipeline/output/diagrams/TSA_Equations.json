@@ -344,10 +344,11 @@
     "ID": "23ASC0001_Control",
     "Component": "23ASC0001",
     "State": "Control",
-    "Formula": "ASC: U(t) = f(Flow, Pressure)",
+    "Formula": "ASC: U(t) = DualModePI(NASP-NF) ~ f(MF, PR, N)",
     "Inputs": [
       "MEASURED_FLOW",
-      "MEASURED_PRESSURE"
+      "MEASURED_PRESSURE",
+      "MEASURED_SPEED"
     ],
     "Role": "Controller",
     "ControllerType": "ASC"
@@ -375,6 +376,19 @@
       "CONTAINER_PRESSURE"
     ],
     "Role": "FlowEquipment"
+  },
+  {
+    "ID": "23PV_0001_Pressure",
+    "Component": "23PV_0001",
+    "State": "Pressure",
+    "Formula": "dP/dt = k * (m_in - m_out)",
+    "Inputs": [
+      "UPSTREAM_FLOW",
+      "ANTISURGE_INFLOW",
+      "DOWNSTREAM_COMPRESSOR_FLOW",
+      "SIBLING_ANTISURGE_FLOW"
+    ],
+    "Role": "Volume"
   },
   {
     "ID": "23PV_0001_MassFlow",
@@ -558,10 +572,11 @@
     "ID": "23ASC1001_Control",
     "Component": "23ASC1001",
     "State": "Control",
-    "Formula": "ASC: U(t) = f(Flow, Pressure)",
+    "Formula": "ASC: U(t) = DualModePI(NASP-NF) ~ f(MF, PR, N)",
     "Inputs": [
       "MEASURED_FLOW",
-      "MEASURED_PRESSURE"
+      "MEASURED_PRESSURE",
+      "MEASURED_SPEED"
     ],
     "Role": "Controller",
     "ControllerType": "ASC"
@@ -737,11 +752,12 @@
     "ID": "23KA1001_MassFlow",
     "Component": "23KA1001",
     "State": "MassFlow",
-    "Formula": "F = f(P_suction, N_speed, P_discharge)",
+    "Formula": "F = f(P_suction, N_speed, P_discharge, UV_recirc)",
     "Inputs": [
       "SUCTION_PRESSURE",
       "LOCAL_CONTROL",
-      "23KA1001_Pressure"
+      "23KA1001_Pressure",
+      "ANTISURGE_RECIRC_FLOW"
     ],
     "Role": "FlowEquipment"
   },
@@ -817,11 +833,12 @@
     "ID": "23KA0001_MassFlow",
     "Component": "23KA0001",
     "State": "MassFlow",
-    "Formula": "F = f(P_suction, N_speed, P_discharge)",
+    "Formula": "F = f(P_suction, N_speed, P_discharge, UV_recirc)",
     "Inputs": [
       "SUCTION_PRESSURE",
       "LOCAL_CONTROL",
-      "23KA0001_Pressure"
+      "23KA0001_Pressure",
+      "ANTISURGE_RECIRC_FLOW"
     ],
     "Role": "FlowEquipment"
   },
@@ -921,11 +938,12 @@
     "ID": "23KA3001_MassFlow",
     "Component": "23KA3001",
     "State": "MassFlow",
-    "Formula": "F = f(P_suction, N_speed, P_discharge)",
+    "Formula": "F = f(P_suction, N_speed, P_discharge, UV_recirc)",
     "Inputs": [
       "SUCTION_PRESSURE",
       "LOCAL_CONTROL",
-      "23KA3001_Pressure"
+      "23KA3001_Pressure",
+      "ANTISURGE_RECIRC_FLOW"
     ],
     "Role": "FlowEquipment"
   },
@@ -1073,11 +1091,12 @@
     "ID": "23KA2001_MassFlow",
     "Component": "23KA2001",
     "State": "MassFlow",
-    "Formula": "F = f(P_suction, N_speed, P_discharge)",
+    "Formula": "F = f(P_suction, N_speed, P_discharge, UV_recirc)",
     "Inputs": [
       "SUCTION_PRESSURE",
       "LOCAL_CONTROL",
-      "23KA2001_Pressure"
+      "23KA2001_Pressure",
+      "ANTISURGE_RECIRC_FLOW"
     ],
     "Role": "FlowEquipment"
   },
@@ -1417,10 +1436,11 @@
     "ID": "23ASC2001_Control",
     "Component": "23ASC2001",
     "State": "Control",
-    "Formula": "ASC: U(t) = f(Flow, Pressure)",
+    "Formula": "ASC: U(t) = DualModePI(NASP-NF) ~ f(MF, PR, N)",
     "Inputs": [
       "MEASURED_FLOW",
-      "MEASURED_PRESSURE"
+      "MEASURED_PRESSURE",
+      "MEASURED_SPEED"
     ],
     "Role": "Controller",
     "ControllerType": "ASC"
@@ -1535,10 +1555,11 @@
     "ID": "23ASC3001_Control",
     "Component": "23ASC3001",
     "State": "Control",
-    "Formula": "ASC: U(t) = f(Flow, Pressure)",
+    "Formula": "ASC: U(t) = DualModePI(NASP-NF) ~ f(MF, PR, N)",
     "Inputs": [
       "MEASURED_FLOW",
-      "MEASURED_PRESSURE"
+      "MEASURED_PRESSURE",
+      "MEASURED_SPEED"
     ],
     "Role": "Controller",
     "ControllerType": "ASC"

@@ -822,10 +822,9 @@ namespace TimeSeriesAnalysis.Dynamic
         /// <param name="output">not used, leave as null</param>
         public void WarmStart(double[] inputs=null, double output=0)
         {
-            // re-setting this variable, will cause "iterate" to start in steady-state.
+            this.delayObj = null;
             isFirstIteration = true;
             this.lowPass1order = null;
-            this.delayObj = null;
         }
 
         /// <summary>

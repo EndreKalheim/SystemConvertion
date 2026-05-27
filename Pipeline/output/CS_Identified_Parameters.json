@@ -302,243 +302,31 @@
   },
   "23ASC0001_Control": {
     "ModelType": "AntiSurgePhysicalModel",
-    "Architecture": "ARX",
-    "FeatureNames": [
-      "U_prev",
-      "HP_PR",
-      "LP_MF",
-      "Const"
-    ],
-    "FeatureWeights": [
-      0.9419620206011088,
-      3.870685779639491,
-      -0.04745041654382479,
-      3.5347570041688416
-    ],
-    "LPFilter_Tau_s": 2.0,
-    "HPFilter_Tau_s": 60.0,
-    "OpenTime_s": 5.0,
+    "Architecture": "KSpicePI",
+    "Kp_Fast": 0.7,
+    "Kp_Slow": 0.1,
+    "Ti_Fast_s": 10.0,
+    "Ti_Slow_s": 10.0,
+    "OpenTime_s": 20.0,
     "CloseTime_s": 60.0,
-    "FitScore": 69.92568036260596,
-    "Formula": "U[t]=0,942*U[t-1]+3,8707*HP(PR,fast=2s,slow=60s)+-0,0475*LP(MF,2s)+3,5348 [RL open=5s close=60s]",
-    "UMin": 9.85,
-    "Benchmark": [
-      {
-        "Architecture": "LinearOLS",
-        "FeatureNames": [
-          "P_out",
-          "MF",
-          "P_in",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 0.0,
-        "FitScore": 61.69943609327164,
-        "Weights": {
-          "P_out": 0.2710938506460401,
-          "MF": -0.24396445459365665,
-          "P_in": -1.4742230204465658,
-          "Const": 57.04039543424823
-        }
-      },
-      {
-        "Architecture": "LinearOLS_LP1s",
-        "FeatureNames": [
-          "P_out",
-          "MF",
-          "P_in",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 1.0,
-        "FitScore": 63.60097912801707,
-        "Weights": {
-          "P_out": 0.2710938506460401,
-          "MF": -0.24396445459365665,
-          "P_in": -1.4742230204465658,
-          "Const": 57.04039543424823
-        }
-      },
-      {
-        "Architecture": "LinearOLS_LP2s",
-        "FeatureNames": [
-          "P_out",
-          "MF",
-          "P_in",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 2.0,
-        "FitScore": 65.27218447554478,
-        "Weights": {
-          "P_out": 0.2710938506460401,
-          "MF": -0.24396445459365665,
-          "P_in": -1.4742230204465658,
-          "Const": 57.04039543424823
-        }
-      },
-      {
-        "Architecture": "LinearOLS_LP3s",
-        "FeatureNames": [
-          "P_out",
-          "MF",
-          "P_in",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 3.0,
-        "FitScore": 66.43082040747018,
-        "Weights": {
-          "P_out": 0.2710938506460401,
-          "MF": -0.24396445459365665,
-          "P_in": -1.4742230204465658,
-          "Const": 57.04039543424823
-        }
-      },
-      {
-        "Architecture": "LinearOLS_LP5s",
-        "FeatureNames": [
-          "P_out",
-          "MF",
-          "P_in",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 5.0,
-        "FitScore": 67.54196004611906,
-        "Weights": {
-          "P_out": 0.2710938506460401,
-          "MF": -0.24396445459365665,
-          "P_in": -1.4742230204465658,
-          "Const": 57.04039543424823
-        }
-      },
-      {
-        "Architecture": "LinearDP_LP2s",
-        "FeatureNames": [
-          "DP",
-          "MF",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 2.0,
-        "FitScore": 48.154379567741834,
-        "Weights": {
-          "DP": -1.4692319506856883,
-          "MF": -0.2627442863228092,
-          "Const": 78.57714831970434
-        }
-      },
-      {
-        "Architecture": "LinearDP_LP3s",
-        "FeatureNames": [
-          "DP",
-          "MF",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 3.0,
-        "FitScore": 48.94912891840576,
-        "Weights": {
-          "DP": -1.4692319506856883,
-          "MF": -0.2627442863228092,
-          "Const": 78.57714831970434
-        }
-      },
-      {
-        "Architecture": "SurgeProxy_LP2s",
-        "FeatureNames": [
-          "DP",
-          "MF",
-          "MF2",
-          "DP_over_MF2",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 2.0,
-        "FitScore": 85.06930887767045,
-        "Weights": {
-          "DP": -0.5492060804394888,
-          "MF": -3.4252082669422084,
-          "MF2": 0.02875708261123799,
-          "DP_over_MF2": 686.1726111782195,
-          "Const": 125.14296747497131
-        }
-      },
-      {
-        "Architecture": "SurgeProxy_LP3s",
-        "FeatureNames": [
-          "DP",
-          "MF",
-          "MF2",
-          "DP_over_MF2",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 3.0,
-        "FitScore": 86.81354040931043,
-        "Weights": {
-          "DP": -0.5492060804394888,
-          "MF": -3.4252082669422084,
-          "MF2": 0.02875708261123799,
-          "DP_over_MF2": 686.1726111782195,
-          "Const": 125.14296747497131
-        }
-      },
-      {
-        "Architecture": "LinearPR_LP2s",
-        "FeatureNames": [
-          "PR",
-          "MF",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 2.0,
-        "FitScore": 65.14137721315927,
-        "Weights": {
-          "PR": 40.74552221453423,
-          "MF": -0.27965802638147585,
-          "Const": -54.691502835536916
-        }
-      },
-      {
-        "Architecture": "LinearPR_LP3s",
-        "FeatureNames": [
-          "PR",
-          "MF",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 3.0,
-        "FitScore": 66.4489705733446,
-        "Weights": {
-          "PR": 40.74552221453423,
-          "MF": -0.27965802638147585,
-          "Const": -54.691502835536916
-        }
-      },
-      {
-        "Architecture": "LinearPR_NL_LP2s",
-        "FeatureNames": [
-          "PR",
-          "MF",
-          "MF2",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 2.0,
-        "FitScore": 86.12016969483169,
-        "Weights": {
-          "PR": 11.474822910904626,
-          "MF": -4.07301526854592,
-          "MF2": 0.032048798450628274,
-          "Const": 116.3292153712952
-        }
-      },
-      {
-        "Architecture": "KickBased",
-        "SurgeProxy_MF_Coeff": 0.1291951757710661,
-        "SurgeProxy_a": 6.880362619666582,
-        "SurgeProxy_b": -21.805424980500792,
-        "KickThreshold": -0.5,
-        "HoldThreshold": 0.0,
-        "KickRate_PrcPerSec": 0.0,
-        "KickGain_PrcPerSecPerUnit": 2.546875,
-        "RampDown_PrcPerMin": 0.0,
-        "RampDecay_Tau_s": 63.28125,
-        "SurgeMargin_LP_Tau_s": 26.875,
-        "FitScore": 55.58963768137903,
-        "SurgeTruthSource": "K-Spice NormalizedFlow vs NormalizedAsymmetricLimit"
-      }
-    ]
+    "OutputScale": 1.0613024137418756,
+    "ControlLineMargin": 0.2,
+    "AsymmetricLineMargin": 0.04762005611962494,
+    "NAS_mean": 25.44374376039936,
+    "SurgeProxy_MF_Raw": -1.4852842211272226,
+    "SurgeProxy_a_Raw": -76.64643994079722,
+    "SurgeProxy_N_Raw": 0.0,
+    "SurgeProxy_b_Raw": 241.6268179803536,
+    "ProxyUsesNormalizedFlow": false,
+    "SurgeProxy_MeanDist": 0.0,
+    "SurgeProxy_StdDist": 1.0,
+    "UKickMax": 43.67,
+    "UMin": 0.0,
+    "NasSignalKey": "23ASC0001:NormalizedFlowSetpoint",
+    "NfSignalKey": "23ASC0001:NormalizedFlow",
+    "FastModeThreshold": 1.0,
+    "FitScore": 69.9692806372975,
+    "Formula": "DualModePI(velocity-form, dim error=NASP-NF); fast(Kp=0,7[mdl:2],Ti=10s); slow(Kp=0,1,Ti=10s); scale=1,061; proxy=pred-MF+PR"
   },
   "23UV0001_MassFlow": {
     "ModelType": "ValvePhysicsModel",
@@ -583,6 +371,32 @@
       1.0,
       1.0,
       1.0
+    ]
+  },
+  "23PV_0001_Pressure": {
+    "ModelType": "NetMassBalance",
+    "FitScore": 88.251,
+    "Gain": 0.08883,
+    "InputNames": [
+      "23HX0001_MassFlow(m_in)",
+      "23HX1001_MassFlow(m_in)",
+      "23UV3001_MassFlow(m_in)",
+      "23UV2001_MassFlow(m_in)",
+      "23KA3001_MassFlow(m_out)",
+      "23KA2001_MassFlow(m_out)",
+      "23UV0001_MassFlow(m_out)",
+      "23UV1001_MassFlow(m_out)"
+    ],
+    "Formula": "Pressure(t) = y(0) + Gain * integral(net_flow * dt)  [net = sum m_in - sum m_out]",
+    "Bias": 66.175,
+    "U0": [
+      -44.282
+    ],
+    "UNorm": [
+      1.0
+    ],
+    "Curvatures": [
+      "NaN"
     ]
   },
   "23PV_0001_MassFlow": {
@@ -774,243 +588,31 @@
   },
   "23ASC1001_Control": {
     "ModelType": "AntiSurgePhysicalModel",
-    "Architecture": "ARX",
-    "FeatureNames": [
-      "U_prev",
-      "HP_PR",
-      "LP_MF",
-      "Const"
-    ],
-    "FeatureWeights": [
-      0.95,
-      3.2898838621075033,
-      -0.033702727457570913,
-      2.635418548880497
-    ],
-    "LPFilter_Tau_s": 3.0,
-    "HPFilter_Tau_s": 60.0,
-    "OpenTime_s": 5.0,
+    "Architecture": "KSpicePI",
+    "Kp_Fast": 3.0,
+    "Kp_Slow": 0.1,
+    "Ti_Fast_s": 80.0,
+    "Ti_Slow_s": 10.0,
+    "OpenTime_s": 20.0,
     "CloseTime_s": 60.0,
-    "FitScore": 69.6469656224219,
-    "Formula": "U[t]=0,950*U[t-1]+3,2899*HP(PR,fast=3s,slow=60s)+-0,0337*LP(MF,3s)+2,6354 [RL open=5s close=60s]",
-    "UMin": 11.12,
-    "Benchmark": [
-      {
-        "Architecture": "LinearOLS",
-        "FeatureNames": [
-          "P_out",
-          "MF",
-          "P_in",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 0.0,
-        "FitScore": 67.97028731983583,
-        "Weights": {
-          "P_out": 0.7127333443448785,
-          "MF": -0.2927037092112231,
-          "P_in": -2.250713888222412,
-          "Const": 57.64538645169587
-        }
-      },
-      {
-        "Architecture": "LinearOLS_LP1s",
-        "FeatureNames": [
-          "P_out",
-          "MF",
-          "P_in",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 1.0,
-        "FitScore": 69.0053018211358,
-        "Weights": {
-          "P_out": 0.7127333443448785,
-          "MF": -0.2927037092112231,
-          "P_in": -2.250713888222412,
-          "Const": 57.64538645169587
-        }
-      },
-      {
-        "Architecture": "LinearOLS_LP2s",
-        "FeatureNames": [
-          "P_out",
-          "MF",
-          "P_in",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 2.0,
-        "FitScore": 70.15679769880767,
-        "Weights": {
-          "P_out": 0.7127333443448785,
-          "MF": -0.2927037092112231,
-          "P_in": -2.250713888222412,
-          "Const": 57.64538645169587
-        }
-      },
-      {
-        "Architecture": "LinearOLS_LP3s",
-        "FeatureNames": [
-          "P_out",
-          "MF",
-          "P_in",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 3.0,
-        "FitScore": 71.04276632484934,
-        "Weights": {
-          "P_out": 0.7127333443448785,
-          "MF": -0.2927037092112231,
-          "P_in": -2.250713888222412,
-          "Const": 57.64538645169587
-        }
-      },
-      {
-        "Architecture": "LinearOLS_LP5s",
-        "FeatureNames": [
-          "P_out",
-          "MF",
-          "P_in",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 5.0,
-        "FitScore": 72.1988684081405,
-        "Weights": {
-          "P_out": 0.7127333443448785,
-          "MF": -0.2927037092112231,
-          "P_in": -2.250713888222412,
-          "Const": 57.64538645169587
-        }
-      },
-      {
-        "Architecture": "LinearDP_LP2s",
-        "FeatureNames": [
-          "DP",
-          "MF",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 2.0,
-        "FitScore": 48.65809204788215,
-        "Weights": {
-          "DP": -1.4757578563787632,
-          "MF": -0.3840043159722618,
-          "Const": 87.85357093632585
-        }
-      },
-      {
-        "Architecture": "LinearDP_LP3s",
-        "FeatureNames": [
-          "DP",
-          "MF",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 3.0,
-        "FitScore": 49.35217939151861,
-        "Weights": {
-          "DP": -1.4757578563787632,
-          "MF": -0.3840043159722618,
-          "Const": 87.85357093632585
-        }
-      },
-      {
-        "Architecture": "SurgeProxy_LP2s",
-        "FeatureNames": [
-          "DP",
-          "MF",
-          "MF2",
-          "DP_over_MF2",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 2.0,
-        "FitScore": 94.98271253491178,
-        "Weights": {
-          "DP": 1.848022955980332,
-          "MF": -17.590346923635337,
-          "MF2": 0.13108973398412116,
-          "DP_over_MF2": -6442.613780393949,
-          "Const": 593.8925933472372
-        }
-      },
-      {
-        "Architecture": "SurgeProxy_LP3s",
-        "FeatureNames": [
-          "DP",
-          "MF",
-          "MF2",
-          "DP_over_MF2",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 3.0,
-        "FitScore": 95.33449816455976,
-        "Weights": {
-          "DP": 1.848022955980332,
-          "MF": -17.590346923635337,
-          "MF2": 0.13108973398412116,
-          "DP_over_MF2": -6442.613780393949,
-          "Const": 593.8925933472372
-        }
-      },
-      {
-        "Architecture": "LinearPR_LP2s",
-        "FeatureNames": [
-          "PR",
-          "MF",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 2.0,
-        "FitScore": 69.91803625535138,
-        "Weights": {
-          "PR": 48.5893655980688,
-          "MF": -0.28443223059025596,
-          "Const": -68.61727361239615
-        }
-      },
-      {
-        "Architecture": "LinearPR_LP3s",
-        "FeatureNames": [
-          "PR",
-          "MF",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 3.0,
-        "FitScore": 71.1814154590676,
-        "Weights": {
-          "PR": 48.5893655980688,
-          "MF": -0.28443223059025596,
-          "Const": -68.61727361239615
-        }
-      },
-      {
-        "Architecture": "LinearPR_NL_LP2s",
-        "FeatureNames": [
-          "PR",
-          "MF",
-          "MF2",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 2.0,
-        "FitScore": 93.82406008946172,
-        "Weights": {
-          "PR": 6.624160522618517,
-          "MF": -7.2722392690221875,
-          "MF2": 0.06255773665815625,
-          "Const": 210.14032036944656
-        }
-      },
-      {
-        "Architecture": "KickBased",
-        "SurgeProxy_MF_Coeff": 0.15317556943642793,
-        "SurgeProxy_a": 7.511598086570449,
-        "SurgeProxy_b": -24.50136097608379,
-        "KickThreshold": -1.0,
-        "HoldThreshold": 1.0,
-        "KickRate_PrcPerSec": 0.0,
-        "KickGain_PrcPerSecPerUnit": 1.8748779296875,
-        "RampDown_PrcPerMin": 15.0,
-        "RampDecay_Tau_s": 191.611328125,
-        "SurgeMargin_LP_Tau_s": 0.11474609375,
-        "FitScore": 79.301468474224,
-        "SurgeTruthSource": "K-Spice NormalizedFlow vs NormalizedAsymmetricLimit"
-      }
-    ]
+    "OutputScale": 1.0,
+    "ControlLineMargin": 0.2,
+    "AsymmetricLineMargin": 0.047614555584550855,
+    "NAS_mean": 25.40800332778701,
+    "SurgeProxy_MF_Raw": -1.5639502575729263,
+    "SurgeProxy_a_Raw": -74.29015543999427,
+    "SurgeProxy_N_Raw": 0.0,
+    "SurgeProxy_b_Raw": 241.56338095686854,
+    "ProxyUsesNormalizedFlow": false,
+    "SurgeProxy_MeanDist": 0.0,
+    "SurgeProxy_StdDist": 1.0,
+    "UKickMax": 44.66,
+    "UMin": 0.0,
+    "NasSignalKey": "23ASC1001:NormalizedFlowSetpoint",
+    "NfSignalKey": "23ASC1001:NormalizedFlow",
+    "FastModeThreshold": 1.0,
+    "FitScore": 85.88677987774804,
+    "Formula": "DualModePI(velocity-form, dim error=NASP-NF); fast(Kp=3[mdl:2],Ti=80s); slow(Kp=0,1,Ti=10s); scale=1; proxy=pred-MF+PR"
   },
   "23UV1001_MassFlow": {
     "ModelType": "ValvePhysicsModel",
@@ -1064,17 +666,17 @@
   },
   "23VA0001_Pressure": {
     "ModelType": "UnitIdentifier_SignedFlows",
-    "FitScore": 86.983,
-    "TimeConstant_s": 99.747,
+    "FitScore": 83.398,
+    "TimeConstant_s": 103.72,
     "Formula": "Pressure(t) = LP(Bias + sum(gain_i * F_i), Tc)  [outflows pre-negated in evaluation]",
     "LinearGains": [
-      0.92764,
-      2.2118,
-      2.1992,
-      0.087173,
-      0.0086623,
-      2.9198,
-      1.368
+      0.92746,
+      2.1475,
+      2.1133,
+      0.089855,
+      0.043727,
+      2.2017,
+      2.2017
     ],
     "InputNames": [
       "25ESV0001_MassFlow(m_in)",
@@ -1085,15 +687,15 @@
       "23UV1001_MassFlow(m_in)",
       "23UV0001_MassFlow(m_in)"
     ],
-    "Bias": 32.548,
+    "Bias": 32.585,
     "U0": [
-      205.1,
-      -58.764,
-      -58.852,
-      -91.689,
-      -30.206,
-      18.258,
-      15.819
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
     ],
     "UNorm": [
       1.0,
@@ -1196,31 +798,36 @@
   },
   "23KA1001_MassFlow": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 59.655,
+    "FitScore": 79.536,
     "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 3 inputs, Tc=0,00s",
+    "Formula": "Dynamic MISO: 4 inputs, Tc=0,00s",
     "LinearGains": [
-      4.7436,
-      2.9203,
-      -2.0986
+      6.8379,
+      3.577,
+      -3.0271,
+      0.44052
     ],
     "InputNames": [
       "23VA0001_Pressure(P_in)",
       "23SIC1001_Control(U(t))",
-      "23KA1001_Pressure(local_var)"
+      "23KA1001_Pressure(local_var)",
+      "23UV1001_MassFlow(uv_recirc)"
     ],
     "Bias": 58.764,
     "U0": [
       32.401,
       77.569,
-      66.523
+      66.523,
+      18.258
     ],
     "UNorm": [
+      1.0,
       1.0,
       1.0,
       1.0
     ],
     "Curvatures": [
+      "NaN",
       "NaN",
       "NaN",
       "NaN"
@@ -1379,31 +986,36 @@
   },
   "23KA0001_MassFlow": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 61.626,
+    "FitScore": 66.096,
     "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 3 inputs, Tc=0,00s",
+    "Formula": "Dynamic MISO: 4 inputs, Tc=0,00s",
     "LinearGains": [
-      3.3338,
-      2.2467,
-      -1.2631
+      3.8415,
+      2.3981,
+      -1.4517,
+      0.17524
     ],
     "InputNames": [
       "23VA0001_Pressure(P_in)",
       "23SIC0001_Control(U(t))",
-      "23KA0001_Pressure(local_var)"
+      "23KA0001_Pressure(local_var)",
+      "23UV0001_MassFlow(uv_recirc)"
     ],
     "Bias": 58.85,
     "U0": [
       32.401,
       77.627,
-      66.541
+      66.541,
+      15.819
     ],
     "UNorm": [
+      1.0,
       1.0,
       1.0,
       1.0
     ],
     "Curvatures": [
+      "NaN",
       "NaN",
       "NaN",
       "NaN"
@@ -1560,10 +1172,10 @@
   },
   "23ESV3002_MassFlow": {
     "ModelType": "ValvePhysicsModel",
-    "FitScore": 92.66478668155071,
+    "FitScore": 91.25863152883039,
     "Cv": 3000.0,
-    "DensityTuningFactor": 0.023869753259802173,
-    "Formula": "Q = 0,0239 * 3000 * U * sqrt(max(0, P_in - P_out))",
+    "DensityTuningFactor": 0.062074686030001464,
+    "Formula": "Q = 0,0621 * 3000 * U * sqrt(max(0, P_in - P_out))",
     "InputNames": [
       "23ESV3002_pf:OutletStream.p"
     ],
@@ -1571,80 +1183,70 @@
       -1.0
     ],
     "SimInputs": [
-      "23HX1001_Pressure(P_in)",
+      "23PV_0001_Pressure(P_in)",
       "23ESV3002_pf:OutletStream.p",
       "Assumed_100%"
     ]
   },
   "23ESV3002_Temperature": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 82.956,
+    "FitScore": 77.94,
     "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 5 inputs, Tc=0,00s",
+    "Formula": "Dynamic MISO: 2 inputs, Tc=0,00s",
     "LinearGains": [
-      0.97558,
-      -16.187,
-      16.199,
-      0.066958,
-      -0.073305
+      1.2128,
+      0.0079658
     ],
     "InputNames": [
       "23PV_0001_Temperature(T_in)",
-      "23HX0001_Pressure(P_in)",
-      "23HX1001_Pressure(P_in)",
-      "23PV_0001_MassFlow(m_in)",
-      "23ESV2002_MassFlow(m_out)"
+      "23PV_0001_Pressure(P_in)"
     ],
-    "Bias": 36.412,
+    "Bias": 36.41,
     "U0": [
       36.69,
-      66.491,
-      66.473,
-      83.536,
-      41.878
+      66.174
     ],
     "UNorm": [
-      1.0,
-      1.0,
-      1.0,
       1.0,
       1.0
     ],
     "Curvatures": [
-      "NaN",
-      "NaN",
-      "NaN",
       "NaN",
       "NaN"
     ]
   },
   "23KA3001_MassFlow": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 60.55,
+    "FitScore": 67.756,
     "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 3 inputs, Tc=0,00s",
+    "Formula": "Dynamic MISO: 4 inputs, Tc=0,00s",
     "LinearGains": [
-      -0.66403,
-      0.07367,
-      1.6416
+      1.3615,
+      2.3597,
+      0.78134,
+      0.58719
     ],
     "InputNames": [
-      "23HX0001_Pressure(P_in)",
+      "23PV_0001_Pressure(P_in)",
       "23SIC3001_Control(U(t))",
-      "23KA3001_Pressure(local_var)"
+      "23KA3001_Pressure(local_var)",
+      "23UV3001_MassFlow(uv_recirc)"
     ],
     "Bias": 48.553,
     "U0": [
-      66.491,
+      66.174,
       77.085,
-      150.12
+      150.12,
+      6.8966
     ],
     "UNorm": [
+      1.0,
       1.0,
       1.0,
       1.0
     ],
     "Curvatures": [
+      "NaN",
       "NaN",
       "NaN",
       "NaN"
@@ -1652,22 +1254,22 @@
   },
   "23KA3001_Pressure": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 22.23,
+    "FitScore": 21.554,
     "TimeConstant_s": 0.0,
     "Formula": "Dynamic MISO: 3 inputs, Tc=0,00s",
     "LinearGains": [
-      0.01996,
-      0.0022475,
-      0.027331
+      0.020534,
+      0.0024396,
+      0.028199
     ],
     "InputNames": [
-      "23HX0001_Pressure(P_in)",
+      "23PV_0001_Pressure(P_in)",
       "23KA3001_MassFlow(local_var)",
       "23SIC3001_Control(U(t))"
     ],
     "Bias": 150.12,
     "U0": [
-      66.491,
+      66.174,
       48.557,
       77.085
     ],
@@ -1684,36 +1286,32 @@
   },
   "23KA3001_Temperature": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 47.815,
+    "FitScore": 47.773,
     "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 6 inputs, Tc=0,00s",
+    "Formula": "Dynamic MISO: 5 inputs, Tc=0,00s",
     "LinearGains": [
-      1.078,
-      1.3461,
-      -139.71,
-      153.93,
-      -7.8336,
-      7.1905
+      1.1383,
+      1.2896,
+      -140.96,
+      -0.6403,
+      156.99
     ],
     "InputNames": [
       "23ESV3002_Temperature(T_in)",
       "23UV3001_Temperature(T_in)",
       "23KA3001_Pressure(local_var)",
-      "23HX3001_Pressure(P_in)",
-      "23HX0001_Pressure(P_in)",
-      "23HX1001_Pressure(P_in)"
+      "23PV_0001_Pressure(P_in)",
+      "23HX3001_Pressure(P_in)"
     ],
-    "Bias": 94.593,
+    "Bias": 94.608,
     "U0": [
       36.41,
       8.4982,
       150.12,
-      150.11,
-      66.491,
-      66.473
+      66.174,
+      150.11
     ],
     "UNorm": [
-      1.0,
       1.0,
       1.0,
       1.0,
@@ -1721,7 +1319,6 @@
       1.0
     ],
     "Curvatures": [
-      "NaN",
       "NaN",
       "NaN",
       "NaN",
@@ -1821,42 +1418,42 @@
   },
   "23UV3001_MassFlow": {
     "ModelType": "ValvePhysicsModel",
-    "FitScore": 99.2282588888856,
+    "FitScore": 99.22370393677038,
     "Cv": 400.0,
-    "DensityTuningFactor": 0.09355378490617476,
-    "Formula": "Q = 0,0936 * 400 * U * sqrt(max(0, P_in - P_out))",
+    "DensityTuningFactor": 0.09351402619314027,
+    "Formula": "Q = 0,0935 * 400 * U * sqrt(max(0, P_in - P_out))",
     "InputNames": [
-      "23HX0001_Pressure(P_out)"
+      "23PV_0001_Pressure(P_out)"
     ],
     "LinearGains": [
       -1.0
     ],
     "SimInputs": [
       "23HX3001_Pressure(P_in)",
-      "23HX0001_Pressure(P_out)",
+      "23PV_0001_Pressure(P_out)",
       "23ASC3001_Control(U(t))"
     ]
   },
   "23UV3001_Temperature": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 85.046,
-    "TimeConstant_s": 1.5157,
-    "Formula": "Dynamic MISO: 3 inputs, Tc=1,52s",
+    "FitScore": 85.069,
+    "TimeConstant_s": 1.5505,
+    "Formula": "Dynamic MISO: 3 inputs, Tc=1,55s",
     "LinearGains": [
-      1.1598,
-      4.2714,
-      0.46798
+      1.1753,
+      4.4157,
+      0.46456
     ],
     "InputNames": [
       "23HX3001_Temperature(T_in)",
       "23HX3001_Pressure(P_in)",
-      "23HX0001_Pressure(P_out)"
+      "23PV_0001_Pressure(P_out)"
     ],
-    "Bias": 8.5305,
+    "Bias": 8.5315,
     "U0": [
       37.12,
       150.11,
-      66.491
+      66.174
     ],
     "UNorm": [
       1.0,
@@ -1866,10 +1463,10 @@
   },
   "23ESV2002_MassFlow": {
     "ModelType": "ValvePhysicsModel",
-    "FitScore": 91.4019187131067,
+    "FitScore": 93.34724931925042,
     "Cv": 3000.0,
-    "DensityTuningFactor": 0.024096695652076606,
-    "Formula": "Q = 0,0241 * 3000 * U * sqrt(max(0, P_in - P_out))",
+    "DensityTuningFactor": 0.06190099803785374,
+    "Formula": "Q = 0,0619 * 3000 * U * sqrt(max(0, P_in - P_out))",
     "InputNames": [
       "23ESV2002_pf:OutletStream.p"
     ],
@@ -1877,80 +1474,70 @@
       -1.0
     ],
     "SimInputs": [
-      "23HX1001_Pressure(P_in)",
+      "23PV_0001_Pressure(P_in)",
       "23ESV2002_pf:OutletStream.p",
       "Assumed_100%"
     ]
   },
   "23ESV2002_Temperature": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 74.068,
+    "FitScore": 62.301,
     "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 5 inputs, Tc=0,00s",
+    "Formula": "Dynamic MISO: 2 inputs, Tc=0,00s",
     "LinearGains": [
-      1.0177,
-      -17.675,
-      17.713,
-      0.081889,
-      -0.039933
+      1.4406,
+      0.011395
     ],
     "InputNames": [
       "23PV_0001_Temperature(T_in)",
-      "23HX0001_Pressure(P_in)",
-      "23HX1001_Pressure(P_in)",
-      "23PV_0001_MassFlow(m_in)",
-      "23ESV3002_MassFlow(m_out)"
+      "23PV_0001_Pressure(P_in)"
     ],
-    "Bias": 36.147,
+    "Bias": 36.145,
     "U0": [
       36.69,
-      66.491,
-      66.473,
-      83.536,
-      41.659
+      66.174
     ],
     "UNorm": [
-      1.0,
-      1.0,
-      1.0,
       1.0,
       1.0
     ],
     "Curvatures": [
-      "NaN",
-      "NaN",
-      "NaN",
       "NaN",
       "NaN"
     ]
   },
   "23KA2001_MassFlow": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 47.569,
+    "FitScore": 67.062,
     "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 3 inputs, Tc=0,00s",
+    "Formula": "Dynamic MISO: 4 inputs, Tc=0,00s",
     "LinearGains": [
-      -0.43861,
-      0.67614,
-      -0.74095
+      0.78228,
+      1.6649,
+      1.2815,
+      0.47087
     ],
     "InputNames": [
-      "23HX0001_Pressure(P_in)",
+      "23PV_0001_Pressure(P_in)",
       "23SIC2001_Control(U(t))",
-      "23KA2001_Pressure(local_var)"
+      "23KA2001_Pressure(local_var)",
+      "23UV2001_MassFlow(uv_recirc)"
     ],
-    "Bias": 50.112,
+    "Bias": 50.123,
     "U0": [
-      66.491,
+      66.174,
       77.217,
-      150.07
+      150.07,
+      8.24
     ],
     "UNorm": [
+      1.0,
       1.0,
       1.0,
       1.0
     ],
     "Curvatures": [
+      "NaN",
       "NaN",
       "NaN",
       "NaN"
@@ -1958,22 +1545,22 @@
   },
   "23KA2001_Pressure": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 8.1162,
+    "FitScore": 7.5824,
     "TimeConstant_s": 0.0,
     "Formula": "Dynamic MISO: 3 inputs, Tc=0,00s",
     "LinearGains": [
-      0.056776,
-      -0.0053929,
-      0.0684
+      0.057452,
+      -0.0055329,
+      0.069983
     ],
     "InputNames": [
-      "23HX0001_Pressure(P_in)",
+      "23PV_0001_Pressure(P_in)",
       "23KA2001_MassFlow(local_var)",
       "23SIC2001_Control(U(t))"
     ],
     "Bias": 150.07,
     "U0": [
-      66.491,
+      66.174,
       50.115,
       77.217
     ],
@@ -1990,36 +1577,32 @@
   },
   "23KA2001_Temperature": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 40.997,
+    "FitScore": 41.372,
     "TimeConstant_s": 0.0,
-    "Formula": "Dynamic MISO: 6 inputs, Tc=0,00s",
+    "Formula": "Dynamic MISO: 5 inputs, Tc=0,00s",
     "LinearGains": [
-      0.83811,
-      1.1883,
-      -220.8,
-      228.1,
-      17.01,
-      -17.524
+      0.78493,
+      1.2875,
+      -218.82,
+      -0.52838,
+      224.17
     ],
     "InputNames": [
       "23ESV2002_Temperature(T_in)",
       "23UV2001_Temperature(T_in)",
       "23KA2001_Pressure(local_var)",
-      "23HX2001_Pressure(P_in)",
-      "23HX0001_Pressure(P_in)",
-      "23HX1001_Pressure(P_in)"
+      "23PV_0001_Pressure(P_in)",
+      "23HX2001_Pressure(P_in)"
     ],
-    "Bias": 91.671,
+    "Bias": 91.68,
     "U0": [
       36.145,
       8.5511,
       150.07,
-      150.05,
-      66.491,
-      66.473
+      66.174,
+      150.05
     ],
     "UNorm": [
-      1.0,
       1.0,
       1.0,
       1.0,
@@ -2027,7 +1610,6 @@
       1.0
     ],
     "Curvatures": [
-      "NaN",
       "NaN",
       "NaN",
       "NaN",
@@ -2119,42 +1701,42 @@
   },
   "23UV2001_MassFlow": {
     "ModelType": "ValvePhysicsModel",
-    "FitScore": 99.54754183782882,
+    "FitScore": 99.54372269147544,
     "Cv": 400.0,
-    "DensityTuningFactor": 0.09343333289650722,
+    "DensityTuningFactor": 0.09338885883672594,
     "Formula": "Q = 0,0934 * 400 * U * sqrt(max(0, P_in - P_out))",
     "InputNames": [
-      "23HX0001_Pressure(P_out)"
+      "23PV_0001_Pressure(P_out)"
     ],
     "LinearGains": [
       -1.0
     ],
     "SimInputs": [
       "23HX2001_Pressure(P_in)",
-      "23HX0001_Pressure(P_out)",
+      "23PV_0001_Pressure(P_out)",
       "23ASC2001_Control(U(t))"
     ]
   },
   "23UV2001_Temperature": {
     "ModelType": "UnitIdentifier",
-    "FitScore": 80.725,
+    "FitScore": 80.514,
     "TimeConstant_s": 0.0,
     "Formula": "Dynamic MISO: 3 inputs, Tc=0,00s",
     "LinearGains": [
-      1.2435,
-      0.95628,
-      0.43398
+      1.2577,
+      0.98346,
+      0.43265
     ],
     "InputNames": [
       "23HX2001_Temperature(T_in)",
       "23HX2001_Pressure(P_in)",
-      "23HX0001_Pressure(P_out)"
+      "23PV_0001_Pressure(P_out)"
     ],
-    "Bias": 8.5521,
+    "Bias": 8.552,
     "U0": [
       37.049,
       150.05,
-      66.491
+      66.174
     ],
     "UNorm": [
       1.0,
@@ -2453,242 +2035,31 @@
   },
   "23ASC2001_Control": {
     "ModelType": "AntiSurgePhysicalModel",
-    "Architecture": "LinearPR_NL_LP2s",
-    "FeatureNames": [
-      "PR",
-      "MF",
-      "MF2",
-      "Const"
-    ],
-    "FeatureWeights": [
-      11.863628802611675,
-      0.453495388644102,
-      -0.003926452213118997,
-      -37.36042858886394
-    ],
-    "LPFilter_Tau_s": 2.0,
-    "OpenTime_s": 5.0,
+    "Architecture": "KSpicePI",
+    "Kp_Fast": 8.0,
+    "Kp_Slow": 0.1,
+    "Ti_Fast_s": 5.0,
+    "Ti_Slow_s": 20.0,
+    "OpenTime_s": 20.0,
     "CloseTime_s": 60.0,
-    "FitScore": 55.58431246562151,
-    "Formula": "target = Σ w·feature(P_in,P_out,MF) over [PR, MF, MF2, Const]; LP(τ=2,0s) → asymmetric rate-limit (open 20,0 %/s, close 1,67 %/s).",
+    "OutputScale": 1.0,
+    "ControlLineMargin": 0.1,
+    "AsymmetricLineMargin": 0.04762179551974066,
+    "NAS_mean": 31.98970049916803,
+    "SurgeProxy_MF_Raw": -1.2823703827929533,
+    "SurgeProxy_a_Raw": 2.4809673310652958,
+    "SurgeProxy_N_Raw": 0.0,
+    "SurgeProxy_b_Raw": 52.64266587682342,
+    "ProxyUsesNormalizedFlow": false,
+    "SurgeProxy_MeanDist": 0.0,
+    "SurgeProxy_StdDist": 1.0,
+    "UKickMax": 18.369999999999997,
     "UMin": 0.0,
-    "Benchmark": [
-      {
-        "Architecture": "LinearOLS",
-        "FeatureNames": [
-          "P_out",
-          "MF",
-          "P_in",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 0.0,
-        "FitScore": 67.28504070671492,
-        "Weights": {
-          "P_out": -3.4336575215706984,
-          "MF": 0.07069283240235111,
-          "P_in": -0.31120729748254483,
-          "Const": 534.7812614587407
-        }
-      },
-      {
-        "Architecture": "LinearOLS_LP1s",
-        "FeatureNames": [
-          "P_out",
-          "MF",
-          "P_in",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 1.0,
-        "FitScore": 66.42911152907247,
-        "Weights": {
-          "P_out": -3.4336575215706984,
-          "MF": 0.07069283240235111,
-          "P_in": -0.31120729748254483,
-          "Const": 534.7812614587407
-        }
-      },
-      {
-        "Architecture": "LinearOLS_LP2s",
-        "FeatureNames": [
-          "P_out",
-          "MF",
-          "P_in",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 2.0,
-        "FitScore": 65.98349230789272,
-        "Weights": {
-          "P_out": -3.4336575215706984,
-          "MF": 0.07069283240235111,
-          "P_in": -0.31120729748254483,
-          "Const": 534.7812614587407
-        }
-      },
-      {
-        "Architecture": "LinearOLS_LP3s",
-        "FeatureNames": [
-          "P_out",
-          "MF",
-          "P_in",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 3.0,
-        "FitScore": 65.0581448263507,
-        "Weights": {
-          "P_out": -3.4336575215706984,
-          "MF": 0.07069283240235111,
-          "P_in": -0.31120729748254483,
-          "Const": 534.7812614587407
-        }
-      },
-      {
-        "Architecture": "LinearOLS_LP5s",
-        "FeatureNames": [
-          "P_out",
-          "MF",
-          "P_in",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 5.0,
-        "FitScore": 61.79439720379764,
-        "Weights": {
-          "P_out": -3.4336575215706984,
-          "MF": 0.07069283240235111,
-          "P_in": -0.31120729748254483,
-          "Const": 534.7812614587407
-        }
-      },
-      {
-        "Architecture": "LinearDP_LP2s",
-        "FeatureNames": [
-          "DP",
-          "MF",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 2.0,
-        "FitScore": 49.59725472111863,
-        "Weights": {
-          "DP": 0.4339385659180468,
-          "MF": 0.03357014974191539,
-          "Const": -35.590235823658375
-        }
-      },
-      {
-        "Architecture": "LinearDP_LP3s",
-        "FeatureNames": [
-          "DP",
-          "MF",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 3.0,
-        "FitScore": 49.405090785274844,
-        "Weights": {
-          "DP": 0.4339385659180468,
-          "MF": 0.03357014974191539,
-          "Const": -35.590235823658375
-        }
-      },
-      {
-        "Architecture": "SurgeProxy_LP2s",
-        "FeatureNames": [
-          "DP",
-          "MF",
-          "MF2",
-          "DP_over_MF2",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 2.0,
-        "FitScore": 51.041817455502134,
-        "Weights": {
-          "DP": 0.1927552621367133,
-          "MF": 2.7118903107579015,
-          "MF2": -0.019206606413993778,
-          "DP_over_MF2": 463.48295904533984,
-          "Const": -116.52434541614896
-        }
-      },
-      {
-        "Architecture": "SurgeProxy_LP3s",
-        "FeatureNames": [
-          "DP",
-          "MF",
-          "MF2",
-          "DP_over_MF2",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 3.0,
-        "FitScore": 50.58285976644138,
-        "Weights": {
-          "DP": 0.1927552621367133,
-          "MF": 2.7118903107579015,
-          "MF2": -0.019206606413993778,
-          "DP_over_MF2": 463.48295904533984,
-          "Const": -116.52434541614896
-        }
-      },
-      {
-        "Architecture": "LinearPR_LP2s",
-        "FeatureNames": [
-          "PR",
-          "MF",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 2.0,
-        "FitScore": 55.34322868283594,
-        "Weights": {
-          "PR": 12.32878806525948,
-          "MF": 0.01194842189728353,
-          "Const": -26.315149473020668
-        }
-      },
-      {
-        "Architecture": "LinearPR_LP3s",
-        "FeatureNames": [
-          "PR",
-          "MF",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 3.0,
-        "FitScore": 54.92265595310337,
-        "Weights": {
-          "PR": 12.32878806525948,
-          "MF": 0.01194842189728353,
-          "Const": -26.315149473020668
-        }
-      },
-      {
-        "Architecture": "LinearPR_NL_LP2s",
-        "FeatureNames": [
-          "PR",
-          "MF",
-          "MF2",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 2.0,
-        "FitScore": 55.58431246562151,
-        "Weights": {
-          "PR": 11.863628802611675,
-          "MF": 0.453495388644102,
-          "MF2": -0.003926452213118997,
-          "Const": -37.36042858886394
-        }
-      },
-      {
-        "Architecture": "KickBased",
-        "SurgeProxy_MF_Coeff": 1.0,
-        "SurgeProxy_a": 0.0,
-        "SurgeProxy_b": -35.0,
-        "KickThreshold": -2.0,
-        "HoldThreshold": -2.0,
-        "KickRate_PrcPerSec": 0.0,
-        "KickGain_PrcPerSecPerUnit": 0.5,
-        "RampDown_PrcPerMin": 0.0,
-        "RampDecay_Tau_s": 500.0,
-        "SurgeMargin_LP_Tau_s": 0.0,
-        "FitScore": -31.754542178747226,
-        "SurgeTruthSource": "K-Spice NormalizedFlow vs NormalizedAsymmetricLimit"
-      }
-    ]
+    "NasSignalKey": "23ASC2001:NormalizedFlowSetpoint",
+    "NfSignalKey": "23ASC2001:NormalizedFlow",
+    "FastModeThreshold": 1.0,
+    "FitScore": 66.7336303698052,
+    "Formula": "DualModePI(velocity-form, dim error=NASP-NF); fast(Kp=8[mdl:1],Ti=5s); slow(Kp=0,1,Ti=20s); scale=1; proxy=pred-MF+PR"
   },
   "23TV3003_MassFlow": {
     "ModelType": "ValvePhysicsModel",
@@ -2793,242 +2164,31 @@
   },
   "23ASC3001_Control": {
     "ModelType": "AntiSurgePhysicalModel",
-    "Architecture": "LinearPR_NL_LP2s",
-    "FeatureNames": [
-      "PR",
-      "MF",
-      "MF2",
-      "Const"
-    ],
-    "FeatureWeights": [
-      13.87104140055036,
-      -3.1703726535346455,
-      0.029805612754344298,
-      53.290386313403054
-    ],
-    "LPFilter_Tau_s": 2.0,
-    "OpenTime_s": 5.0,
+    "Architecture": "KSpicePI",
+    "Kp_Fast": 3.0,
+    "Kp_Slow": 0.4,
+    "Ti_Fast_s": 20.0,
+    "Ti_Slow_s": 20.0,
+    "OpenTime_s": 20.0,
     "CloseTime_s": 60.0,
-    "FitScore": 65.2243366399115,
-    "Formula": "target = Σ w·feature(P_in,P_out,MF) over [PR, MF, MF2, Const]; LP(τ=2,0s) → asymmetric rate-limit (open 20,0 %/s, close 1,67 %/s).",
+    "OutputScale": 1.0583620663081206,
+    "ControlLineMargin": 0.1,
+    "AsymmetricLineMargin": 0.04761985794052703,
+    "NAS_mean": 32.050116472545724,
+    "SurgeProxy_MF_Raw": -1.309590767284538,
+    "SurgeProxy_a_Raw": 8.234021736894222,
+    "SurgeProxy_N_Raw": 0.0,
+    "SurgeProxy_b_Raw": 41.42663305446256,
+    "ProxyUsesNormalizedFlow": false,
+    "SurgeProxy_MeanDist": 0.0,
+    "SurgeProxy_StdDist": 1.0,
+    "UKickMax": 19.82,
     "UMin": 0.0,
-    "Benchmark": [
-      {
-        "Architecture": "LinearOLS",
-        "FeatureNames": [
-          "P_out",
-          "MF",
-          "P_in",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 0.0,
-        "FitScore": 70.56099627090573,
-        "Weights": {
-          "P_out": -8.961930583137457,
-          "MF": 0.1844024917372927,
-          "P_in": -0.27417396913607084,
-          "Const": 1356.6196198514263
-        }
-      },
-      {
-        "Architecture": "LinearOLS_LP1s",
-        "FeatureNames": [
-          "P_out",
-          "MF",
-          "P_in",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 1.0,
-        "FitScore": 71.60065038860125,
-        "Weights": {
-          "P_out": -8.961930583137457,
-          "MF": 0.1844024917372927,
-          "P_in": -0.27417396913607084,
-          "Const": 1356.6196198514263
-        }
-      },
-      {
-        "Architecture": "LinearOLS_LP2s",
-        "FeatureNames": [
-          "P_out",
-          "MF",
-          "P_in",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 2.0,
-        "FitScore": 70.6039993283901,
-        "Weights": {
-          "P_out": -8.961930583137457,
-          "MF": 0.1844024917372927,
-          "P_in": -0.27417396913607084,
-          "Const": 1356.6196198514263
-        }
-      },
-      {
-        "Architecture": "LinearOLS_LP3s",
-        "FeatureNames": [
-          "P_out",
-          "MF",
-          "P_in",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 3.0,
-        "FitScore": 69.17073197711751,
-        "Weights": {
-          "P_out": -8.961930583137457,
-          "MF": 0.1844024917372927,
-          "P_in": -0.27417396913607084,
-          "Const": 1356.6196198514263
-        }
-      },
-      {
-        "Architecture": "LinearOLS_LP5s",
-        "FeatureNames": [
-          "P_out",
-          "MF",
-          "P_in",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 5.0,
-        "FitScore": 65.68820643806892,
-        "Weights": {
-          "P_out": -8.961930583137457,
-          "MF": 0.1844024917372927,
-          "P_in": -0.27417396913607084,
-          "Const": 1356.6196198514263
-        }
-      },
-      {
-        "Architecture": "LinearDP_LP2s",
-        "FeatureNames": [
-          "DP",
-          "MF",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 2.0,
-        "FitScore": 57.16842235637982,
-        "Weights": {
-          "DP": 0.3455199122511414,
-          "MF": 0.1568281477666804,
-          "Const": -34.55605832908666
-        }
-      },
-      {
-        "Architecture": "LinearDP_LP3s",
-        "FeatureNames": [
-          "DP",
-          "MF",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 3.0,
-        "FitScore": 56.04947071993989,
-        "Weights": {
-          "DP": 0.3455199122511414,
-          "MF": 0.1568281477666804,
-          "Const": -34.55605832908666
-        }
-      },
-      {
-        "Architecture": "SurgeProxy_LP2s",
-        "FeatureNames": [
-          "DP",
-          "MF",
-          "MF2",
-          "DP_over_MF2",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 2.0,
-        "FitScore": 72.21955582268471,
-        "Weights": {
-          "DP": 2.5194866974402217,
-          "MF": -23.315064318225968,
-          "MF2": 0.16176433307974253,
-          "DP_over_MF2": -4996.134499308638,
-          "Const": 717.9885529178875
-        }
-      },
-      {
-        "Architecture": "SurgeProxy_LP3s",
-        "FeatureNames": [
-          "DP",
-          "MF",
-          "MF2",
-          "DP_over_MF2",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 3.0,
-        "FitScore": 70.42704408918352,
-        "Weights": {
-          "DP": 2.5194866974402217,
-          "MF": -23.315064318225968,
-          "MF2": 0.16176433307974253,
-          "DP_over_MF2": -4996.134499308638,
-          "Const": 717.9885529178875
-        }
-      },
-      {
-        "Architecture": "LinearPR_LP2s",
-        "FeatureNames": [
-          "PR",
-          "MF",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 2.0,
-        "FitScore": 62.01307505487617,
-        "Weights": {
-          "PR": 10.695239175222184,
-          "MF": 0.09450020212284214,
-          "Const": -26.99970820151473
-        }
-      },
-      {
-        "Architecture": "LinearPR_LP3s",
-        "FeatureNames": [
-          "PR",
-          "MF",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 3.0,
-        "FitScore": 60.833518836797865,
-        "Weights": {
-          "PR": 10.695239175222184,
-          "MF": 0.09450020212284214,
-          "Const": -26.99970820151473
-        }
-      },
-      {
-        "Architecture": "LinearPR_NL_LP2s",
-        "FeatureNames": [
-          "PR",
-          "MF",
-          "MF2",
-          "Const"
-        ],
-        "LPFilter_Tau_s": 2.0,
-        "FitScore": 65.2243366399115,
-        "Weights": {
-          "PR": 13.87104140055036,
-          "MF": -3.1703726535346455,
-          "MF2": 0.029805612754344298,
-          "Const": 53.290386313403054
-        }
-      },
-      {
-        "Architecture": "KickBased",
-        "SurgeProxy_MF_Coeff": 1.0,
-        "SurgeProxy_a": 0.0,
-        "SurgeProxy_b": -35.0,
-        "KickThreshold": -2.0,
-        "HoldThreshold": -2.0,
-        "KickRate_PrcPerSec": 0.0,
-        "KickGain_PrcPerSecPerUnit": 0.5,
-        "RampDown_PrcPerMin": 0.0,
-        "RampDecay_Tau_s": 500.0,
-        "SurgeMargin_LP_Tau_s": 0.0,
-        "FitScore": -23.974409614010405,
-        "SurgeTruthSource": "K-Spice NormalizedFlow vs NormalizedAsymmetricLimit"
-      }
-    ]
+    "NasSignalKey": "23ASC3001:NormalizedFlowSetpoint",
+    "NfSignalKey": "23ASC3001:NormalizedFlow",
+    "FastModeThreshold": 1.0,
+    "FitScore": 81.90579092126784,
+    "Formula": "DualModePI(velocity-form, dim error=NASP-NF); fast(Kp=3[mdl:2],Ti=20s); slow(Kp=0,4,Ti=20s); scale=1,058; proxy=pred-MF+PR"
   },
   "23SIC1001_Control": {
     "ModelType": "PID",
