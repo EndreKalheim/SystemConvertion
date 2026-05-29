@@ -55,7 +55,15 @@
       "Bash(Select-String -Pattern \"PV_0001|Strategy|AllGains\")",
       "Bash(Remove-Item \"c:\\\\Users\\\\Endre\\\\OneDrive\\\\Dokumenter\\\\sem3\\\\TSA\\\\SystemConvertion\\\\EJDS.cs\", \"c:\\\\Users\\\\Endre\\\\OneDrive\\\\Dokumenter\\\\sem3\\\\TSA\\\\SystemConvertion\\\\F6vn.cs\", \"c:\\\\Users\\\\Endre\\\\OneDrive\\\\Dokumenter\\\\sem3\\\\TSA\\\\SystemConvertion\\\\XBPm.cs\" -ErrorAction SilentlyContinue)",
       "Bash(Write-Output \"CS duplicates removed\")",
-      "PowerShell(cd \"c:\\\\Users\\\\Endre\\\\OneDrive\\\\Dokumenter\\\\sem3\\\\TSA\\\\SystemConvertion\"; git status --short | Where-Object { $_ -match '^\\\\?\\\\?' })"
+      "PowerShell(cd \"c:\\\\Users\\\\Endre\\\\OneDrive\\\\Dokumenter\\\\sem3\\\\TSA\\\\SystemConvertion\"; git status --short | Where-Object { $_ -match '^\\\\?\\\\?' })",
+      "PowerShell(cd \"c:\\\\Users\\\\Endre\\\\OneDrive\\\\Dokumenter\\\\sem3\\\\TSA\\\\SystemConvertion\\\\Pipeline\"; Get-Content \"output/diagrams/TSA_Explicit_Topology.json\" -Encoding utf8 | ConvertFrom-Json | Select-Object -ExpandProperty edges | Where-Object { $_.to -eq \"23UV0001_MassFlow\" } | ConvertTo-Json)",
+      "Bash(Select-Object Name, FullName)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Endre\\\\OneDrive\\\\Dokumenter\\\\sem3\" -Recurse -Filter \"*.tex\")",
+      "Bash(Select-Object -First 20 FullName)",
+      "Bash(find \"/mnt/c/Users/Endre/OneDrive/Dokumenter/sem3\" -name \"*.tex\" 2>/dev/null | head -20)",
+      "Read(//mnt/c/Users/Endre/OneDrive/Dokumenter/**)",
+      "Bash(find \"/mnt/c/Users/Endre\" -name \"*.tex\" 2>/dev/null | head -20)",
+      "Read(//mnt/c/Users/**)"
     ]
   }
 }

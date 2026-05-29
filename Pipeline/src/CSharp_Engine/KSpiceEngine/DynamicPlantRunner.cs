@@ -189,7 +189,7 @@ namespace KSpiceEngine
                     Console.WriteLine($"[Model] {id}: Inter-stage junction vessel ({inputCols.Count} flow inputs)");
                     result = inputCols.Count == 0
                         ? (Enumerable.Repeat(0.0, numRows).ToArray(), Fallback("No flow inputs for inter-stage junction"))
-                        : SeparatorPressureIdentifier.Identify(id, Y_true, inputCols, timeBase_s);
+                        : SeparatorPressureIdentifier.Identify(id, Y_true, inputCols, timeBase_s, isInterstageJunction: true);
                 }
                 else if (state.EndsWith("Level") && IsContainerType(kspiceType))
                 {
@@ -199,7 +199,7 @@ namespace KSpiceEngine
                 else if (state == "MassFlow" && kspiceType.IndexOf("Valve", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     var inputCols = FindInputSignals(id, inputEdges, signalMap, dataset, physicalNeighbors);
-                    result = IdentifyValveModel(id, comp, Y_true, numRows, timeBase_s, models, signalMap, dataset, inputCols);
+                    result = IdentifyValveModel(id, comp, Y_true, numRows, timeBase_s, models, signalMap, dataset, inputCols, physicalNeighbors);
                 }
                 else if (state == "Temperature" && kspiceType.IndexOf("HeatExchanger", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
@@ -518,7 +518,9 @@ namespace KSpiceEngine
 
         private static (double[] pred, JObject pars) IdentifyValveModel(
             string id, string comp, double[] Y_true, int numRows, double timeBase_s,
-            JArray models, Dictionary<string, string> signalMap, Dictionary<string, double[]> dataset, List<(string name, double[] data)> inputCols)
+            JArray models, Dictionary<string, string> signalMap, Dictionary<string, double[]> dataset,
+            List<(string name, double[] data)> inputCols,
+            Dictionary<string, HashSet<string>> physicalNeighbors = null)
         {
             Console.WriteLine($"[Model] {id}: Outlet Valve Physics Model identification");
             string compBase = comp.EndsWith("_pf", StringComparison.OrdinalIgnoreCase)
@@ -555,6 +557,36 @@ namespace KSpiceEngine
             {
                 string[] pOutCands = { $"{pfComp}:OutletStream.p", $"{pfComp}:OutletPressure", signalMap.ContainsKey($"{compBase}_DownstreamPressure") ? signalMap[$"{compBase}_DownstreamPressure"] : null };
                 foreach (var cand in pOutCands) { if (cand != null && dataset.ContainsKey(cand)) { pOut = dataset[cand]; pOutCol = cand; break; } }
+            }
+
+            // If pOut was resolved to a raw K-Spice stream name (contains ":"), it won't exist
+            // as an identified model in CL → NaN → flat flow. Replace it with the downstream
+            // neighbour's identified Pressure model ID using the physical adjacency graph.
+            // Example (TutorialHN): "23UV0001_pf:OutletStream.p" → "23VA0001_Pressure"
+            // Triggers only when the topology builder failed to create a P_out edge (e.g. the
+            // UV outlet connects directly to a separator, not via a compressor inlet).
+            // Rev4 UV valves already have a topology P_out edge (equation ID, no ":") → no change.
+            if (pOutCol != null && pOutCol.Contains(":") && physicalNeighbors != null)
+            {
+                string pInBase = pInCol?.Split('(')[0].Trim();  // strip "(P_in)" label if present
+                if (physicalNeighbors.TryGetValue(compBase, out var neighbors))
+                {
+                    foreach (string nb in neighbors)
+                    {
+                        string candidateId = $"{nb}_Pressure";
+                        if (candidateId.Contains(":")) continue;
+                        if (string.Equals(candidateId, pInBase, StringComparison.OrdinalIgnoreCase)) continue;
+                        // Equation IDs are never raw CSV column names — resolve via signalMap.
+                        // Previous attempt checked dataset.ContainsKey(candidateId) which always
+                        // fails because dataset keys are raw K-Spice stream names, not equation IDs.
+                        string mappedCol = signalMap.TryGetValue(candidateId, out string c) ? c : candidateId;
+                        if (!dataset.ContainsKey(mappedCol)) continue;
+                        Console.WriteLine($"[ValveIdentify] {id}: Replacing raw K-Spice P_out '{pOutCol}' → equation ID '{candidateId}' (CSV: {mappedCol})");
+                        pOut    = dataset[mappedCol];
+                        pOutCol = candidateId;   // store equation ID so CL resolves via predictions
+                        break;
+                    }
+                }
             }
 
             if (uData == null) { uData = Enumerable.Repeat(100.0, numRows).ToArray(); uCol = "Assumed_100%"; }

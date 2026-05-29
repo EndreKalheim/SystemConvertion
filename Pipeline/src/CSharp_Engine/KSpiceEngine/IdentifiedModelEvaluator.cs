@@ -68,6 +68,8 @@ namespace KSpiceEngine
         private double netBalanceGain;
         private bool[]? netBalanceIsOutflow;
         private double netBalanceAnchor;
+        private double netBalanceLagTc_s;
+        private double netBalanceLagState;
 
         private bool pidPrimed;
         private double pidSetpointFallback = double.NaN; // constant SP when setpoint not in CSV
@@ -343,9 +345,10 @@ namespace KSpiceEngine
 
                 case "NetMassBalance":
                 {
-                    netBalanceGain = (double?)p["Gain"] ?? 0.0;
+                    netBalanceGain      = (double?)p["Gain"]    ?? 0.0;
+                    netBalanceLagTc_s   = (double?)p["LagTc_s"] ?? 0.0;
                     netBalanceIsOutflow = InputContract.Select(s => s.IsOutflow).ToArray();
-                    netBalanceAccum = 0.0;
+                    netBalanceAccum     = 0.0;
                     return;
                 }
 
@@ -377,8 +380,9 @@ namespace KSpiceEngine
             }
             if (ModelType == "NetMassBalance")
             {
-                netBalanceAccum  = 0.0;
-                netBalanceAnchor = initialOutput;
+                netBalanceAccum    = 0.0;
+                netBalanceAnchor   = initialOutput;
+                netBalanceLagState = initialOutput;
             }
         }
 
@@ -541,6 +545,16 @@ namespace KSpiceEngine
                 // matching the physical gas manifold residence time (~380 kg / 44 kg/s).
                 netBalanceAccum *= (1.0 - 0.1 * timeBase_s);
                 double y = netBalanceAnchor + netBalanceGain * netBalanceAccum;
+                // First-order output lag: limits per-step pressure change for inter-stage
+                // junction nodes where NetMassBalance was selected. Without this, the
+                // per-step gain is ~9× that of the LP UnitModel, making the ASC feedback
+                // loop unstable in CL. LagTc_s=0 (default) disables the lag.
+                if (netBalanceLagTc_s > 1e-6)
+                {
+                    double alpha = timeBase_s / (timeBase_s + netBalanceLagTc_s);
+                    netBalanceLagState = netBalanceLagState + alpha * (y - netBalanceLagState);
+                    y = netBalanceLagState;
+                }
                 lastOutput = y;
                 return y;
             }

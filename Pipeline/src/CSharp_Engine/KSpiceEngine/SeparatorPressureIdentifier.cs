@@ -17,7 +17,8 @@ namespace KSpiceEngine
             string id,
             double[] Y_true,
             List<(string name, double[] data)> inputCols,
-            double timeBase_s)
+            double timeBase_s,
+            bool isInterstageJunction = false)
         {
             var signedInputs     = DynamicPlantRunner.NegateOutflows(inputCols);
             var integratedInputs = DynamicPlantRunner.IntegrateFlows(signedInputs, timeBase_s);
@@ -263,6 +264,38 @@ namespace KSpiceEngine
                 }
 
                 Console.WriteLine($"[SUCCESS] {id}: Best={best.name}, FitScore={best.fit:F1}%");
+
+                // For inter-stage junctions using NetMassBalance: add a first-order output lag.
+                // LP separators get natural damping from UnitModel (Tc~100s). HP inter-stage junctions
+                // fall back to NetMassBalance whose per-step gain is ~9× that of LP, making the
+                // ASC→UV→PV0001→KA→ASC feedback loop unstable in CL.
+                // Analytically derive the minimum LagTc that reduces per-step gain to LP's stable level.
+                if (isInterstageJunction && best.name == "NetMassBalance")
+                {
+                    double baseFit   = best.fit;
+
+                    // Physics-derived lag: LP UnitIdentifier (Tc≈100s) gives per-step gain dt/Tc ≈ 0.010/step.
+                    // Solve: alpha * Gain * dt = 0.010  →  LagTc = dt * (Gain*dt / 0.010 - 1)
+                    // This sets the HP inter-stage pressure per-step gain equal to the stable LP model,
+                    // preventing the ASC→UV→PV0001→KA→ASC feedback loop from oscillating in CL.
+                    double nmGain     = (double?)best.pars["Gain"] ?? 0.0;
+                    double lpTarget   = 0.010;              // LP stable per-step gain (empirically safe)
+                    double nmPerStep  = nmGain * timeBase_s;
+                    double lagTc_calc = nmPerStep > lpTarget
+                        ? timeBase_s * (nmPerStep / lpTarget - 1.0)
+                        : timeBase_s;                       // already stable; use 1-step minimum
+                    double bestLagTc  = Math.Clamp(lagTc_calc, timeBase_s, 60.0);
+                    double[] yLagged  = SimulateWithLag(best.ySim, bestLagTc, timeBase_s, Y_true[0]);
+                    double bestLagFit = ComputeLagFit(yLagged, Y_true);
+                    Console.WriteLine($"[Model] {id}: Physics LagTc={bestLagTc:F1}s → OL fit={bestLagFit:F1}% (base={baseFit:F1}%)");
+                    var laggedPars    = new JObject(best.pars);
+                    laggedPars["LagTc_s"]  = bestLagTc;
+                    laggedPars["FitScore"] = bestLagFit;
+                    laggedPars["Formula"]  = ((string?)best.pars["Formula"] ?? "") + $" + first-order output lag (Tc={bestLagTc:F1}s)";
+                    best = (yLagged, bestLagFit, "NetMassBalance", laggedPars);
+                    Console.WriteLine($"[Model] {id}: Applied physics LagTc={bestLagTc:F1}s → CL-stable fit={bestLagFit:F1}%");
+                }
+
                 return (best.ySim, best.pars);
             }
             catch (Exception ex)
@@ -290,6 +323,25 @@ namespace KSpiceEngine
             double[] integ = new double[N];
             for (int j = 1; j < N; j++) integ[j] = integ[j - 1] + net[j] * timeBase_s;
             return integ;
+        }
+
+        private static double[] SimulateWithLag(double[] innerY, double lagTc_s, double timeBase_s, double y0)
+        {
+            int N = innerY.Length;
+            double[] lagged = new double[N];
+            lagged[0] = y0;
+            double alpha = timeBase_s / (timeBase_s + lagTc_s);
+            for (int t = 1; t < N; t++)
+                lagged[t] = lagged[t - 1] + alpha * (innerY[t] - lagged[t - 1]);
+            return lagged;
+        }
+
+        private static double ComputeLagFit(double[] yPred, double[] yTrue)
+        {
+            double mean = yTrue.Average();
+            double tss  = yTrue.Sum(y => (y - mean) * (y - mean));
+            double sse  = yTrue.Zip(yPred, (a, b) => (a - b) * (a - b)).Sum();
+            return tss > 1e-12 ? Math.Max(-100.0, 100.0 * (1.0 - sse / tss)) : 0.0;
         }
 
         private static void TryStrategy(
