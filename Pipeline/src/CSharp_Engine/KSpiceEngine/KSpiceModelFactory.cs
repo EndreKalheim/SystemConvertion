@@ -49,9 +49,31 @@ namespace KSpiceEngine
                 }
             }
 
+            // Inverse adjacency map: component → set of components that feed INTO it.
+            var upstreamOf = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var kv in downstreamOf)
+                foreach (var ds in kv.Value)
+                {
+                    if (!upstreamOf.ContainsKey(ds))
+                        upstreamOf[ds] = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    upstreamOf[ds].Add(kv.Key);
+                }
+
+            // True if any input to comp is an ASC controller — used to detect anti-surge
+            // recirculation valves regardless of plant-specific naming conventions.
+            bool IsAscControlledValve(string comp)
+            {
+                if (!upstreamOf.TryGetValue(comp, out var ups)) return false;
+                foreach (var u in ups)
+                    if (typeByComp.TryGetValue(u, out var t) &&
+                        t.IndexOf("ASC", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                        return true;
+                return false;
+            }
+
             // Returns true if any Compressor is reachable downstream from compName,
-            // skipping anti-surge recirculation (UV) paths which create backward loops
-            // that would otherwise make HP after-coolers appear inter-stage.
+            // skipping anti-surge recirculation paths which create backward loops that
+            // would otherwise make HP after-coolers appear inter-stage.
             bool IsInterstageHX(string compName)
             {
                 var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -63,8 +85,7 @@ namespace KSpiceEngine
                     string curr = queue.Dequeue();
                     if (!visited.Add(curr)) continue;
                     string baseCurr2 = curr.Replace("_pf", "");
-                    // Anti-surge valves (UV) recirculate backwards — skip to avoid false positives.
-                    if (baseCurr2.ToUpper().Contains("UV")) continue;
+                    if (IsAscControlledValve(baseCurr2) || IsAscControlledValve(curr)) continue;
                     if (typeByComp.TryGetValue(curr, out string ct) && ct.Contains("Compressor"))
                         return true;
                     if (downstreamOf.TryGetValue(curr, out var nxt))
@@ -72,16 +93,6 @@ namespace KSpiceEngine
                 }
                 return false;
             }
-
-            // Inverse adjacency map: component → set of components that feed INTO it.
-            var upstreamOf = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
-            foreach (var kv in downstreamOf)
-                foreach (var ds in kv.Value)
-                {
-                    if (!upstreamOf.ContainsKey(ds))
-                        upstreamOf[ds] = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                    upstreamOf[ds].Add(kv.Key);
-                }
 
             // Returns true if this ControlValve/PipeFlow is the HP suction pressure junction node:
             // a merge point where ≥ 2 distinct inter-stage heat exchangers converge upstream.
@@ -240,51 +251,24 @@ namespace KSpiceEngine
                 }
                 else if (ktype.Contains("ControlValve") || ktype.Contains("PipeFlow") || ktype.Contains("BlockValve"))
                 {
-                    // Detect anti-surge recirculation valves by name ("UV") OR by being
-                    // driven by an ASC controller — the latter is more robust when the
-                    // naming convention differs between systems.
-                    bool isAntiSurge = baseName.ToUpper().Contains("UV");
-                    if (!isAntiSurge)
-                    {
-                        var nodeInputs = node["Inputs"] as JArray;
-                        if (nodeInputs != null)
-                        {
-                            foreach (var ninp in nodeInputs)
-                            {
-                                string src = (string)ninp["Source"] ?? "";
-                                int colon = src.IndexOf(':');
-                                if (colon > 0)
-                                {
-                                    string srcComp = src.Substring(0, colon);
-                                    if (typeByComp.TryGetValue(srcComp, out string srcType)
-                                        && srcType.IndexOf("ASC", StringComparison.OrdinalIgnoreCase) >= 0)
-                                    { isAntiSurge = true; break; }
-                                }
-                            }
-                        }
-                    }
-
+                    bool isAntiSurge = IsAscControlledValve(baseName) || IsAscControlledValve(baseName + "_pf");
                     bool isInterstageJunction = !isAntiSurge && IsInterstageJunction(baseName);
 
                     if (isAntiSurge)
                     {
-                        // Anti-surge recirculation valve: gas flows from discharge side (HX outlet)
-                        // back to the compressor suction separator.
-                        // UPSTREAM_PRESSURE (capped to [:1] in topology builder) gives HX outlet P_in.
-                        // CONTAINER_PRESSURE traverses upstream through HX/Compressor to find the
-                        // suction separator pressure for P_out.
+                        // Anti-surge recirculation valve: gas flows from the discharge side
+                        // back to the compressor suction. CONTAINER_PRESSURE traverses upstream
+                        // through HX/Compressor to find the suction separator pressure for P_out.
                         AddState("MassFlow",    "F = Cv * sqrt(dP * rho)",      new[] { "UPSTREAM_PRESSURE", "CONTAINER_PRESSURE", "LOCAL_CONTROL" });
                         AddState("Temperature", "T_out = f(T_in, P_in, P_out)", new[] { "UPSTREAM_TEMP", "UPSTREAM_PRESSURE", "CONTAINER_PRESSURE" });
                     }
                     else if (isInterstageJunction)
                     {
-                        // Inter-stage pressure junction: HP suction header.
-                        // Modeled as a mass-balance vessel (same as separator pressure):
-                        //   UPSTREAM_FLOW            → HX0001_MF, HX1001_MF       (m_in, +)
-                        //   ANTISURGE_INFLOW         → UV2001_MF, UV3001_MF       (m_in, +)
-                        //   DOWNSTREAM_COMPRESSOR    → KA2001_MF, KA3001_MF       (m_out, −)
-                        //   SIBLING_ANTISURGE_FLOW   → UV0001_MF, UV1001_MF       (m_out, −)
-                        // NegateOutflows + SeparatorPressureIdentifier handle sign convention and fit.
+                        // Inter-stage header without a physical accumulation vessel: modeled
+                        // as a synthetic mass-balance vessel using the same equation as a
+                        // separator. UPSTREAM_FLOW + ANTISURGE_INFLOW act as m_in (+);
+                        // DOWNSTREAM_COMPRESSOR_FLOW + SIBLING_ANTISURGE_FLOW act as m_out (−).
+                        // NegateOutflows + SeparatorPressureIdentifier handle signs and fit.
                         AddState("Pressure",    "dP/dt = k * (m_in - m_out)",
                             new[] { "UPSTREAM_FLOW", "ANTISURGE_INFLOW", "DOWNSTREAM_COMPRESSOR_FLOW", "SIBLING_ANTISURGE_FLOW" });
                         AddState("MassFlow",    "F = Cv * sqrt(dP * rho)",
@@ -294,8 +278,7 @@ namespace KSpiceEngine
                     }
                     else
                     {
-                        // BlockValve (ESV, etc.) is modeled as a valve: Q = Cv * sqrt(dP * rho).
-                        // When no controller is wired (LOCAL_CONTROL finds no upstream PID/ASC),
+                        // When no controller is wired (LOCAL_CONTROL finds nothing),
                         // DynamicPlantRunner defaults to Assumed_100% (always open).
                         AddState("MassFlow",    "F = Cv * sqrt(dP * rho)",      new[] { "UPSTREAM_PRESSURE", "DOWNSTREAM_PRESSURE", "LOCAL_CONTROL" });
                         AddState("Temperature", "T_out = f(T_in, P_in, P_out)", new[] { "UPSTREAM_TEMP", "UPSTREAM_PRESSURE", "DOWNSTREAM_PRESSURE" });
@@ -303,18 +286,15 @@ namespace KSpiceEngine
                 }
                 else if (ktype.Contains("Compressor"))
                 {
-                    // Compressor flow modeled as f(suction pressure, speed controller output).
-                    // Downstream flow approaches were tried but failed due to operating-point
-                    // mismatch between training and test sets (different speed ranges) and
-                    // UV anti-correlation (UV high when KA flow is low during surge events).
+                    // Compressor flow uses suction pressure + speed; downstream-flow
+                    // approaches failed due to operating-point mismatch between training
+                    // and test sets and anti-surge anti-correlation during surge events.
                     AddState("MassFlow",    "F = f(P_suction, N_speed, P_discharge, UV_recirc)", new[] { "SUCTION_PRESSURE", "LOCAL_CONTROL", $"{baseName}_Pressure", "ANTISURGE_RECIRC_FLOW" });
-                    // UV recirculation is excluded from Pressure: adding it creates a shorter
-                    // ASC→UV→Pressure→MassFlow→ASC feedback cycle that amplifies CL errors.
-                    // UV effect on pressure is already captured indirectly via MassFlow input.
+                    // Anti-surge recirculation is excluded from Pressure to avoid a short
+                    // ASC→UV→Pressure→MassFlow→ASC cycle that amplifies CL errors. The
+                    // recirculation effect is already captured indirectly via MassFlow.
                     AddState("Pressure",    "P_out = P_in + Head(F, N)",   new[] { "SUCTION_PRESSURE", $"{baseName}_MassFlow", "LOCAL_CONTROL" });
                     AddState("Temperature", "T_out = T_in * (P_out/P_in)^((k-1)/k)", new[] { "UPSTREAM_TEMP", $"{baseName}_Pressure", "UPSTREAM_PRESSURE" });
-                    // Speed is identified from the SIC controller output; marked as a free
-                    // (boundary) signal in ClosedLoopRunner so MassFlow gets CSV truth RPM.
                     AddState("Speed",       "N = f(speed controller output)",        new[] { "LOCAL_CONTROL" });
                 }
                 else if (ktype.Contains("Pump"))

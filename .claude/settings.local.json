@@ -63,7 +63,11 @@
       "Bash(find \"/mnt/c/Users/Endre/OneDrive/Dokumenter/sem3\" -name \"*.tex\" 2>/dev/null | head -20)",
       "Read(//mnt/c/Users/Endre/OneDrive/Dokumenter/**)",
       "Bash(find \"/mnt/c/Users/Endre\" -name \"*.tex\" 2>/dev/null | head -20)",
-      "Read(//mnt/c/Users/**)"
+      "Read(//mnt/c/Users/**)",
+      "PowerShell(dotnet build Pipeline\\\\src\\\\CSharp_Engine\\\\KSpiceEngine\\\\KSpiceEngine.csproj 2>&1)",
+      "PowerShell(dotnet build \"C:\\\\Users\\\\Endre\\\\OneDrive\\\\Dokumenter\\\\sem3\\\\TSA\\\\SystemConvertion\\\\Pipeline\\\\src\\\\CSharp_Engine\\\\KSpiceEngine\\\\KSpiceEngine.csproj\" 2>&1)",
+      "PowerShell(Get-ChildItem -Path . -Directory -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.Name -match \"method|report|image|figure\" -or $_.Name -match \"05 Metode\" } | Select-Object -ExpandProperty FullName | Select-Object -First 20)",
+      "PowerShell(dotnet build \"C:\\\\Users\\\\Endre\\\\OneDrive\\\\Dokumenter\\\\sem3\\\\TSA\\\\SystemConvertion\\\\Pipeline\\\\src\\\\CSharp_Engine\\\\KSpiceEngine\\\\KSpiceEngine.csproj\" --no-incremental 2>&1)"
     ]
   }
 }

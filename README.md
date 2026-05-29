@@ -1,0 +1,151 @@
+# K-Spice → TSA System Conversion
+
+Grey-box identification pipeline that converts a high-fidelity K-Spice plant
+simulation into a modular network of MISO surrogate models. Topology is
+extracted from K-Spice's own model definitions (`.mdl` / `.prm`) and fused with
+empirical CSV time-series, then the [TimeSeriesAnalysis](TimeSeriesAnalysis-master/)
+library identifies first-order dynamics, PID parameters, and per-equipment
+physics-guided models. Each block is re-assembled into a closed-loop simulator
+that runs without K-Spice.
+
+## Methodology
+
+```mermaid
+flowchart TD
+    KSPICE[("K-Spice<br/>.mdl / .prm")]:::data
+    CSV[("Plant<br/>CSV")]:::data
+
+    TOPO["1. Topological<br/>Extraction"]:::step
+    EQ["2. Equation<br/>Reconstruction"]:::step
+    CLEAN["Preprocessing &<br/>Data Cleaning"]:::step
+
+    MISO["3. MISO<br/>Transformation"]:::core
+    MAP["4. Signal<br/>Mapping"]:::core
+    SOLVE["5. Parametric<br/>Identification"]:::core
+    VAL["6. Global System<br/>Validation"]:::valid
+
+    KSPICE --> TOPO --> EQ --> MISO
+    CSV    --> CLEAN
+    MISO   --> MAP
+    CLEAN  --> MAP
+    MAP    --> SOLVE --> VAL
+
+    classDef data    fill:#eeeeee,stroke:#333,stroke-width:1px;
+    classDef step    fill:#dbeafe,stroke:#1e40af;
+    classDef core    fill:#fde68a,stroke:#92400e,font-weight:bold;
+    classDef valid   fill:#bbf7d0,stroke:#166534,font-weight:bold;
+```
+
+Physical K-Spice metadata (left branch) is fused with empirical transients
+(right branch) to generate the surrogate network. Phases 3–5 are the core MISO
+fitting stage; Phase 6 re-runs the identified blocks plant-wide in closed loop.
+
+## Requirements
+
+- Python 3.10+ (`pandas`, `numpy`, `matplotlib`)
+- .NET 10 SDK (for the C# identification engine)
+
+## Project layout
+
+```
+SystemConvertion/
+├── kspicefiles/           ← place your K-Spice .mdl / .prm here
+├── Pipeline/
+│   ├── data/
+│   │   ├── raw/           ← place your simulation CSV here (any filename)
+│   │   └── extracted/     ← KSpiceSystemMap.json (generated)
+│   ├── output/            ← all generated artefacts
+│   │   ├── diagrams/      ← TSA_Equations.json, topology HTML
+│   │   ├── validation_plots*/
+│   │   ├── CS_Predictions*.csv
+│   │   └── CS_Identified_Parameters.json
+│   ├── src/
+│   │   ├── Parser/        ← K-Spice XML parser (Phase 1)
+│   │   ├── Visualization/ ← topology builders (Phase 3 + diagrams)
+│   │   └── CSharp_Engine/ ← identification engine (Phases 2 & 4, tests)
+│   └── run.py             ← single entry point
+├── TimeSeriesAnalysis-master/
+└── KspiceSimTestdata.csv  ← optional held-out CSV (one level up from Pipeline/)
+```
+
+## Inputs
+
+1. **K-Spice model files** — copy your `.mdl` and `.prm` files into
+   [`kspicefiles/`](kspicefiles/). One folder can hold multiple revisions; the
+   pipeline lists them and asks which one to use.
+2. **Simulation CSV** — export a 1 Hz time-series from K-Spice covering the
+   operating range you want to identify, and drop it into
+   [`Pipeline/data/raw/`](Pipeline/data/raw/). Any filename works; the runner
+   auto-picks the single CSV in that folder (or prompts if there are several).
+3. **(Optional) Held-out test CSV** — drop alongside `Pipeline/` as
+   `KspiceSimTestdata.csv`, or pass `--testcsv path/to/file.csv`. Used by the
+   open-loop and closed-loop test phases.
+
+## Usage
+
+All commands run from the `Pipeline/` directory.
+
+### Full pipeline (interactive model picker)
+
+```bash
+cd Pipeline
+python run.py
+```
+
+The runner lists the `.mdl` files it finds, asks you to pick one, then runs
+Phases 1–5 (extract → equations → topology → simulate → visualise). Outputs
+land in `Pipeline/output/`.
+
+### Single phases
+
+```bash
+python run.py --phase extract           # 1. Parse .mdl/.prm → KSpiceSystemMap.json
+python run.py --phase equations         # 2. C# engine builds plant equations
+python run.py --phase topology          # 3. Python wires the MISO graph
+python run.py --phase simulate          # 4. C# identifies all models
+python run.py --phase visualize         # 5. HTML topologies + validation plots
+```
+
+### Evaluation tests
+
+```bash
+python run.py --phase testset            # Open-loop on held-out CSV
+python run.py --phase closedloop         # Closed-loop on held-out CSV
+python run.py --phase closedloop-train   # Closed-loop on the training CSV
+python run.py --phase tests              # All three above, in sequence
+```
+
+### Useful flags
+
+```bash
+python run.py --list                          # List available K-Spice models
+python run.py --model Rev3B                   # Skip the picker (partial name match)
+python run.py --csv path/to/sim.csv           # Override training CSV
+python run.py --testcsv path/to/test.csv      # Override held-out CSV
+```
+
+## Outputs
+
+After a full run you'll find:
+
+| File | Purpose |
+|------|---------|
+| `output/diagrams/TSA_Equations.json` | One descriptor per modeled state |
+| `output/diagrams/SignalMapping.json` | CSV column ↔ model-ID map |
+| `output/diagrams/TSA_Explicit_Topology.json` | Wired MISO dependency graph |
+| `output/CS_Identified_Parameters.json` | Fitted parameters for every model |
+| `output/CS_Predictions*.csv` | Open- / closed-loop simulated states |
+| `output/validation_plots*/` | Per-model PNGs (truth vs. prediction) |
+| `output/diagrams/System_TSA_State_Topology.html` | Interactive MISO graph |
+| `output/diagrams/System_Topology_V2.html` | Raw K-Spice connectivity |
+
+## Notes
+
+- The pipeline is **topology-driven**: components are classified by their
+  K-Spice type and the placeholders (e.g. `UPSTREAM_FLOW`, `ANTISURGE_INFLOW`)
+  are resolved via BFS over the parsed wiring graph. Anti-surge valves are
+  detected via the ASC-controller wiring (not a name pattern), so the same
+  code works for plants with non-standard tag conventions.
+- The C# engine builds itself on first run via `dotnet run` — no manual build
+  step needed.
+- For project-specific architecture notes see [Pipeline/CLAUDE.md](Pipeline/CLAUDE.md).

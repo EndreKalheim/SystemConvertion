@@ -87,12 +87,9 @@ namespace KSpiceEngine.CustomModels
 
         private double uPrev             = 0.0;
         private double effectiveUMin     = 0.0;
-        private double ePrev             = 0.0;   // previous dimensional error
+        private double ePrev             = 0.0;
         private bool   ePrevInitialized  = false;
         private bool   prevFastMode      = false;
-        // Legacy LP filter state (used only by the LinearOLS fallback path)
-        private double targetLP          = 0.0;
-        private bool   lpInitialized     = false;
 
         // Proxy bias correction: computed once from the priming call (truth inputs at t=0)
         // and subtracted from all subsequent CL proxy evaluations. This prevents the proxy
@@ -247,8 +244,6 @@ namespace KSpiceEngine.CustomModels
             ePrev             = 0.0;
             ePrevInitialized  = false;
             prevFastMode      = false;
-            targetLP          = uPrev;
-            lpInitialized     = false;
             // Reset proxy bias so the FIRST actual CL step sets the baseline (not the
             // truth-input priming call). ClosedLoopRunner calls WarmStart twice: once
             // before priming and once after (re-anchor). The re-anchor clears any bias

@@ -12,19 +12,14 @@ namespace KSpiceEngine
     {
         static void Main(string[] args)
         {
-            // Parse CLI arguments
-            // --mode  equations | simulate | testset | closedloop | all  (default: all)
-            // --map   path to KSpiceSystemMap.json
-            // --csv   path to KspiceSim.csv (training data — used by equations & simulate)
-            // --testcsv path to held-out CSV (used by testset & closedloop modes)
+            // CLI: --mode equations|simulate|testset|closedloop|all  --map  --csv  --testcsv  --suffix  --kspicemdl
             string mode    = "all";
             string mapPath = null;
             string csvPath = null;
             string testCsvPath = null;
             string selectedKspiceModel = null;
-            // Output filename suffix — lets the same closedloop mode write to either
-            // CS_Predictions_ClosedLoop.csv (default) or CS_Predictions_ClosedLoop_Train.csv
-            // when run on the training CSV, so the two runs don't clobber each other.
+            // Suffix lets the same closedloop mode write either CS_Predictions_ClosedLoop.csv
+            // (default) or CS_Predictions_ClosedLoop_Train.csv so the two runs don't clobber.
             string suffix = "";
 
             for (int i = 0; i < args.Length - 1; i++)
@@ -45,7 +40,15 @@ namespace KSpiceEngine
                 mapPath = Path.Combine(pipelineRoot, "data", "extracted", "KSpiceSystemMap.json");
 
             if (string.IsNullOrEmpty(csvPath))
-                csvPath = Path.Combine(pipelineRoot, "data", "raw", "KspiceBigSimFixed.csv");
+            {
+                // Auto-pick the single .csv inside data/raw/ (whatever the user named it).
+                string rawDir = Path.Combine(pipelineRoot, "data", "raw");
+                if (Directory.Exists(rawDir))
+                {
+                    var csvs = Directory.GetFiles(rawDir, "*.csv");
+                    if (csvs.Length >= 1) csvPath = csvs[0];
+                }
+            }
 
             string diagDir = Path.Combine(pipelineRoot, "output", "diagrams");
             string outDir  = Path.Combine(pipelineRoot, "output");

@@ -156,13 +156,14 @@ def plot_validation(predictions_csv=None, kspice_csv=None, out_dir=None):
     if predictions_csv is None:
         predictions_csv = os.path.join(base_dir, "output", "CS_Predictions.csv")
     if kspice_csv is None:
-        # Prefer the CSV saved by the last simulate run; fall back to the default path.
+        # Prefer the CSV saved by the last simulate run; otherwise auto-pick from data/raw/.
         state_file = os.path.join(base_dir, "output", "last_train_csv.txt")
         if os.path.exists(state_file):
             candidate = open(state_file).read().strip()
             kspice_csv = candidate if os.path.exists(candidate) else None
         if kspice_csv is None:
-            kspice_csv = os.path.join(base_dir, "data", "raw", "KspiceSim.csv")
+            raw_csvs = sorted(glob.glob(os.path.join(base_dir, "data", "raw", "*.csv")))
+            kspice_csv = raw_csvs[0] if raw_csvs else os.path.join(base_dir, "data", "raw", "")
     if out_dir is None:
         out_dir = os.path.join(base_dir, "output", "validation_plots")
     mapping_json    = os.path.join(base_dir, "output", "diagrams", "SignalMapping.json")
@@ -510,7 +511,7 @@ def plot_validation(predictions_csv=None, kspice_csv=None, out_dir=None):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument('--predictions', help='CS_Predictions CSV path (default: output/CS_Predictions.csv)')
-    ap.add_argument('--rawcsv',      help='Raw KSpice CSV with input signals (default: data/raw/KspiceSim.csv)')
+    ap.add_argument('--rawcsv',      help='Raw KSpice CSV with input signals (default: auto-pick from data/raw/)')
     ap.add_argument('--outdir',      help='Output directory for validation plots (default: output/validation_plots)')
     a = ap.parse_args()
     plot_validation(predictions_csv=a.predictions, kspice_csv=a.rawcsv, out_dir=a.outdir)

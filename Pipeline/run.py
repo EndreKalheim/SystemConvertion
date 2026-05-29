@@ -32,7 +32,6 @@ SRC_VIS      = os.path.join(HERE, 'src', 'Visualization')
 SRC_PARSER   = os.path.join(HERE, 'src', 'Parser', 'KSpiceParser.py')
 
 MAP_JSON     = os.path.join(DATA_EXT, 'KSpiceSystemMap.json')
-DEFAULT_CSV  = os.path.join(DATA_RAW,  'KspiceBigSimFixed.csv')
 # Held-out test CSV (lives one level above Pipeline/). Used by the testset and
 # closedloop phases — same plant, different operating trajectory, never seen
 # during identification. Override with --testcsv.
@@ -102,22 +101,35 @@ def pick_model(model_arg):
 
 
 def pick_csv(csv_arg, mdl_path):
-    """Return path to KSpice simulation CSV, with fallback search."""
+    """Return path to a KSpice simulation CSV.
+
+    Resolution order:
+      1. Explicit --csv argument.
+      2. Auto-pick the single .csv inside data/raw/ (whatever the user named it).
+         If multiple .csv files exist, prompt the user to choose one.
+      3. Fall back to any .csv next to the .mdl file in kspicefiles/.
+    """
     if csv_arg:
         if os.path.exists(csv_arg):
             return os.path.abspath(csv_arg)
         sys.exit(f"[ERROR] CSV not found: {csv_arg}")
 
-    if os.path.exists(DEFAULT_CSV):
-        return DEFAULT_CSV
+    raw_csvs = sorted(glob.glob(os.path.join(DATA_RAW, '*.csv')))
+    if len(raw_csvs) == 1:
+        return raw_csvs[0]
+    if len(raw_csvs) > 1:
+        print("\nMultiple CSV files in data/raw/:")
+        for i, p in enumerate(raw_csvs, 1):
+            print(f"  {i:2}. {os.path.basename(p)}")
+        choice = input("Select training CSV (number): ").strip()
+        return raw_csvs[int(choice) - 1]
 
-    # Try to find a CSV next to the .mdl file
     nearby = glob.glob(os.path.join(os.path.dirname(mdl_path), '*.csv'))
     if nearby:
-        print(f"  [WARN] Default CSV not found, using: {nearby[0]}")
+        print(f"  [WARN] No CSV in data/raw/, using: {nearby[0]}")
         return nearby[0]
 
-    print(f"  [WARN] No CSV found — simulation phase will be skipped")
+    print(f"  [WARN] No CSV found in {DATA_RAW} — simulation phase will be skipped")
     return None
 
 
@@ -192,10 +204,10 @@ def phase_simulate(csv_path, mdl=None):
 
 def phase_visualize(csv_path=None):
     print("\n-- Phase 5 | Generate visualizations --------------------------")
-    # Resolve the training CSV: explicit arg > saved state > hardcoded default.
-    raw_csv = csv_path or _load_last_csv() or DEFAULT_CSV
-    if raw_csv != (csv_path or DEFAULT_CSV):
-        print(f"  (using saved training CSV: {os.path.basename(raw_csv)})")
+    # Resolve the training CSV: explicit arg > saved state > auto-pick from data/raw.
+    raw_csv = csv_path or _load_last_csv() or pick_csv(None, '')
+    if csv_path is None and raw_csv:
+        print(f"  (using training CSV: {os.path.basename(raw_csv)})")
 
     # Raw K-Spice component connectivity (overview)
     _run([sys.executable, os.path.join(SRC_VIS, 'TopologyVisualizer.py'),
@@ -239,8 +251,7 @@ def phase_closedloop(test_csv, mdl=None):
     if mdl:
         cmd += ['--kspicemdl', mdl]
     _run(cmd)
-    # Plot closed-loop predictions to a separate folder
-    raw_csv = csv_for_run or DEFAULT_CSV
+    raw_csv = csv_for_run or _load_last_csv() or pick_csv(None, '')
     _run([sys.executable, os.path.join(HERE, 'Plot_CS_Predictions.py'),
           '--predictions', os.path.join(HERE, 'output', 'CS_Predictions_ClosedLoop.csv'),
           '--rawcsv',      raw_csv,
@@ -288,7 +299,7 @@ def main():
     p.add_argument('--model', '-m',
                    help='Partial name of .mdl file in kspicefiles/ (e.g. "Rev3B")')
     p.add_argument('--csv',
-                   help='Path to KSpice simulation CSV (default: data/raw/KspiceSim.csv)')
+                   help='Path to KSpice simulation CSV (default: auto-pick from data/raw/)')
     p.add_argument('--testcsv',
                    help='Path to held-out test CSV used by testset/closedloop phases '
                         f'(default: {DEFAULT_TEST_CSV})')

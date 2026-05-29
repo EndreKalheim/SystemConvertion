@@ -59,6 +59,14 @@ def build_eq_topology():
             raw_ins[bn].append((src, port))
             raw_outs.setdefault(src, []).append((bn, port))
 
+    def is_antisurge_valve(comp):
+        """True if comp is driven by a K-Spice ASC controller (regardless of naming).
+        Replaces brittle 'UV' name heuristics so the topology generalises across plants."""
+        for ctrl, _ in raw_ins.get(comp, []):
+            if 'ASC' in base_types.get(ctrl, ''):
+                return True
+        return False
+
     # ── Upstream / downstream traversal (skips noise blocks) ────────────────
 
     def get_upstream(node, flow_only=False):
@@ -187,14 +195,16 @@ def build_eq_topology():
         return result
 
     def find_nearest_state(start_comp, target_state, traverse_upstream,
-                           pass_through_types=None, skip_comps=None):
+                           pass_through_types=None, skip_comps=None,
+                           skip_antisurge=False):
         """BFS over the component graph; returns component names that model target_state.
 
         pass_through_types: list of KSpiceType substrings to skip rather than stop at.
         skip_comps: list of name substrings; any component whose name contains one of
-            these strings is excluded from the BFS entirely (not visited, not returned).
-            Used by SUCTION_PRESSURE to block anti-surge recirculation paths (UV valves)
-            that would otherwise lead back to the discharge-side pressure.
+            these strings is excluded from the BFS entirely.
+        skip_antisurge: when True, skip anti-surge recirculation valves (detected via
+            ASC-controller wiring) so the BFS blocks recirculation paths back to the
+            discharge-side pressure.
         """
         found = []
         visited = set()
@@ -203,9 +213,10 @@ def build_eq_topology():
             curr = queue.pop(0)
             if curr in visited:
                 continue
-            # Skip components whose name matches a skip pattern.
-            if skip_comps and curr != start_comp:
-                if any(s.upper() in curr.upper() for s in skip_comps):
+            if curr != start_comp:
+                if skip_comps and any(s.upper() in curr.upper() for s in skip_comps):
+                    continue
+                if skip_antisurge and is_antisurge_valve(curr):
                     continue
             visited.add(curr)
             if curr != start_comp and f"{curr}_{target_state}" in equation_ids:
@@ -300,20 +311,19 @@ def build_eq_topology():
                     add_edge(f"{n}_Pressure", cid, "P_in")
 
             elif inp == "SUCTION_PRESSURE":
-                # Like UPSTREAM_PRESSURE but skips anti-surge / recirculation valves
-                # (UV-named components) so the BFS only follows the main suction path
-                # from the separator to the compressor inlet — blocking the discharge-side
-                # path that would otherwise find HX0001_Pressure (circular for P_out model).
-                # [:1]: take only the nearest upstream pressure. Without the slice, multi-stage
-                # HP compressors (KA2001) receive both HX0001_P and HX1001_P as P_in inputs,
-                # giving UnitIdentifier two correlated features with cancelling OLS coefficients.
-                for n in find_nearest_state(comp, 'Pressure', True, skip_comps=['UV', 'ASC'])[:1]:
+                # Like UPSTREAM_PRESSURE but blocks anti-surge recirculation paths so the
+                # BFS only follows the main suction path from the separator to the
+                # compressor inlet. [:1] limits to the nearest match — multi-stage HP
+                # compressors otherwise pick up two correlated P_in inputs that produce
+                # cancelling OLS coefficients.
+                for n in find_nearest_state(comp, 'Pressure', True,
+                                             skip_comps=['ASC'], skip_antisurge=True)[:1]:
                     add_edge(f"{n}_Pressure", cid, "P_in")
 
             elif inp == "ANTISURGE_FLOW":
-                # UV recirculation entering compressor suction inlet pipe.
-                # BFS upstream from compressor through BlockValve/PipeFlow to find UV valves
-                # (by name 'UV' or by having an ASC controller as input).
+                # Anti-surge recirculation entering the compressor suction inlet pipe.
+                # BFS upstream from the compressor through pass-through valves until an
+                # ASC-controlled valve is found.
                 visited_asg = set()
                 queue_asg = [comp]
                 while queue_asg:
@@ -323,15 +333,8 @@ def build_eq_topology():
                     visited_asg.add(c_asg)
                     for u_asg, _ in get_upstream(c_asg, flow_only=True):
                         kt_asg = base_types.get(u_asg, '')
-                        if f"{u_asg}_MassFlow" in equation_ids:
-                            is_uv = 'UV' in u_asg.upper()
-                            if not is_uv:
-                                for ctrl, _ in raw_ins.get(u_asg, []):
-                                    if 'ASC' in base_types.get(ctrl, ''):
-                                        is_uv = True
-                                        break
-                            if is_uv:
-                                add_edge(f"{u_asg}_MassFlow", cid, "uv_recirc")
+                        if f"{u_asg}_MassFlow" in equation_ids and is_antisurge_valve(u_asg):
+                            add_edge(f"{u_asg}_MassFlow", cid, "uv_recirc")
                         if any(t in kt_asg for t in ('BlockValve', 'PipeFlow', 'Transmitter')):
                             queue_asg.append(u_asg)
 
@@ -392,26 +395,24 @@ def build_eq_topology():
                         add_edge(fallback_key, cid, "P_out")
 
             elif inp == "CONTAINER_PRESSURE":
-                # Find P_out for UV valve: pressure at its recirculation outlet.
-                # UV feeds the compressor inlet pipe directly (not the separator).
-                # Follow UV outlet downstream to find which compressor it serves,
-                # then BFS upstream from that compressor (no pass-throughs, skip UV/FE)
-                # to find the suction-side pressure.
-                #   LP UV → KA0001 upstream → VA0001_Pressure (LP suction separator)
-                #   HP UV → KA2001 upstream → HX0001_Pressure (LP discharge = HP suction)
+                # P_out for an anti-surge valve: pressure at its recirculation outlet.
+                # The valve feeds the compressor inlet pipe directly. Follow its outlet
+                # downstream to find the compressor, then BFS upstream from there to
+                # find the suction-side pressure (LP separator or LP-discharge HX).
                 found_pout = False
                 for target in get_downstream(comp, flow_only=True)[:3]:
                     suction = [s for s in find_nearest_state(target, 'Pressure', True,
-                                                             skip_comps=['UV', 'FE'])
+                                                             skip_comps=['FE'],
+                                                             skip_antisurge=True)
                                if f"{s}_Pressure" in equation_ids][:1]
                     if suction:
                         add_edge(f"{suction[0]}_Pressure", cid, "P_out")
                         found_pout = True
                         break
                 if not found_pout:
-                    # Fallback: original upstream-through-HX+Compressor approach
                     for n in [n for n in find_nearest_state(comp, 'Pressure', True,
-                                                            skip_comps=['UV', 'FE'],
+                                                            skip_comps=['FE'],
+                                                            skip_antisurge=True,
                                                             pass_through_types=['HeatExchanger', 'Compressor', 'Pump'])
                               if f"{n}_Pressure" in equation_ids][:1]:
                         add_edge(f"{n}_Pressure", cid, "P_out")
@@ -472,47 +473,25 @@ def build_eq_topology():
                     add_edge(speed_key, cid, "speed")
 
             elif inp == "ANTISURGE_INFLOW":
-                # UV recirculation returns gas to the compressor inlet pipe, not the separator.
-                # Mass balance on inlet pipe: VA_outflow = KA_flow - UV_flow
-                # -> UV_flow acts as positive inflow (m_in) in VA0001 pressure balance.
-                # Use find_nearest_state with pass_through_types so pruned ESV valves
-                # (no MassFlow equation) AND unpruned non-compressor flow valves (e.g.
-                # ESV1002 with a MassFlow equation) are both traversed past to reach the
-                # actual compressor. get_downstream alone stops at the first base_type node.
+                # Anti-surge recirculation returns gas to the compressor inlet pipe.
+                # Mass balance on inlet pipe: VA_outflow = KA_flow - UV_flow → the UV
+                # flow acts as positive inflow (m_in) in the VA pressure balance.
                 for ds_comp in find_nearest_state(comp, 'MassFlow', False,
                                                    pass_through_types=['BlockValve', 'PipeFlow',
                                                                         'ControlValve', 'SafetyValve']):
                     if 'Compressor' not in base_types.get(ds_comp, ''):
                         continue
                     for u, _ in get_upstream(ds_comp, flow_only=True):
-                        if f"{u}_MassFlow" not in equation_ids:
-                            continue
-                        is_uv = 'UV' in u.upper()
-                        if not is_uv:
-                            for ctrl_comp, _ in raw_ins.get(u, []):
-                                if 'ASC' in base_types.get(ctrl_comp, ''):
-                                    is_uv = True
-                                    break
-                        if is_uv:
+                        if f"{u}_MassFlow" in equation_ids and is_antisurge_valve(u):
                             add_edge(f"{u}_MassFlow", cid, "m_in")
 
             elif inp == "ANTISURGE_RECIRC_FLOW":
-                # UV recirculation that discharges to the compressor inlet junction, not
-                # the separator.  In Rev4: UV → pv (pipe junction, transparent) → KA.
-                # Contrast: UV → pv → VA (separator) — handled by ANTISURGE_INFLOW instead.
-                # Adding UV_MassFlow lets the MISO model learn the +1 gain contribution.
-                # The UV→KA edge creates the cycle KA→ASC→UV→KA; ClosedLoopRunner
-                # breaks it automatically with a unit delay on the cycle-back edge.
+                # Anti-surge recirculation that discharges to the compressor inlet pipe
+                # junction (not to a separator). The valve→KA edge creates the cycle
+                # KA→ASC→UV→KA; ClosedLoopRunner breaks it with a unit delay on the
+                # cycle-back edge.
                 for u, _ in get_upstream(comp, flow_only=True):
-                    if f"{u}_MassFlow" not in equation_ids:
-                        continue
-                    is_uv_r = 'UV' in u.upper()
-                    if not is_uv_r:
-                        for ctrl_comp, _ in raw_ins.get(u, []):
-                            if 'ASC' in base_types.get(ctrl_comp, ''):
-                                is_uv_r = True
-                                break
-                    if not is_uv_r:
+                    if f"{u}_MassFlow" not in equation_ids or not is_antisurge_valve(u):
                         continue
                     uv_ds = get_downstream(u, flow_only=True)
                     feeds_compressor = any('Compressor' in base_types.get(d, '') for d in uv_ds)
@@ -537,13 +516,12 @@ def build_eq_topology():
                         add_edge(f"{n}_MassFlow", cid, "m_out")
 
             elif inp == "SIBLING_ANTISURGE_FLOW":
-                # Find LP anti-surge UV valves (UV0001, UV1001) that drain gas from the
-                # inter-stage pipe space back to the LP separator (net m_out from junction).
-                # They share a pipe connector with the ESV block valves upstream of this
-                # junction, not with PV_0001 itself.
-                # Full path: PV_0001 ← pv_L0007A(noise) ← ESV0005(passthru) ← pv_23L0005 → UV0001
-                # BFS goes upstream through noise pipe nodes and ESV/BlockValve pass-throughs.
-                # UV2001/UV3001 connect from a different HP-side connector and are not reached.
+                # Anti-surge valves that drain gas from the inter-stage pipe space back
+                # to a sibling separator (net m_out from this junction). They share a
+                # pipe connector with the ESV block valves upstream of this junction,
+                # not with the junction itself. BFS goes upstream through noise pipe
+                # nodes and pass-through valves, then looks at the noise pipe's outputs
+                # for ASC-controlled sibling drain valves.
                 _sib_visited: set = set()
                 _sib_queue = [comp]
                 while _sib_queue:
@@ -554,24 +532,20 @@ def build_eq_topology():
                     for _ssrc, _sport in raw_ins.get(_scurr, []):
                         _ssrc_b = _ssrc.replace('_pf', '')
                         if _ssrc_b == _scurr or _ssrc_b in _sib_visited:
-                            continue  # self-ref or already visited
-                        # Only follow flow ports, not valve parameter connections
+                            continue
                         if any(t in _sport for t in ('Cv', 'FL', 'Fd', 'Valve', 'xT',
                                                       'Control', 'Speed', 'Profile',
                                                       'Factor', 'Temperature', 'Measured')):
                             continue
                         _ssrc_kt = base_types.get(_ssrc_b, '')
                         _is_noise = _ssrc_b not in base_types
-                        # ESV/block valves have a companion _pf model (PipeFlow type) that
-                        # overwrites base_types — treat PipeFlow the same as BlockValve here.
                         _is_pass  = any(t in _ssrc_kt for t in ('BlockValve', 'SafetyValve', 'PipeFlow'))
                         if _is_noise:
-                            # Noise pipe connector: check siblings for UV drain valves
                             for _sib, _ in raw_outs.get(_ssrc_b, []):
                                 _sib_b = _sib.replace('_pf', '')
                                 if _sib_b == comp or _sib_b in _sib_visited:
                                     continue
-                                if 'UV' not in _sib_b.upper():
+                                if not is_antisurge_valve(_sib_b):
                                     continue
                                 if f"{_sib_b}_MassFlow" not in equation_ids:
                                     continue
@@ -579,7 +553,6 @@ def build_eq_topology():
                             _sib_queue.append(_ssrc_b)
                         elif _is_pass:
                             _sib_queue.append(_ssrc_b)
-                        # else: real equipment (HX, Compressor) — stop this branch
 
             elif inp == "DOWNSTREAM_LIQUID_OUTFLOWS":
                 # Oil/water liquid outflows from separator/tank (LV valves, overflow valves).
@@ -604,11 +577,11 @@ def build_eq_topology():
             elif inp == "MEASURED_FLOW":
                 ctype = eq.get("ControllerType", "")
                 if ctype == "ASC":
-                    # ASC should measure the compressor it protects, not the UV valve flow.
-                    # Follow: ASC controls UV valve -> UV feeds inlet pipe -> Compressor.
+                    # ASC should measure the compressor it protects, not its own UV valve.
+                    # Follow: ASC controls valve → valve feeds inlet pipe → Compressor.
                     found_flow = False
                     for uv in get_downstream(comp):
-                        if 'UV' not in uv.upper():
+                        if not is_antisurge_valve(uv):
                             continue
                         for ka in get_downstream(uv, flow_only=True):
                             if 'Compressor' in base_types.get(ka, '') and f"{ka}_MassFlow" in equation_ids:
@@ -618,8 +591,8 @@ def build_eq_topology():
                         if found_flow:
                             break
                     if not found_flow:
-                        # Fallback: skip UV in BFS to avoid circular dependency
-                        for n in find_nearest_state(comp, 'MassFlow', True, skip_comps=['UV'])[:1]:
+                        for n in find_nearest_state(comp, 'MassFlow', True,
+                                                     skip_antisurge=True)[:1]:
                             add_edge(f"{n}_MassFlow", cid, "y_flow")
                 else:
                     for n in find_nearest_state(comp, 'MassFlow', True)[:1]:
@@ -628,16 +601,17 @@ def build_eq_topology():
             elif inp == "MEASURED_PRESSURE":
                 ctype = eq.get("ControllerType", "")
                 if ctype == "ASC":
-                    # ASC only needs inlet and outlet pressure of the protected compressor.
+                    # ASC needs the inlet and outlet pressure of the protected compressor.
                     added_pres = False
                     for uv in get_downstream(comp):
-                        if 'UV' not in uv.upper():
+                        if not is_antisurge_valve(uv):
                             continue
                         for ka in get_downstream(uv, flow_only=True):
                             if 'Compressor' not in base_types.get(ka, ''):
                                 continue
                             for p in find_nearest_state(ka, 'Pressure', True,
-                                                         skip_comps=['UV', 'FE'])[:1]:
+                                                         skip_comps=['FE'],
+                                                         skip_antisurge=True)[:1]:
                                 add_edge(f"{p}_Pressure", cid, "y_pres")
                             if f"{ka}_Pressure" in equation_ids:
                                 add_edge(f"{ka}_Pressure", cid, "y_pres")
@@ -659,12 +633,11 @@ def build_eq_topology():
             elif inp == "MEASURED_SPEED":
                 ctype = eq.get("ControllerType", "")
                 if ctype == "ASC":
-                    # Wire the protected compressor's Speed state to the ASC surge proxy.
-                    # Follow: ASC controls UV → UV outlet feeds compressor inlet → KA*.
-                    # Speed(N) shifts the surge limit (higher N → NASP at higher flow),
-                    # so including it in the 4-feature proxy improves generalization.
+                    # Wire the protected compressor's Speed state into the ASC surge proxy.
+                    # Speed shifts the surge limit (higher N → NASP at higher flow), so
+                    # including it as a fourth feature improves generalisation.
                     for uv in get_downstream(comp):
-                        if 'UV' not in uv.upper():
+                        if not is_antisurge_valve(uv):
                             continue
                         for ka in get_downstream(uv, flow_only=True):
                             if 'Compressor' in base_types.get(ka, '') and f"{ka}_Speed" in equation_ids:
@@ -676,12 +649,10 @@ def build_eq_topology():
                 comp_bare = comp.split('_')[0]
                 if 'Control' in kt and 'ASC' not in comp:
                     if 'PIC' in comp:
-                        # Pressure controllers: trace measurement chain via raw_ins.
-                        # find_nearest_state uses flow_only=True which filters 'Measured'
-                        # ports, so BFS through flow connections fails for PIC→PT→pv chains.
-                        # Instead walk raw_ins directly:
-                        #   PIC → PT (Measurement port) → pv_node → BFS upstream in raw_ins
-                        #   skipping UV components to avoid reaching discharge HX via recirc.
+                        # Pressure controllers: walk raw_ins directly from PIC → PT
+                        # (Measurement port) → pipe node → BFS upstream, blocking
+                        # anti-surge recirculation valves so the chain does not reach
+                        # the discharge HX via recirc.
                         found_pic = False
                         for src, port in raw_ins.get(comp_bare, []):
                             if found_pic:
@@ -697,7 +668,7 @@ def build_eq_topology():
                                     bfs_curr = bfs_q.pop(0)
                                     if bfs_curr in bfs_vis:
                                         continue
-                                    if 'UV' in bfs_curr.upper():
+                                    if is_antisurge_valve(bfs_curr):
                                         continue
                                     bfs_vis.add(bfs_curr)
                                     if f"{bfs_curr}_Pressure" in equation_ids:
