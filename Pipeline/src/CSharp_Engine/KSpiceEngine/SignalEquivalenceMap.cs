@@ -41,12 +41,12 @@ namespace KSpiceEngine
         // doesn't need it — each handled K-spice class names its passthrough port
         // explicitly.)
 
-        public SignalEquivalenceMap(JArray models, Dictionary<string, string> signalMap, ISet<string> validModelIds = null)
+        public SignalEquivalenceMap(JArray models, Dictionary<string, string> signalMap, ISet<string>? validModelIds = null)
         {
             componentByName = new Dictionary<string, JObject>(StringComparer.OrdinalIgnoreCase);
             foreach (var m in models)
             {
-                string name = (string)m["Name"] ?? "";
+                string name = (string?)m["Name"] ?? "";
                 if (!componentByName.ContainsKey(name))
                     componentByName[name] = (JObject)m;
             }
@@ -73,24 +73,24 @@ namespace KSpiceEngine
         /// Resolve any CSV signal name to a model_id by walking the K-spice wiring graph.
         /// Returns null when no equivalent modelled state exists (true boundary signal).
         /// </summary>
-        public string TryResolve(string csvSignal)
+        public string? TryResolve(string csvSignal)
         {
             if (string.IsNullOrEmpty(csvSignal)) return null;
-            if (cache.TryGetValue(csvSignal, out string cached))
+            if (cache.TryGetValue(csvSignal, out var cached))
                 return cached.Length == 0 ? null : cached;
 
             var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            string result = ResolveRecursive(csvSignal, visited);
+            string? result = ResolveRecursive(csvSignal, visited);
             cache[csvSignal] = result ?? "";
             return result;
         }
 
-        private string ResolveRecursive(string signal, HashSet<string> visited)
+        private string? ResolveRecursive(string? signal, HashSet<string> visited)
         {
             if (string.IsNullOrEmpty(signal)) return null;
 
             // Direct hit: this signal IS a model's primary output.
-            if (csvToModelId.TryGetValue(signal, out string direct)) return direct;
+            if (csvToModelId.TryGetValue(signal, out var direct)) return direct;
 
             // Cycle guard.
             if (!visited.Add(signal)) return null;
@@ -104,9 +104,9 @@ namespace KSpiceEngine
             // Look up using the full name including any _pf suffix — _pf variants ARE
             // registered in componentByName (they come from the full models array) and
             // carry the InletStream inputs that their base component lacks.
-            if (!componentByName.TryGetValue(comp, out JObject compObj)) return null;
-            string ktype = (string)compObj["KSpiceType"] ?? "";
-            var inputs = (JArray)compObj["Inputs"];
+            if (!componentByName.TryGetValue(comp, out var compObj)) return null;
+            string ktype = (string?)compObj["KSpiceType"] ?? "";
+            var inputs = (JArray?)compObj["Inputs"];
             if (inputs == null || inputs.Count == 0) return null;
 
             // Only trace through specific *passthrough* component classes. Anything
@@ -135,9 +135,9 @@ namespace KSpiceEngine
                 // (MeasuredValue, AlarmHigh, etc.) — they all derive from "Value".
                 foreach (var inp in inputs)
                 {
-                    string dst = (string)inp["Destination"] ?? "";
+                    string dst = (string?)inp["Destination"] ?? "";
                     if (string.Equals(dst, "Value", StringComparison.OrdinalIgnoreCase))
-                        return ResolveRecursive((string)inp["Source"], visited);
+                        return ResolveRecursive((string?)inp["Source"], visited);
                 }
                 return null;
             }
@@ -149,9 +149,9 @@ namespace KSpiceEngine
                 {
                     foreach (var inp in inputs)
                     {
-                        string dst = (string)inp["Destination"] ?? "";
+                        string dst = (string?)inp["Destination"] ?? "";
                         if (string.Equals(dst, "Measurement", StringComparison.OrdinalIgnoreCase))
-                            return ResolveRecursive((string)inp["Source"], visited);
+                            return ResolveRecursive((string?)inp["Source"], visited);
                     }
                     return null;
                 }
@@ -164,12 +164,12 @@ namespace KSpiceEngine
                     string[] spDst = { "ExternalSetpoint", "Setpoint", "CascadeSetpoint" };
                     foreach (var inp in inputs)
                     {
-                        string dst = (string)inp["Destination"] ?? "";
+                        string dst = (string?)inp["Destination"] ?? "";
                         bool match = false;
                         foreach (var d in spDst)
                             if (string.Equals(d, dst, StringComparison.OrdinalIgnoreCase)) { match = true; break; }
                         if (!match) continue;
-                        string resolved = ResolveRecursive((string)inp["Source"], visited);
+                        string? resolved = ResolveRecursive((string?)inp["Source"], visited);
                         if (resolved != null) return resolved;
                     }
                     return null;
@@ -215,7 +215,7 @@ namespace KSpiceEngine
                 var inlets = new List<JObject>();
                 foreach (var inp in inputs)
                 {
-                    string dst = (string)inp["Destination"] ?? "";
+                    string dst = (string?)inp["Destination"] ?? "";
                     if (!dst.StartsWith("InletStream", StringComparison.OrdinalIgnoreCase)) continue;
                     inlets.Add((JObject)inp);
                 }
@@ -230,7 +230,7 @@ namespace KSpiceEngine
 
                 foreach (var sole in inlets)
                 {
-                    string upstream = (string)sole["Source"]; // e.g. "23ESV0002_pf:OutletStream"
+                    string upstream = (string?)sole["Source"] ?? ""; // e.g. "23ESV0002_pf:OutletStream"
                     int uc = upstream.IndexOf(':');
 
                     if (isPressureQuery && uc > 0)
@@ -243,7 +243,7 @@ namespace KSpiceEngine
                         if (hit != null) return hit;
                     }
 
-                    string mapped = MapPortToStreamSuffix(upstream, isPressureQuery ? "Pressure" : port);
+                    string? mapped = MapPortToStreamSuffix(upstream, isPressureQuery ? "Pressure" : port);
                     if (mapped != null)
                     {
                         var hit = ResolveRecursive(mapped, visited);
@@ -266,9 +266,9 @@ namespace KSpiceEngine
             {
                 foreach (var inp in inputs)
                 {
-                    string dst = (string)inp["Destination"] ?? "";
+                    string dst = (string?)inp["Destination"] ?? "";
                     if (!dst.StartsWith("InletStream", StringComparison.OrdinalIgnoreCase)) continue;
-                    string upstream = (string)inp["Source"]; // e.g. "pv_23L0003A:OutletStream[0]"
+                    string upstream = (string?)inp["Source"] ?? ""; // e.g. "pv_23L0003A:OutletStream[0]"
                     int uc = upstream.IndexOf(':');
                     if (uc > 0)
                     {
@@ -277,7 +277,7 @@ namespace KSpiceEngine
                         var hit = ResolveRecursive($"{upComp}:Pressure", visited);
                         if (hit != null) return hit;
                     }
-                    string mapped = MapPortToStreamSuffix(upstream, "Pressure");
+                    string? mapped = MapPortToStreamSuffix(upstream, "Pressure");
                     if (mapped != null)
                     {
                         var hit = ResolveRecursive(mapped, visited);
@@ -304,10 +304,10 @@ namespace KSpiceEngine
         // Convert a (stream-bearing source, requested state port) pair into the
         // K-spice convention of `Comp:Stream.suffix` so the inverted signal map can
         // resolve it directly. Returns null when the conversion isn't well-defined.
-        private static string MapPortToStreamSuffix(string upstream, string port)
+        private static string? MapPortToStreamSuffix(string upstream, string port)
         {
             if (string.IsNullOrEmpty(upstream) || !upstream.Contains(':')) return null;
-            string suffix = port switch
+            string? suffix = port switch
             {
                 _ when port.Equals("Temperature", StringComparison.OrdinalIgnoreCase) => ".t",
                 _ when port.Equals("Pressure",    StringComparison.OrdinalIgnoreCase) => ".p",

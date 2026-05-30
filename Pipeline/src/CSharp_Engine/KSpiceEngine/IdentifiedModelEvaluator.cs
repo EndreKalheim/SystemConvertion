@@ -307,13 +307,13 @@ namespace KSpiceEngine
                         TimeDelay_s    = (double?)p["TimeDelay_s"]    ?? 0.0,
                         Bias           = (double?)p["Bias"]           ?? 0.0
                     };
-                    var gains = (JArray)p["LinearGains"];
+                    var gains = p["LinearGains"] as JArray;
                     if (gains != null) unitParams.LinearGains = gains.Select(t => (double)t).ToArray();
-                    var u0 = (JArray)p["U0"];
+                    var u0 = p["U0"] as JArray;
                     if (u0 != null) unitParams.U0 = u0.Select(t => (double)t).ToArray();
-                    var unorm = (JArray)p["UNorm"];
+                    var unorm = p["UNorm"] as JArray;
                     if (unorm != null) unitParams.UNorm = unorm.Select(t => (double)t).ToArray();
-                    var curv = (JArray)p["Curvatures"];
+                    var curv = p["Curvatures"] as JArray;
                     if (curv != null) unitParams.Curvatures = curv.Select(t => (double)t).ToArray();
 
                     unitModel = new UnitModel(unitParams, ID);
@@ -328,17 +328,17 @@ namespace KSpiceEngine
                 case "IdentifyLinear_IntegratedFlow":
                 {
                     integratorBias = (double?)p["Bias"] ?? 0.0;
-                    var gains = (JArray)p["LinearGains"];
+                    var gains = p["LinearGains"] as JArray;
                     integratorLinearGains = gains?.Select(t => (double)t).ToArray() ?? new double[0];
                     integratorIsOutflow = InputContract.Select(s => s.IsOutflow).ToArray();
                     integratorAccum = new double[InputContract.Count];
-                    var u0 = (JArray)p["U0"];
+                    var u0 = p["U0"] as JArray;
                     integratorU0 = u0?.Select(t => (double)t).ToArray()
                                    ?? new double[integratorLinearGains.Length];
-                    var curv = (JArray)p["Curvatures"];
+                    var curv = p["Curvatures"] as JArray;
                     if (curv != null && curv.Any(t => !double.IsNaN((double)t)))
                         integratorCurvatures = curv.Select(t => (double)t).ToArray();
-                    var unorm = (JArray)p["UNorm"];
+                    var unorm = p["UNorm"] as JArray;
                     integratorUNorm = unorm?.Select(t => (double)t).ToArray();
                     return;
                 }
@@ -507,7 +507,7 @@ namespace KSpiceEngine
                 {
                     double v = inputs[i];
                     if (double.IsNaN(v)) v = 0.0;
-                    if (integratorIsOutflow[i]) v = -v;
+                    if (integratorIsOutflow != null && integratorIsOutflow[i]) v = -v;
                     integratorAccum[i] += v * timeBase_s;
                     y += integratorLinearGains[i] * integratorAccum[i];
                     // Optional curvature: c*(accum - U0)^2 / UNorm

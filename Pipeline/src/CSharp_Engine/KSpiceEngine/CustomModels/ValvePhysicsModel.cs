@@ -30,7 +30,7 @@ namespace KSpiceEngine.CustomModels
         public override SignalType GetOutputSignalType() { return SignalType.Output_Y; }
         public bool IsModelSimulatable(out string explanationStr) { explanationStr = "OK"; return true; }
 
-        public void WarmStart(double[] inputs, double output)
+        public void WarmStart(double[]? inputs, double output)
         {
             // Stateless physics model, no internal state to warm start
         }
@@ -40,7 +40,7 @@ namespace KSpiceEngine.CustomModels
 
         public ISimulatableModel Clone(string cloneID)
         {
-            return new ValvePhysicsModel(cloneID, (string[])this.ModelInputIDs.Clone(), this.outputID)
+            return new ValvePhysicsModel(cloneID, (string[])this.ModelInputIDs!.Clone(), this.outputID)
             {
                 modelParameters = new ValveParameters()
                 {
@@ -51,7 +51,7 @@ namespace KSpiceEngine.CustomModels
         }
 
         // Inputs expected: P_in, P_out, U (0..100 or 0..1)
-        public double[] Iterate(double[] inputsU, double timeBase_s, double badDataID = -9999)
+        public double[] Iterate(double[]? inputsU, double timeBase_s, double badDataID = -9999)
         {
             if (inputsU == null || inputsU.Length < 3) return new double[] { badDataID };
 

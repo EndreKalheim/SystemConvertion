@@ -19,28 +19,30 @@ namespace KSpiceEngine
             Console.WriteLine("\n[DynamicPlantRunner] Starting Phase 6: Training and Validation Pipeline...");
 
             var systemMap = JObject.Parse(File.ReadAllText(systemMapPath));
-            var models    = (JArray)systemMap["Models"];
+            var models    = (JArray)systemMap["Models"]!;
 
             var compToType = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             foreach (var model in models)
             {
-                string name      = (string)model["Name"];
+                string name      = (string)model["Name"]! ?? "";
                 string rawName   = name.Replace("_pf", "", StringComparison.OrdinalIgnoreCase);
                 bool   isPipeSfx = name.EndsWith("_pf", StringComparison.OrdinalIgnoreCase);
                 if (isPipeSfx && compToType.ContainsKey(rawName)) continue;
-                compToType[rawName] = (string)model["KSpiceType"];
+                compToType[rawName] = (string)model["KSpiceType"]! ?? "";
             }
 
-            var signalMap  = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(mappingPath));
-            var equations  = JsonConvert.DeserializeObject<List<dynamic>>(File.ReadAllText(equationsPath));
+            var signalMap  = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(mappingPath))
+                             ?? new Dictionary<string, string>();
+            var equations  = JsonConvert.DeserializeObject<List<dynamic>>(File.ReadAllText(equationsPath))
+                             ?? new List<dynamic>();
 
-            string topologyPath = Path.Combine(Path.GetDirectoryName(equationsPath), "TSA_Explicit_Topology.json");
-            var topoEdges = (JArray)JObject.Parse(File.ReadAllText(topologyPath))["edges"];
+            string topologyPath = Path.Combine(Path.GetDirectoryName(equationsPath)!, "TSA_Explicit_Topology.json");
+            var topoEdges = (JArray)JObject.Parse(File.ReadAllText(topologyPath))["edges"]!;
 
             var inputEdges = new Dictionary<string, List<(string fromNode, string label)>>();
             foreach (var edge in topoEdges)
             {
-                string to = (string)edge["to"], from = (string)edge["from"], label = (string)edge["label"];
+                string to = (string)edge["to"]! ?? "", from = (string)edge["from"]! ?? "", label = (string)edge["label"]! ?? "";
                 if (!inputEdges.ContainsKey(to)) inputEdges[to] = new List<(string, string)>();
                 inputEdges[to].Add((from, label));
             }
@@ -65,7 +67,7 @@ namespace KSpiceEngine
                 string kspiceType     = compToType.ContainsKey(comp) ? compToType[comp] : "Unknown";
 
                 string mapKey = $"{comp}_{state}";
-                string targetCsvHeader = signalMap.ContainsKey(mapKey) ? signalMap[mapKey] : null;
+                string? targetCsvHeader = signalMap.ContainsKey(mapKey) ? signalMap[mapKey] : null;
                 bool hasCsvTruth = targetCsvHeader != null && dataset.ContainsKey(targetCsvHeader);
 
                 if (!hasCsvTruth)
@@ -88,7 +90,7 @@ namespace KSpiceEngine
                             foreach (var (fromNode, label) in inputEdges[id])
                             {
                                 if (label != "m_in" && label != "m_out") continue;
-                                string resolvedKey = signalMap.ContainsKey(fromNode) ? fromNode : null;
+                                string? resolvedKey = signalMap.ContainsKey(fromNode) ? fromNode : null;
                                 if (resolvedKey == null)
                                 {
                                     int li = fromNode.LastIndexOf('_');
@@ -136,7 +138,7 @@ namespace KSpiceEngine
                     }
                     continue;
                 }
-                double[] Y_true = dataset[targetCsvHeader];
+                double[] Y_true = dataset[targetCsvHeader!];
 
                 if (formula.Contains("Boundary"))
                 {
@@ -162,7 +164,7 @@ namespace KSpiceEngine
                     }
                     else
                     {
-                        result = AscIdentifier.Identify(id, comp, Y_true, timeBase_s, inputCols, predictions, models, selectedKspiceModelPath, dataset);
+                        result = AscIdentifier.Identify(id, comp, Y_true, timeBase_s, inputCols, predictions, models, selectedKspiceModelPath ?? "", dataset);
                     }
                 }
                 else if (state == "Pressure" && IsContainerType(kspiceType))
@@ -224,8 +226,8 @@ namespace KSpiceEngine
                         var gains  = result.pars["LinearGains"] as JArray;
                         int pinIdx = -1;
                         for (int k = 0; k < (inames?.Count ?? 0); k++)
-                            if (((string)inames[k]).EndsWith("(P_in)")) { pinIdx = k; break; }
-                        if (pinIdx >= 0 && (double)gains[pinIdx] < 0)
+                            if (((string)inames![k]! ?? "").EndsWith("(P_in)")) { pinIdx = k; break; }
+                        if (pinIdx >= 0 && gains != null && (double)gains[pinIdx]! < 0)
                         {
                             inputCols = inputCols.Where(c => !c.name.EndsWith("(P_in)")).ToList();
                             Console.WriteLine($"[Model] {id}: P_in gain < 0 (non-physical OLS artifact) → excluded; re-identifying");
@@ -243,6 +245,7 @@ namespace KSpiceEngine
             Console.WriteLine($"\n[SUCCESS] Validation Data Written to {outputCsvPath}");
 
             string paramsOutPath = Path.Combine(Path.GetDirectoryName(outputCsvPath)!, "CS_Identified_Parameters.json");
+            // (Path.GetDirectoryName above already null-asserted)
             File.WriteAllText(paramsOutPath, JsonConvert.SerializeObject(identifiedParams, Formatting.Indented));
             Console.WriteLine($"[SUCCESS] Identified Parameters Written to {paramsOutPath}");
         }
@@ -252,7 +255,7 @@ namespace KSpiceEngine
         private static (double[] pred, JObject pars) IdentifyPidModel(
             string id, string comp, double[] Y_true, int numRows, double timeBase_s,
             Dictionary<string, string> signalMap, Dictionary<string, double[]> dataset,
-            JObject eqDesc = null)
+            JObject? eqDesc = null)
         {
             string measMapKey = $"{comp}_Measurement";
             string spMapKey   = $"{comp}_Setpoint";
@@ -303,8 +306,8 @@ namespace KSpiceEngine
                 // it over the data range — more stable when data excitation is low.
                 if (eqDesc?["KSpice_OutRangeLow"] != null && eqDesc["KSpice_OutRangeHigh"] != null)
                 {
-                    double olo = (double)eqDesc["KSpice_OutRangeLow"];
-                    double ohi = (double)eqDesc["KSpice_OutRangeHigh"];
+                    double olo = (double)eqDesc["KSpice_OutRangeLow"]!;
+                    double ohi = (double)eqDesc["KSpice_OutRangeHigh"]!;
                     double slack = Math.Max(1.0, (ohi - olo) * 0.1);
                     bool dataFitsKSpice = Y_true.Min() >= olo - slack && Y_true.Max() <= ohi + slack;
                     if (ohi - olo > 100 + 1e-6 && dataFitsKSpice)
@@ -380,10 +383,10 @@ namespace KSpiceEngine
                 //   Kp_tsa = Gain * 100 / MeasRange  (output is [0,100] normalised)
                 if (eqDesc?["KSpice_Gain"] != null && eqDesc["KSpice_MeasRange"] != null)
                 {
-                    double kGain  = (double)eqDesc["KSpice_Gain"];
-                    double kRange = (double)eqDesc["KSpice_MeasRange"];
-                    double kTi    = eqDesc["KSpice_Ti_s"] != null ? (double)eqDesc["KSpice_Ti_s"] : Ti;
-                    double kTd    = eqDesc["KSpice_Td_s"] != null ? (double)eqDesc["KSpice_Td_s"] : 0.0;
+                    double kGain  = (double)eqDesc["KSpice_Gain"]!;
+                    double kRange = (double)eqDesc["KSpice_MeasRange"]!;
+                    double kTi    = eqDesc["KSpice_Ti_s"] != null ? (double)eqDesc["KSpice_Ti_s"]! : Ti;
+                    double kTd    = eqDesc["KSpice_Td_s"] != null ? (double)eqDesc["KSpice_Td_s"]! : 0.0;
                     double kKp    = kGain * 100.0 / kRange;
                     // Detect unit mismatch: K-Spice can store MeasRange in SI base units
                     // (Pa) while the CSV uses derived units (bar). If the declared range
@@ -520,7 +523,7 @@ namespace KSpiceEngine
             string id, string comp, double[] Y_true, int numRows, double timeBase_s,
             JArray models, Dictionary<string, string> signalMap, Dictionary<string, double[]> dataset,
             List<(string name, double[] data)> inputCols,
-            Dictionary<string, HashSet<string>> physicalNeighbors = null)
+            Dictionary<string, HashSet<string>>? physicalNeighbors = null)
         {
             Console.WriteLine($"[Model] {id}: Outlet Valve Physics Model identification");
             string compBase = comp.EndsWith("_pf", StringComparison.OrdinalIgnoreCase)
@@ -528,17 +531,17 @@ namespace KSpiceEngine
             string pfComp   = compBase + "_pf";
 
             double cv = 100.0;
-            var valveInfo = models.FirstOrDefault(m => ((string)m["Name"]).Equals(compBase, StringComparison.OrdinalIgnoreCase));
+            var valveInfo = models.FirstOrDefault(m => ((string)m["Name"]! ?? "").Equals(compBase, StringComparison.OrdinalIgnoreCase));
             if (valveInfo?["Parameters"] != null)
             {
-                if (valveInfo["Parameters"]["CvFullyOpen"] != null)
-                    cv = (double)valveInfo["Parameters"]["CvFullyOpen"];
-                else if (valveInfo["Parameters"]["CvCheckValveFullyOpen"] != null)
-                    cv = (double)valveInfo["Parameters"]["CvCheckValveFullyOpen"];
+                if (valveInfo["Parameters"]!["CvFullyOpen"] != null)
+                    cv = (double)valveInfo["Parameters"]!["CvFullyOpen"]!;
+                else if (valveInfo["Parameters"]!["CvCheckValveFullyOpen"] != null)
+                    cv = (double)valveInfo["Parameters"]!["CvCheckValveFullyOpen"]!;
             }
 
-            double[] pIn = null, pOut = null, uData = null;
-            string pInCol = null, pOutCol = null, uCol = null;
+            double[]? pIn = null, pOut = null, uData = null;
+            string? pInCol = null, pOutCol = null, uCol = null;
 
             foreach (var col in inputCols)
             {
@@ -549,13 +552,13 @@ namespace KSpiceEngine
 
             if (pIn == null)
             {
-                string[] pInCands = { $"{pfComp}:InletStream.p", $"{pfComp}:InletPressure", signalMap.ContainsKey($"{compBase}_UpstreamPressure") ? signalMap[$"{compBase}_UpstreamPressure"] : null };
+                string?[] pInCands = { $"{pfComp}:InletStream.p", $"{pfComp}:InletPressure", signalMap.ContainsKey($"{compBase}_UpstreamPressure") ? signalMap[$"{compBase}_UpstreamPressure"] : null };
                 foreach (var cand in pInCands) { if (cand != null && dataset.ContainsKey(cand)) { pIn = dataset[cand]; pInCol = cand; break; } }
             }
 
             if (pOut == null)
             {
-                string[] pOutCands = { $"{pfComp}:OutletStream.p", $"{pfComp}:OutletPressure", signalMap.ContainsKey($"{compBase}_DownstreamPressure") ? signalMap[$"{compBase}_DownstreamPressure"] : null };
+                string?[] pOutCands = { $"{pfComp}:OutletStream.p", $"{pfComp}:OutletPressure", signalMap.ContainsKey($"{compBase}_DownstreamPressure") ? signalMap[$"{compBase}_DownstreamPressure"] : null };
                 foreach (var cand in pOutCands) { if (cand != null && dataset.ContainsKey(cand)) { pOut = dataset[cand]; pOutCol = cand; break; } }
             }
 
@@ -568,7 +571,7 @@ namespace KSpiceEngine
             // Rev4 UV valves already have a topology P_out edge (equation ID, no ":") → no change.
             if (pOutCol != null && pOutCol.Contains(":") && physicalNeighbors != null)
             {
-                string pInBase = pInCol?.Split('(')[0].Trim();  // strip "(P_in)" label if present
+                string? pInBase = pInCol?.Split('(')[0].Trim();  // strip "(P_in)" label if present
                 if (physicalNeighbors.TryGetValue(compBase, out var neighbors))
                 {
                     foreach (string nb in neighbors)
@@ -579,7 +582,7 @@ namespace KSpiceEngine
                         // Equation IDs are never raw CSV column names — resolve via signalMap.
                         // Previous attempt checked dataset.ContainsKey(candidateId) which always
                         // fails because dataset keys are raw K-Spice stream names, not equation IDs.
-                        string mappedCol = signalMap.TryGetValue(candidateId, out string c) ? c : candidateId;
+                        string mappedCol = signalMap.TryGetValue(candidateId, out var c) ? c : candidateId;
                         if (!dataset.ContainsKey(mappedCol)) continue;
                         Console.WriteLine($"[ValveIdentify] {id}: Replacing raw K-Spice P_out '{pOutCol}' → equation ID '{candidateId}' (CSV: {mappedCol})");
                         pOut    = dataset[mappedCol];
@@ -623,7 +626,7 @@ namespace KSpiceEngine
             }
 
             double tuningFactor = sumFF > 1e-9 ? sumYF / sumFF : 1.0;
-            var valveModel = new CustomModels.ValvePhysicsModel(id, new[] { pInCol, pOutCol, uCol }, id);
+            var valveModel = new CustomModels.ValvePhysicsModel(id, new[] { pInCol ?? "", pOutCol ?? "", uCol ?? "" }, id);
             valveModel.modelParameters.Cv                 = cv;
             valveModel.modelParameters.DensityTuningFactor = tuningFactor;
 
@@ -966,7 +969,7 @@ namespace KSpiceEngine
             if (p.Curvatures != null) target["Curvatures"] = JArray.FromObject(p.Curvatures);
         }
 
-        internal static double[] SolveLinearSystem(double[,] A, double[] b, int n)
+        internal static double[]? SolveLinearSystem(double[,] A, double[] b, int n)
         {
             double[,] m = new double[n, n];
             double[]  r = new double[n];
@@ -1034,11 +1037,11 @@ namespace KSpiceEngine
             if (!inputEdges.ContainsKey(nodeId)) return result;
 
             int parentSplit = nodeId.LastIndexOf('_');
-            string parentComp = parentSplit > 0 ? nodeId.Substring(0, parentSplit) : null;
+            string? parentComp = parentSplit > 0 ? nodeId.Substring(0, parentSplit) : null;
 
             foreach (var (fromNode, label) in inputEdges[nodeId])
             {
-                string resolvedKey = null;
+                string? resolvedKey = null;
                 if (signalMap.ContainsKey(fromNode))
                 {
                     resolvedKey = fromNode;
@@ -1057,7 +1060,7 @@ namespace KSpiceEngine
                         }
                         else
                         {
-                            string proxyKey = FindProxySignal(fromComp, fromState, parentComp,
+                            string? proxyKey = FindProxySignal(fromComp, fromState, parentComp,
                                                               physicalNeighbors, signalMap, dataset);
                             if (proxyKey != null)
                             {
@@ -1083,8 +1086,8 @@ namespace KSpiceEngine
             return result;
         }
 
-        private static string FindProxySignal(
-            string missingComp, string stateSuffix, string parentComp,
+        private static string? FindProxySignal(
+            string missingComp, string stateSuffix, string? parentComp,
             Dictionary<string, HashSet<string>> physicalNeighbors,
             Dictionary<string, string> signalMap,
             Dictionary<string, double[]> dataset,
@@ -1125,14 +1128,14 @@ namespace KSpiceEngine
 
             foreach (var model in models)
             {
-                string compName = Normalize((string)model["Name"] ?? "");
-                var inputs = (JArray)model["Inputs"];
+                string compName = Normalize((string?)model["Name"] ?? "");
+                var inputs = (JArray?)model["Inputs"];
                 if (inputs == null) continue;
                 foreach (var inp in inputs)
                 {
-                    string dst = (string)inp["Destination"] ?? "";
+                    string dst = (string?)inp["Destination"] ?? "";
                     if (dst.IndexOf("Stream", StringComparison.OrdinalIgnoreCase) < 0) continue;
-                    string src = (string)inp["Source"] ?? "";
+                    string src = (string?)inp["Source"] ?? "";
                     int colonIdx = src.IndexOf(':');
                     if (colonIdx <= 0) continue;
                     string srcComp = Normalize(src.Substring(0, colonIdx));
@@ -1189,7 +1192,7 @@ namespace KSpiceEngine
 
             foreach (var kvp in predictions)
             {
-                string trueHeader = signalMap.ContainsKey(kvp.Key) ? signalMap[kvp.Key] : null;
+                string? trueHeader = signalMap.ContainsKey(kvp.Key) ? signalMap[kvp.Key] : null;
                 if (trueHeader != null && dataset.ContainsKey(trueHeader))
                 {
                     newHeaders.Add($"{kvp.Key}_True");

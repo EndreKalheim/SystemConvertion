@@ -24,19 +24,21 @@ namespace KSpiceEngine
             Console.WriteLine($"  Test CSV : {testCsvPath}");
 
             var systemMap = JObject.Parse(File.ReadAllText(systemMapPath));
-            var models = (JArray)systemMap["Models"];
-            var signalMap = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(mappingPath));
-            var equations = JsonConvert.DeserializeObject<List<dynamic>>(File.ReadAllText(equationsPath));
+            var models = (JArray?)systemMap["Models"] ?? new JArray();
+            var signalMap = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(mappingPath))
+                            ?? new Dictionary<string, string>();
+            var equations = JsonConvert.DeserializeObject<List<dynamic>>(File.ReadAllText(equationsPath))
+                            ?? new List<dynamic>();
             var identifiedParams = JObject.Parse(File.ReadAllText(identifiedParamsPath));
             var topology = JObject.Parse(File.ReadAllText(topologyPath));
-            var topoEdges = (JArray)topology["edges"];
+            var topoEdges = (JArray?)topology["edges"] ?? new JArray();
 
             var inputEdges = new Dictionary<string, List<(string fromNode, string label)>>();
             foreach (var edge in topoEdges)
             {
-                string to = (string)edge["to"];
-                string from = (string)edge["from"];
-                string label = (string)edge["label"];
+                string to = (string?)edge["to"] ?? "";
+                string from = (string?)edge["from"] ?? "";
+                string label = (string?)edge["label"] ?? "";
                 if (!inputEdges.ContainsKey(to)) inputEdges[to] = new List<(string, string)>();
                 inputEdges[to].Add((from, label));
             }
@@ -69,13 +71,13 @@ namespace KSpiceEngine
                 }
                 double[] Y_true = dataset[truthCol];
 
-                var p = (JObject)identifiedParams[id];
+                var p = (JObject?)identifiedParams[id];
                 if (p == null)
                 {
                     skipped++;
                     continue;
                 }
-                string mt = (string)p["ModelType"] ?? "";
+                string mt = (string?)p["ModelType"] ?? "";
 
                 if (mt == "Boundary" || mt == "Fallback")
                 {
@@ -107,7 +109,7 @@ namespace KSpiceEngine
                     for (int t = 0; t < numRows; t++)
                     {
                         for (int k = 0; k < inputArrays.Count; k++)
-                            step[k] = inputArrays[k] != null ? inputArrays[k][t] : double.NaN;
+                            step[k] = inputArrays[k]?[t] ?? double.NaN;
                         yPred[t] = evaluator.Iterate(step, timeBase_s);
                     }
 
@@ -137,7 +139,7 @@ namespace KSpiceEngine
                 if (!dataset.ContainsKey(col)) continue;
                 fits[kv.Key] = ComputeFit(dataset[col], kv.Value);
             }
-            string fitsPath = Path.Combine(Path.GetDirectoryName(outputCsvPath), "TestSet_FitScores.json");
+            string fitsPath = Path.Combine(Path.GetDirectoryName(outputCsvPath) ?? "", "TestSet_FitScores.json");
             File.WriteAllText(fitsPath, fits.ToString(Formatting.Indented));
 
             Console.WriteLine($"\n[SUCCESS] Test-set predictions: {ok} OK, {skipped} skipped, {failed} failed");
@@ -148,17 +150,17 @@ namespace KSpiceEngine
         // Resolves the model's InputContract into actual CSV time-series for the
         // test dataset. Reuses the same FindInputSignals / proxy-BFS path the
         // trainer used so signal names match exactly.
-        private static List<double[]> ResolveInputArrays(IdentifiedModelEvaluator evaluator,
+        private static List<double[]?>? ResolveInputArrays(IdentifiedModelEvaluator evaluator,
             string comp, Dictionary<string, string> signalMap,
             Dictionary<string, double[]> dataset, string modelId,
             Dictionary<string, List<(string fromNode, string label)>> inputEdges,
             Dictionary<string, HashSet<string>> physicalNeighbors)
         {
-            var result = new List<double[]>();
+            var result = new List<double[]?>();
 
             foreach (var slot in evaluator.InputContract)
             {
-                double[] arr = null;
+                double[]? arr = null;
                 string key = slot.SourceKey;
 
                 if (key.StartsWith("@Setpoint:") || key.StartsWith("@Measurement:"))
@@ -166,7 +168,7 @@ namespace KSpiceEngine
                     string what = key.StartsWith("@Setpoint:") ? "Setpoint" : "Measurement";
                     string c = key.Substring(key.IndexOf(':') + 1);
                     string lookup = $"{c}_{what}";
-                    if (signalMap.TryGetValue(lookup, out string col) && dataset.ContainsKey(col))
+                    if (signalMap.TryGetValue(lookup, out var col) && dataset.ContainsKey(col))
                         arr = dataset[col];
                 }
                 else if (key.StartsWith("@P_in:") || key.StartsWith("@P_out:") || key.StartsWith("@Flow:"))
@@ -176,7 +178,7 @@ namespace KSpiceEngine
                     var inputCols = DynamicPlantRunner.FindInputSignals(modelId, inputEdges, signalMap, dataset, physicalNeighbors);
                     arr = PickAscInput(inputCols, key);
                 }
-                else if (signalMap.TryGetValue(key, out string col) && dataset.ContainsKey(col))
+                else if (signalMap.TryGetValue(key, out var col) && dataset.ContainsKey(col))
                 {
                     // Direct lookup against signal map (UnitModel-based + IntegratedFlow).
                     arr = dataset[col];
@@ -216,10 +218,10 @@ namespace KSpiceEngine
             return result;
         }
 
-        private static double[] PickAscInput(List<(string name, double[] data)> inputCols, string roleKey)
+        private static double[]? PickAscInput(List<(string name, double[] data)> inputCols, string roleKey)
         {
             string role = roleKey.Substring(1, roleKey.IndexOf(':') - 1);
-            double[] flow = null, press1 = null, press2 = null;
+            double[]? flow = null, press1 = null, press2 = null;
             foreach (var col in inputCols)
             {
                 var n = col.name;
@@ -233,7 +235,7 @@ namespace KSpiceEngine
                 else if (press2 == null) press2 = col.data;
             }
 
-            double[] pIn = press1, pOut = press2;
+            double[]? pIn = press1, pOut = press2;
             if (press1 != null && press2 != null && press1.Length > 0 && press2.Length > 0
                 && press1[0] > press2[0]) { pIn = press2; pOut = press1; }
 

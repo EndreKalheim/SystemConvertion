@@ -67,7 +67,10 @@
       "PowerShell(dotnet build Pipeline\\\\src\\\\CSharp_Engine\\\\KSpiceEngine\\\\KSpiceEngine.csproj 2>&1)",
       "PowerShell(dotnet build \"C:\\\\Users\\\\Endre\\\\OneDrive\\\\Dokumenter\\\\sem3\\\\TSA\\\\SystemConvertion\\\\Pipeline\\\\src\\\\CSharp_Engine\\\\KSpiceEngine\\\\KSpiceEngine.csproj\" 2>&1)",
       "PowerShell(Get-ChildItem -Path . -Directory -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.Name -match \"method|report|image|figure\" -or $_.Name -match \"05 Metode\" } | Select-Object -ExpandProperty FullName | Select-Object -First 20)",
-      "PowerShell(dotnet build \"C:\\\\Users\\\\Endre\\\\OneDrive\\\\Dokumenter\\\\sem3\\\\TSA\\\\SystemConvertion\\\\Pipeline\\\\src\\\\CSharp_Engine\\\\KSpiceEngine\\\\KSpiceEngine.csproj\" --no-incremental 2>&1)"
+      "PowerShell(dotnet build \"C:\\\\Users\\\\Endre\\\\OneDrive\\\\Dokumenter\\\\sem3\\\\TSA\\\\SystemConvertion\\\\Pipeline\\\\src\\\\CSharp_Engine\\\\KSpiceEngine\\\\KSpiceEngine.csproj\" --no-incremental 2>&1)",
+      "PowerShell(dotnet build \"C:\\\\Users\\\\Endre\\\\OneDrive\\\\Dokumenter\\\\sem3\\\\TSA\\\\SystemConvertion\\\\Pipeline\\\\src\\\\CSharp_Engine\\\\KSpiceEngine\\\\KSpiceEngine.csproj\" --no-incremental 2>&1 | Select-String \"warning \" | Group-Object { \\($_ -split ': warning '\\)[1].Substring\\(0,6\\) } | Sort-Object Count -Descending | Format-Table Count, Name -AutoSize)",
+      "PowerShell(Get-Content \"C:\\\\Users\\\\Endre\\\\AppData\\\\Local\\\\Temp\\\\warnings.txt\" | ForEach-Object { \\($_ -split '\\\\\\('\\)[0] } | Group-Object | Sort-Object Count -Descending | Format-Table Count, Name -AutoSize)",
+      "PowerShell(dotnet build \"C:\\\\Users\\\\Endre\\\\OneDrive\\\\Dokumenter\\\\sem3\\\\TSA\\\\SystemConvertion\\\\Pipeline\\\\src\\\\CSharp_Engine\\\\KSpiceEngine\\\\KSpiceEngine.csproj\" --no-incremental 2>&1 | Select-String \"KSpiceEngine\\\\.csproj\\\\]$\" | ForEach-Object { \\($_ -split '\\\\\\('\\)[0] } | Group-Object | Sort-Object Count -Descending | Format-Table Count, Name -AutoSize)"
     ]
   }
 }

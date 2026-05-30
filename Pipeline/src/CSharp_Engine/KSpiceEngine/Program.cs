@@ -13,11 +13,11 @@ namespace KSpiceEngine
         static void Main(string[] args)
         {
             // CLI: --mode equations|simulate|testset|closedloop|all  --map  --csv  --testcsv  --suffix  --kspicemdl
-            string mode    = "all";
-            string mapPath = null;
-            string csvPath = null;
-            string testCsvPath = null;
-            string selectedKspiceModel = null;
+            string  mode    = "all";
+            string? mapPath = null;
+            string? csvPath = null;
+            string? testCsvPath = null;
+            string? selectedKspiceModel = null;
             // Suffix lets the same closedloop mode write either CS_Predictions_ClosedLoop.csv
             // (default) or CS_Predictions_ClosedLoop_Train.csv so the two runs don't clobber.
             string suffix = "";
@@ -125,6 +125,11 @@ namespace KSpiceEngine
                         return;
                     }
 
+                    if (string.IsNullOrEmpty(csvPath) || !File.Exists(csvPath))
+                    {
+                        Console.WriteLine($"[ERROR] Training CSV not found: {csvPath ?? "(none)"}");
+                        return;
+                    }
                     DynamicPlantRunner.RunPlantSimulations(csvPath, mapPath, eqMapPath, sigMapPath, predPath, selectedKspiceModel);
                     Console.WriteLine($"[SUCCESS] Predictions -> {predPath}");
                 }
@@ -170,7 +175,7 @@ namespace KSpiceEngine
                     }
 
                     // Default to the held-out CSV if --testcsv was passed; otherwise use --csv (training).
-                    string runCsv = !string.IsNullOrEmpty(testCsvPath) && File.Exists(testCsvPath) ? testCsvPath : csvPath;
+                    string? runCsv = !string.IsNullOrEmpty(testCsvPath) && File.Exists(testCsvPath) ? testCsvPath : csvPath;
                     if (string.IsNullOrEmpty(runCsv) || !File.Exists(runCsv))
                     {
                         Console.WriteLine($"[ERROR] No CSV available for closed-loop run.");

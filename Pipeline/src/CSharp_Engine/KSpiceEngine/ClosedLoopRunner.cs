@@ -32,19 +32,21 @@ namespace KSpiceEngine
             Console.WriteLine($"  CSV : {csvPath}");
 
             var systemMap        = JObject.Parse(File.ReadAllText(systemMapPath));
-            var models           = (JArray)systemMap["Models"];
-            var signalMap        = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(mappingPath));
-            var equations        = JsonConvert.DeserializeObject<List<dynamic>>(File.ReadAllText(equationsPath));
+            var models           = (JArray?)systemMap["Models"] ?? new JArray();
+            var signalMap        = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(mappingPath))
+                                    ?? new Dictionary<string, string>();
+            var equations        = JsonConvert.DeserializeObject<List<dynamic>>(File.ReadAllText(equationsPath))
+                                    ?? new List<dynamic>();
             var identifiedParams = JObject.Parse(File.ReadAllText(identifiedParamsPath));
             var topology         = JObject.Parse(File.ReadAllText(topologyPath));
-            var topoEdges        = (JArray)topology["edges"];
+            var topoEdges        = (JArray?)topology["edges"] ?? new JArray();
 
             var inputEdges = new Dictionary<string, List<(string fromNode, string label)>>();
             foreach (var edge in topoEdges)
             {
-                string to    = (string)edge["to"];
-                string from  = (string)edge["from"];
-                string label = (string)edge["label"];
+                string to    = (string?)edge["to"] ?? "";
+                string from  = (string?)edge["from"] ?? "";
+                string label = (string?)edge["label"] ?? "";
                 if (!inputEdges.ContainsKey(to)) inputEdges[to] = new List<(string, string)>();
                 inputEdges[to].Add((from, label));
             }
@@ -59,7 +61,7 @@ namespace KSpiceEngine
             var freeModelIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var eq in equations)
             {
-                string formula = (string)eq.Formula ?? "";
+                string formula = (string)(eq.Formula ?? "");
                 if (formula.IndexOf("Boundary", StringComparison.OrdinalIgnoreCase) >= 0)
                     freeModelIds.Add((string)eq.ID);
             }
@@ -97,19 +99,19 @@ namespace KSpiceEngine
             var freeCsvColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var fid in freeModelIds)
             {
-                if (signalMap.TryGetValue(fid, out string fcol) && !string.IsNullOrEmpty(fcol))
+                if (signalMap.TryGetValue(fid, out var fcol) && !string.IsNullOrEmpty(fcol))
                     freeCsvColumns.Add(fcol);
             }
-            var topoNodes = (JArray)topology["nodes"];
+            var topoNodes = (JArray?)topology["nodes"];
             if (topoNodes != null)
             {
                 foreach (var node in topoNodes)
                 {
-                    string nodeLabel = (string)node["label"] ?? "";
+                    string nodeLabel = (string?)node["label"] ?? "";
                     if (!nodeLabel.Contains("[boundary]", StringComparison.OrdinalIgnoreCase)) continue;
-                    string nodeId = (string)node["id"] ?? "";
+                    string nodeId = (string?)node["id"] ?? "";
                     if (!string.IsNullOrEmpty(nodeId)
-                        && signalMap.TryGetValue(nodeId, out string bcol)
+                        && signalMap.TryGetValue(nodeId, out var bcol)
                         && !string.IsNullOrEmpty(bcol))
                         freeCsvColumns.Add(bcol);
                 }
@@ -145,9 +147,9 @@ namespace KSpiceEngine
             {
                 string role = (string)eq.Role; if (role != "Controller") continue;
                 string c = (string)eq.Component;
-                string measCol = signalMap.ContainsKey($"{c}_Measurement") ? signalMap[$"{c}_Measurement"] : null;
+                string? measCol = signalMap.ContainsKey($"{c}_Measurement") ? signalMap[$"{c}_Measurement"] : null;
                 if (measCol == null) continue;
-                string traced = equiv.TryResolve(measCol);
+                string? traced = equiv.TryResolve(measCol);
                 Console.WriteLine($"  [equiv] {c}.Measurement [{measCol}] -> {(traced ?? "(boundary CSV)")}");
             }
 
@@ -167,11 +169,11 @@ namespace KSpiceEngine
 
                 allModelIds.Add(id);
 
-                string truthCol = signalMap.ContainsKey(mapKey) ? signalMap[mapKey] : null;
+                string? truthCol = signalMap.ContainsKey(mapKey) ? signalMap[mapKey] : null;
                 if (truthCol != null && dataset.ContainsKey(truthCol))
                     truthByModelId[id] = dataset[truthCol];
 
-                var p = (JObject)identifiedParams[id];
+                var p = (JObject?)identifiedParams[id];
                 if (p == null)
                     continue;
 
@@ -188,8 +190,8 @@ namespace KSpiceEngine
             foreach (var kv in evaluators.ToList())
             {
                 if (kv.Value.ModelType != "ValvePhysicsModel") continue;
-                var p = (JObject)identifiedParams[kv.Key];
-                var simInputs = (JArray)p?["SimInputs"];
+                var p = (JObject?)identifiedParams[kv.Key];
+                var simInputs = (JArray?)p?["SimInputs"] ?? new JArray();
                 kv.Value.InputContract = HybridValveContract(kv.Key, inputEdges, simInputs, validModelIds);
             }
 
@@ -331,7 +333,7 @@ namespace KSpiceEngine
             string fitsName = predBase.StartsWith("CS_Predictions_")
                 ? predBase.Substring("CS_Predictions_".Length) + "_FitScores.json"
                 : predBase + "_FitScores.json";
-            string fitsPath = Path.Combine(Path.GetDirectoryName(outputCsvPath), fitsName);
+            string fitsPath = Path.Combine(Path.GetDirectoryName(outputCsvPath) ?? "", fitsName);
             File.WriteAllText(fitsPath, fits.ToString(Formatting.Indented));
 
             Console.WriteLine($"\n[SUCCESS] Closed-loop predictions for {fitOk} models written to:");
@@ -393,11 +395,11 @@ namespace KSpiceEngine
                     if (dataset.TryGetValue(csvCol, out var farr)) return SafeAt(farr, t);
                 }
                 // 2. Direct model output (signal-map inverse).
-                if (csvToModelId.TryGetValue(csvCol, out string sid)
+                if (csvToModelId.TryGetValue(csvCol, out var sid)
                     && predictions.TryGetValue(sid, out var parr1))
                     return SafeAt(parr1, IndexFor(sid));
                 // 3. Equivalence (transmitter chain, etc.) → predicted model.
-                string traced = equiv?.TryResolve(csvCol);
+                string? traced = equiv?.TryResolve(csvCol);
                 if (traced != null && predictions.TryGetValue(traced, out var parr2))
                     return SafeAt(parr2, IndexFor(traced));
                 // 4. Last resort — raw CSV reading. True boundary or unmodelled signal.
@@ -418,14 +420,14 @@ namespace KSpiceEngine
                 string what = key.StartsWith("@Setpoint:") ? "Setpoint" : "Measurement";
                 string c = key.Substring(key.IndexOf(':') + 1);
                 string lookup = $"{c}_{what}";
-                if (signalMap.TryGetValue(lookup, out string col))
+                if (signalMap.TryGetValue(lookup, out var col))
                 {
                     if (what == "Setpoint")
                     {
                         // 1. Equivalence trace: if setpoint CSV column resolves (via K-Spice transmitter
                         //    wiring) to a non-free predicted model, use the CL prediction.
                         //    e.g. SIC1001/3001:SetpointUsed → 23KA0001/2001_Speed (speed-followers).
-                        string traced2 = equiv?.TryResolve(col);
+                        string? traced2 = equiv?.TryResolve(col);
                         if (traced2 != null && !freeModelIds.Contains(traced2)
                             && predictions.TryGetValue(traced2, out var followPred))
                             return SafeAt(followPred, IndexFor(traced2));
@@ -474,7 +476,7 @@ namespace KSpiceEngine
 
             // Source is a model-state key (e.g. "23VA0001_Pressure") — go through signal
             // map to its CSV and resolve via equivalence (handles UnitModel input slots).
-            if (signalMap.TryGetValue(key, out string mapped))
+            if (signalMap.TryGetValue(key, out var mapped))
                 return FromCsvCol(mapped);
 
             return double.NaN;
@@ -510,7 +512,7 @@ namespace KSpiceEngine
                 case "Flow":  chosen = flow; break;
                 default: return double.NaN;
             }
-            if (chosen.data == null) return double.NaN;
+            if (chosen.data == null || chosen.name == null) return double.NaN;
 
             // Substitute predicted value if this column corresponds to a modelled state.
             // The name is "{key}({label})" — strip the parens to recover the key.
@@ -526,7 +528,7 @@ namespace KSpiceEngine
                 int idx = (forceLastStep || (computedThisStep != null && !computedThisStep.Contains(key))) ? t - 1 : t;
                 return SafeAt(parr, idx);
             }
-            string traced = equiv?.TryResolve(key);
+            string? traced = equiv?.TryResolve(key);
             if (traced != null && predictions.TryGetValue(traced, out var parr2))
             {
                 int idx = (forceLastStep || (computedThisStep != null && !computedThisStep.Contains(traced))) ? t - 1 : t;
@@ -569,7 +571,7 @@ namespace KSpiceEngine
                 _ => default
             };
 
-            if (chosen.data == null)
+            if (chosen.data == null || chosen.name == null)
                 return double.NaN;
 
             int paren = chosen.name.IndexOf('(');
@@ -579,7 +581,7 @@ namespace KSpiceEngine
                 int idx = (forceLastStep || (computedThisStep != null && !computedThisStep.Contains(key))) ? t - 1 : t;
                 return SafeAt(parr, idx);
             }
-            string traced = equiv?.TryResolve(key);
+            string? traced = equiv?.TryResolve(key);
             if (traced != null && predictions.TryGetValue(traced, out var parr2))
             {
                 int idx = (forceLastStep || (computedThisStep != null && !computedThisStep.Contains(traced))) ? t - 1 : t;
@@ -606,8 +608,8 @@ namespace KSpiceEngine
             inputEdges.TryGetValue(modelId, out var edges);
             for (int i = 0; i < 3; i++)
             {
-                string preferred = null;  // edge whose source is a known predicted model
-                string fallback = null;    // any edge with the right label (synthetic source)
+                string? preferred = null;  // edge whose source is a known predicted model
+                string? fallback = null;    // any edge with the right label (synthetic source)
                 if (edges != null)
                 {
                     foreach (var e in edges)
@@ -618,9 +620,9 @@ namespace KSpiceEngine
                         { preferred = e.fromNode; break; }
                     }
                 }
-                string source = preferred ?? fallback;
+                string? source = preferred ?? fallback;
                 if (source == null && simInputs != null && simInputs.Count > i)
-                    source = (string)simInputs[i];
+                    source = (string?)simInputs[i];
                 if (source != null)
                     slots.Add(new IdentifiedModelEvaluator.InputSlot { SourceKey = source, Label = simLabels[i] });
             }

@@ -17,7 +17,8 @@ namespace KSpiceEngine
         {
             System.Console.WriteLine($"Loading System Map: {jsonPath}");
             var jsonContent = File.ReadAllText(jsonPath);
-            dynamic systemMap = JsonConvert.DeserializeObject(jsonContent);
+            dynamic systemMap = JsonConvert.DeserializeObject(jsonContent)
+                ?? throw new System.InvalidOperationException($"Failed to parse {jsonPath}");
 
             var modelDefinitions = new List<JObject>();
 
@@ -39,7 +40,7 @@ namespace KSpiceEngine
                 if (nodeInputs2 == null) continue;
                 foreach (var inp in nodeInputs2)
                 {
-                    string src = (string)inp["Source"] ?? "";
+                    string src = (string?)inp["Source"] ?? "";
                     int colon = src.IndexOf(':');
                     if (colon <= 0) continue;
                     string srcComp = src.Substring(0, colon);
@@ -86,7 +87,7 @@ namespace KSpiceEngine
                     if (!visited.Add(curr)) continue;
                     string baseCurr2 = curr.Replace("_pf", "");
                     if (IsAscControlledValve(baseCurr2) || IsAscControlledValve(curr)) continue;
-                    if (typeByComp.TryGetValue(curr, out string ct) && ct.Contains("Compressor"))
+                    if (typeByComp.TryGetValue(curr, out var ct) && ct.Contains("Compressor"))
                         return true;
                     if (downstreamOf.TryGetValue(curr, out var nxt))
                         foreach (var d in nxt) queue.Enqueue(d);
@@ -116,12 +117,12 @@ namespace KSpiceEngine
                     if (!visited.Add(curr)) continue;
                     string baseCurr = curr.Replace("_pf", "");
 
-                    if (!typeByComp.TryGetValue(curr, out string ct) &&
+                    if (!typeByComp.TryGetValue(curr, out var ct) &&
                         !typeByComp.TryGetValue(baseCurr, out ct))
                         ct = "";
 
                     // Also look up base component type (to classify _pf companions).
-                    typeByComp.TryGetValue(baseCurr, out string baseCt);
+                    typeByComp.TryGetValue(baseCurr, out var baseCt);
 
                     if (ct.Contains("HeatExchanger") && IsInterstageHX(baseCurr))
                     {

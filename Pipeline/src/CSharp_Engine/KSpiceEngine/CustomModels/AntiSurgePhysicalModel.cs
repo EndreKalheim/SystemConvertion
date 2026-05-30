@@ -61,9 +61,9 @@ namespace KSpiceEngine.CustomModels
         public double UMin { get; set; } = 0.0;
 
         // ── Legacy OLS fields (kept for graceful fallback of old param files) ─
-        public string[] FeatureNames   { get; set; }
-        public double[] FeatureWeights { get; set; }
-        public double   LPFilter_Tau_s { get; set; } = 0.0;
+        public string[]? FeatureNames   { get; set; }
+        public double[]? FeatureWeights { get; set; }
+        public double    LPFilter_Tau_s { get; set; } = 0.0;
     }
 
     /// <summary>
@@ -102,7 +102,7 @@ namespace KSpiceEngine.CustomModels
 
         public AntiSurgePhysicalModel() { this.processModelType = ModelType.SubProcess; }
 
-        public AntiSurgePhysicalModel(string id, string[] inputIDs, string outputID = null) : this()
+        public AntiSurgePhysicalModel(string id, string[] inputIDs, string? outputID = null) : this()
         {
             this.ID          = id;
             this.outputID    = outputID ?? id;
@@ -115,7 +115,7 @@ namespace KSpiceEngine.CustomModels
 
         public ISimulatableModel Clone(string cloneID)
         {
-            return new AntiSurgePhysicalModel(cloneID, (string[])ModelInputIDs.Clone(), outputID)
+            return new AntiSurgePhysicalModel(cloneID, (string[])ModelInputIDs!.Clone(), outputID)
             {
                 modelParameters = new AntiSurgeParameters
                 {
@@ -140,8 +140,8 @@ namespace KSpiceEngine.CustomModels
                     FastModeThreshold      = modelParameters.FastModeThreshold,
                     UMax                   = modelParameters.UMax,
                     UMin                   = modelParameters.UMin,
-                    FeatureNames           = (string[])modelParameters.FeatureNames?.Clone(),
-                    FeatureWeights         = (double[])modelParameters.FeatureWeights?.Clone(),
+                    FeatureNames           = (string[]?)modelParameters.FeatureNames?.Clone(),
+                    FeatureWeights         = (double[]?)modelParameters.FeatureWeights?.Clone(),
                     LPFilter_Tau_s         = modelParameters.LPFilter_Tau_s
                 }
             };
@@ -164,7 +164,7 @@ namespace KSpiceEngine.CustomModels
             }
         }
 
-        public double[] Iterate(double[] inputsU, double timeBase_s, double badDataID = -9999)
+        public double[] Iterate(double[]? inputsU, double timeBase_s, double badDataID = -9999)
         {
             if (inputsU == null || inputsU.Length < 3) return new[] { badDataID };
 
@@ -237,7 +237,7 @@ namespace KSpiceEngine.CustomModels
             return new[] { Math.Round(uOut, 4) };
         }
 
-        public void WarmStart(double[] inputs, double output)
+        public void WarmStart(double[]? inputs, double output)
         {
             uPrev             = Math.Max(modelParameters.UMin, Math.Min(modelParameters.UMax, output));
             effectiveUMin     = Math.Min(modelParameters.UMin, uPrev);
@@ -256,7 +256,7 @@ namespace KSpiceEngine.CustomModels
             proxyBiasOffset   = 0.0;
         }
 
-        public double? GetSteadyStateInput(double x0, int inputIdx = 0, double[] givenInputValues = null) => null;
+        public double? GetSteadyStateInput(double x0, int inputIdx = 0, double[]? givenInputValues = null) => null;
         public double? GetSteadyStateOutput(double[] u0, double badDataID = -9999) => uPrev;
     }
 }

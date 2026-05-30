@@ -36,8 +36,8 @@ namespace KSpiceEngine
             // ── 1. Resolve P_in, P_out, Flow from topology input columns ──────
             // Pre-scan: pull out the speed column (y_speed) before pressure/flow
             // classification so RPM values don't corrupt the pressure sort.
-            double[] speedFromTopology = null;
-            string   speedColName      = null;
+            double[]? speedFromTopology = null;
+            string?   speedColName      = null;
             foreach (var col in inputCols)
             {
                 if (col.name.IndexOf("y_speed", StringComparison.OrdinalIgnoreCase) >= 0 ||
@@ -45,8 +45,8 @@ namespace KSpiceEngine
                 { speedFromTopology = col.data; speedColName = col.name; break; }
             }
 
-            double[] flow = null, pIn = null, pOut = null;
-            string   flowName = null, pInName = null, pOutName = null;
+            double[]? flow = null, pIn = null, pOut = null;
+            string?   flowName = null, pInName = null, pOutName = null;
             var pressCands = new List<(double[] data, string name, double mean)>();
 
             foreach (var col in inputCols)
@@ -92,7 +92,7 @@ namespace KSpiceEngine
             }
 
             // ── 2. Override with already-predicted signals where available ─────
-            double[] TryGetPred(string colName)
+            double[]? TryGetPred(string? colName)
             {
                 if (colName == null) return null;
                 int paren = colName.IndexOf('(');
@@ -119,13 +119,13 @@ namespace KSpiceEngine
 
             foreach (var m in models)
             {
-                string rn = ((string)m["Name"]).Replace("_pf", "", StringComparison.OrdinalIgnoreCase);
+                string rn = ((string?)m["Name"] ?? "").Replace("_pf", "", StringComparison.OrdinalIgnoreCase);
                 if (!string.Equals(rn, comp, StringComparison.OrdinalIgnoreCase)) continue;
 
                 bool sourceMatches = false;
                 if (!string.IsNullOrEmpty(selectedKspiceModelPath))
                 {
-                    var src = (string)m["SourceFile"] ?? (string)m["SourceMdl"];
+                    var src = (string?)m["SourceFile"] ?? (string?)m["SourceMdl"];
                     if (src != null)
                     {
                         try { sourceMatches = string.Equals(Path.GetFileName(src),
@@ -139,11 +139,11 @@ namespace KSpiceEngine
                 if (prm == null) break;
 
                 if (prm["ControlLineMargin"] != null)
-                    controlLineMargin = (double)prm["ControlLineMargin"];
+                    controlLineMargin = (double?)prm["ControlLineMargin"] ?? controlLineMargin;
 
                 if (prm["FastProportionalGain"] != null)
                 {
-                    kpFast   = (double)prm["FastProportionalGain"];
+                    kpFast   = (double?)prm["FastProportionalGain"] ?? kpFast;
                     kpSlow   = (double?)prm["SlowProportionalGain"] ?? 0.2;
                     tiFast_s = (double?)prm["FastIntegralTime"]     ?? 10.0;
                     tiSlow_s = (double?)prm["SlowIntegralTime"]     ?? 20.0;
@@ -153,7 +153,7 @@ namespace KSpiceEngine
 
                 if (prm["CloseTime"] != null && (sourceMatches || string.IsNullOrEmpty(selectedKspiceModelPath)))
                 {
-                    closeTime_s = (double)prm["CloseTime"];
+                    closeTime_s = (double?)prm["CloseTime"] ?? closeTime_s;
                     break;
                 }
                 break;
@@ -167,7 +167,7 @@ namespace KSpiceEngine
                                           closeTime_s, openTime_s, timeBase_s,
                                           dataset, nfKey, nasKey, M,
                                           controlLineMargin, kpFast, kpSlow, tiFast_s, tiSlow_s,
-                                          speedFromTopology);
+                                          speedFromTopology ?? Array.Empty<double>());
             }
 
             Console.WriteLine($"[WARNING] {id}: KSpicePI params available={hasKSpicePIParams}, NF/NAS available={haveKspiceSurge} — using ConstantUMin fallback");
@@ -188,8 +188,8 @@ namespace KSpiceEngine
             double kpFast, double kpSlow, double tiFast_s, double tiSlow_s,
             double[] speedArr)
         {
-            double[] nfArr  = dataset[nfKey];
-            double[] nasArr = dataset[nasKey];
+            double[] nfArr  = dataset[nfKey]  ?? throw new InvalidOperationException($"Missing NF data for {comp}");
+            double[] nasArr = dataset[nasKey] ?? throw new InvalidOperationException($"Missing NAS data for {comp}");
 
             // Compute asym = NAS*(1+CLM)*(1-ALM)/NAS = (1+CLM)*(1-ALM)
             // K-Spice uses NormalizedFlowSetpoint = NAS*asym as the open trigger; the
@@ -198,7 +198,7 @@ namespace KSpiceEngine
             // otherwise from CLM and ALM=0.05 (system-map default).
             string naspKey = $"{comp}:NormalizedFlowSetpoint";
             double asym;
-            if (dataset.TryGetValue(naspKey, out var naspArr) && nasArr != null)
+            if (dataset.TryGetValue(naspKey, out var naspArr))
             {
                 double sumRatio = 0.0;
                 for (int i = 0; i < M; i++) sumRatio += (nasArr[i] > 0.1) ? naspArr[i] / nasArr[i] : 1.0;
@@ -284,7 +284,7 @@ namespace KSpiceEngine
                 // Ridge: λ = 0.01 * M
                 for (int p = 0; p < nFeat; p++) XtX[p, p] += 0.01 * M;
 
-                double[] betaN = DynamicPlantRunner.SolveLinearSystem(XtX, Xty, nFeat);
+                double[]? betaN = DynamicPlantRunner.SolveLinearSystem(XtX, Xty, nFeat);
                 if (betaN != null && betaN[0] < 0)  // sign guard: higher MF → less surge risk
                 {
                     raw_mf = betaN[0] / sMF;

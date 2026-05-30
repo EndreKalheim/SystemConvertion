@@ -47,7 +47,7 @@ namespace KSpiceEngine.CustomModels
             this.processModelType = ModelType.SubProcess;
         }
 
-        public HeatExchangerTemperatureModel(string id, string[] inputIDs, string outputID = null) : this()
+        public HeatExchangerTemperatureModel(string id, string[] inputIDs, string? outputID = null) : this()
         {
             this.ID = id;
             this.outputID = outputID ?? id;
@@ -60,7 +60,7 @@ namespace KSpiceEngine.CustomModels
 
         public ISimulatableModel Clone(string cloneID)
         {
-            return new HeatExchangerTemperatureModel(cloneID, (string[])this.ModelInputIDs.Clone(), this.outputID)
+            return new HeatExchangerTemperatureModel(cloneID, (string[])this.ModelInputIDs!.Clone(), this.outputID)
             {
                 modelParameters = new HeatExchangerTemperatureParameters
                 {
@@ -74,12 +74,12 @@ namespace KSpiceEngine.CustomModels
             };
         }
 
-        public void WarmStart(double[] inputs, double output)
+        public void WarmStart(double[]? inputs, double output)
         {
             lastOutput = output;
         }
 
-        public double[] Iterate(double[] inputs, double timeBase_s, double badDataID = -9999)
+        public double[] Iterate(double[]? inputs, double timeBase_s, double badDataID = -9999)
         {
             var p = modelParameters;
 
@@ -107,7 +107,7 @@ namespace KSpiceEngine.CustomModels
             return new double[] { lastOutput };
         }
 
-        public double? GetSteadyStateInput(double x0, int inputIdx = 0, double[] givenInputValues = null) => null;
+        public double? GetSteadyStateInput(double x0, int inputIdx = 0, double[]? givenInputValues = null) => null;
         public double? GetSteadyStateOutput(double[] u0, double badDataID = -9999) => lastOutput;
     }
 }

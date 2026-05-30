@@ -21,7 +21,7 @@ namespace KSpiceEngine
                 string stateType = eq.State;
                 string role = eq.Role;
 
-                string matchedHeader = FindBestMatch(csvHeaders, comp, stateType, systemMap);
+                string? matchedHeader = FindBestMatch(csvHeaders, comp, stateType, systemMap);
                 if (matchedHeader != null) {
                     mapping[id] = matchedHeader;
                 }
@@ -29,25 +29,25 @@ namespace KSpiceEngine
                 // --- Automatic Missing Signal/Boundary Binding ---
                 // PID controllers get Setpoint + Measurement mappings used for PID identification.
                 // ASC controllers are excluded — they have no single PV/SP in the PID sense.
-                string controllerType = (string)eq.ControllerType ?? "";
+                string controllerType = (string)(eq.ControllerType ?? "");
                 if (role == "Controller" && stateType == "Control" && controllerType == "PID") {
-                    string spMatch = FindBestMatch(csvHeaders, comp, "Setpoint", systemMap);
+                    string? spMatch = FindBestMatch(csvHeaders, comp, "Setpoint", systemMap);
                     if (spMatch != null) mapping[$"{comp}_Setpoint"] = spMatch;
 
-                    string measMatch = FindBestMatch(csvHeaders, comp, "Measurement", systemMap);
+                    string? measMatch = FindBestMatch(csvHeaders, comp, "Measurement", systemMap);
                     if (measMatch != null) mapping[$"{comp}_Measurement"] = measMatch;
                 }
 
                 // If it's FlowEquipment, binding explicit upstream/downstream pressure for boundaries
                 if (role == "FlowEquipment") {
-                    string outPressMatch = FindBestMatch(csvHeaders, comp, "DownstreamPressure", systemMap);
+                    string? outPressMatch = FindBestMatch(csvHeaders, comp, "DownstreamPressure", systemMap);
                     if (outPressMatch != null) mapping[$"{comp}_DownstreamPressure"] = outPressMatch;
 
-                    string inPressMatch = FindBestMatch(csvHeaders, comp, "UpstreamPressure", systemMap);
+                    string? inPressMatch = FindBestMatch(csvHeaders, comp, "UpstreamPressure", systemMap);
                     if (inPressMatch != null) mapping[$"{comp}_UpstreamPressure"] = inPressMatch;
 
                     // Map control signal for valves (Opening / LocalControlSignalIn)
-                    string ctrlMatch = FindBestMatch(csvHeaders, comp, "ControlSignal", systemMap);
+                    string? ctrlMatch = FindBestMatch(csvHeaders, comp, "ControlSignal", systemMap);
                     if (ctrlMatch != null) mapping[$"{comp}_ControlSignal"] = ctrlMatch;
                 }
             }
@@ -65,7 +65,7 @@ namespace KSpiceEngine
             // Strategy B (output receiver): if no cascade master found, find the
             // component that physically receives this controller's output and map to
             // whatever CSV column name that input port appears under.
-            var allModels = (JArray)systemMap["Models"];
+            var allModels = (JArray?)systemMap["Models"] ?? new JArray();
             foreach (var eq in tsaEquations)
             {
                 if ((string)eq.Role != "Controller") continue;
@@ -74,21 +74,21 @@ namespace KSpiceEngine
                 if (mapping.ContainsKey(ctrlKey)) continue;
 
                 // Locate this controller in the system map.
-                JObject ctrlModel = null;
+                JObject? ctrlModel = null;
                 foreach (var m in allModels)
-                    if (string.Equals((string)m["Name"], comp, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals((string?)m["Name"], comp, StringComparison.OrdinalIgnoreCase))
                         { ctrlModel = (JObject)m; break; }
                 if (ctrlModel == null) continue;
 
                 // Strategy A: ExternalSetpoint from a cascade master controller.
-                var ctrlInputs = (JArray)ctrlModel["Inputs"];
+                var ctrlInputs = (JArray?)ctrlModel["Inputs"];
                 if (ctrlInputs != null)
                 {
                     foreach (var inp in ctrlInputs)
                     {
-                        string dst = (string)inp["Destination"] ?? "";
+                        string dst = (string?)inp["Destination"] ?? "";
                         if (!dst.Equals("ExternalSetpoint", StringComparison.OrdinalIgnoreCase)) continue;
-                        string src   = (string)inp["Source"] ?? "";
+                        string src   = (string?)inp["Source"] ?? "";
                         var   match  = csvHeaders.FirstOrDefault(h =>
                             h.Equals(src, StringComparison.OrdinalIgnoreCase));
                         if (match != null)
@@ -105,14 +105,14 @@ namespace KSpiceEngine
                 string outputSignal = $"{comp}:ControllerOutput";
                 foreach (var model in allModels)
                 {
-                    var inputs = (JArray)model["Inputs"];
+                    var inputs = (JArray?)model["Inputs"];
                     if (inputs == null) continue;
                     foreach (var inp in inputs)
                     {
-                        string src = (string)inp["Source"] ?? "";
+                        string src = (string?)inp["Source"] ?? "";
                         if (!src.Equals(outputSignal, StringComparison.OrdinalIgnoreCase)) continue;
-                        string dst            = (string)inp["Destination"] ?? "";
-                        string receiverName   = (string)model["Name"] ?? "";
+                        string dst            = (string?)inp["Destination"] ?? "";
+                        string receiverName   = (string?)model["Name"] ?? "";
                         string candidateSignal = $"{receiverName}:{dst}";
                         var match = csvHeaders.FirstOrDefault(h =>
                             h.Equals(candidateSignal, StringComparison.OrdinalIgnoreCase));
@@ -144,32 +144,32 @@ namespace KSpiceEngine
             return mapping;
         }
 
-        private static string TracePhysicalMeasurement(JObject systemMap, string controllerName)
+        private static string? TracePhysicalMeasurement(JObject systemMap, string controllerName)
         {
-            var models = (JArray)systemMap["Models"];
-            
+            var models = (JArray?)systemMap["Models"] ?? new JArray();
+
             // Map the cleaned CSV name back to the KSpiceSystemMap name for tracing
             string mapLookupName = controllerName;
             if (mapLookupName == "23LIC0002") mapLookupName = "23LIC002";
 
-            var controller = models.FirstOrDefault(m => string.Equals((string)m["Name"], mapLookupName, StringComparison.OrdinalIgnoreCase));
+            var controller = models.FirstOrDefault(m => string.Equals((string?)m["Name"], mapLookupName, StringComparison.OrdinalIgnoreCase));
             if (controller == null) return null;
 
-            var inputs = (JArray)controller["Inputs"];
-            var measInput = inputs?.FirstOrDefault(i => ((string)i["Destination"]) == "Measurement");
+            var inputs = (JArray?)controller["Inputs"];
+            var measInput = inputs?.FirstOrDefault(i => ((string?)i["Destination"]) == "Measurement");
             if (measInput == null) return null;
 
-            string source = (string)measInput["Source"];
+            string source = (string?)measInput["Source"] ?? "";
             string transmitterName = source.Split(':')[0];
 
             // Trace transmitter to real physical volume/flow element
-            var transmitter = models.FirstOrDefault(m => string.Equals((string)m["Name"], transmitterName, StringComparison.OrdinalIgnoreCase));
+            var transmitter = models.FirstOrDefault(m => string.Equals((string?)m["Name"], transmitterName, StringComparison.OrdinalIgnoreCase));
             if (transmitter != null)
             {
-                var tInputs = (JArray)transmitter["Inputs"];
+                var tInputs = (JArray?)transmitter["Inputs"];
                 if (tInputs != null && tInputs.Count > 0)
                 {
-                    string realSource = (string)tInputs[0]["Source"];
+                    string realSource = (string?)tInputs[0]["Source"] ?? "";
                     // Attempt alias fixing (23VA001 -> 23VA0001)
                     if (realSource.StartsWith("23VA001:")) realSource = realSource.Replace("23VA001:", "23VA0001:");
 
@@ -177,13 +177,13 @@ namespace KSpiceEngine
                     if (realSource.StartsWith("pv_"))
                     {
                         string pvName = realSource.Split(':')[0];
-                        var pv = models.FirstOrDefault(m => string.Equals((string)m["Name"], pvName, StringComparison.OrdinalIgnoreCase));
+                        var pv = models.FirstOrDefault(m => string.Equals((string?)m["Name"], pvName, StringComparison.OrdinalIgnoreCase));
                         if (pv != null)
                         {
-                            var pvInputs = (JArray)pv["Inputs"];
+                            var pvInputs = (JArray?)pv["Inputs"];
                             if (pvInputs != null && pvInputs.Count > 0)
                             {
-                                string pvSource = (string)pvInputs[0]["Source"];
+                                string pvSource = (string?)pvInputs[0]["Source"] ?? "";
                                 string rootComp = pvSource.Split(':')[0];
                                 string signalType = realSource.Split(':')[1];
 
@@ -206,24 +206,24 @@ namespace KSpiceEngine
             return source;
         }
 
-        private static string TraceValveControlSignal(JObject systemMap, string valveName)
+        private static string? TraceValveControlSignal(JObject systemMap, string valveName)
         {
-            var models = (JArray)systemMap["Models"];
-            var valve = models.FirstOrDefault(m => string.Equals((string)m["Name"], valveName, StringComparison.OrdinalIgnoreCase));
+            var models = (JArray?)systemMap["Models"] ?? new JArray();
+            var valve = models.FirstOrDefault(m => string.Equals((string?)m["Name"], valveName, StringComparison.OrdinalIgnoreCase));
             if (valve == null) return null;
 
-            var inputs = (JArray)valve["Inputs"];
+            var inputs = (JArray?)valve["Inputs"];
             if (inputs == null) return null;
 
-            var compInput = inputs.FirstOrDefault(i => ((string)i["Destination"]).Equals("LocalControlSignalIn", StringComparison.OrdinalIgnoreCase) || ((string)i["Destination"]).Equals("TargetPosition", StringComparison.OrdinalIgnoreCase));
+            var compInput = inputs.FirstOrDefault(i => ((string?)i["Destination"] ?? "").Equals("LocalControlSignalIn", StringComparison.OrdinalIgnoreCase) || ((string?)i["Destination"] ?? "").Equals("TargetPosition", StringComparison.OrdinalIgnoreCase));
             if (compInput != null)
             {
-                return (string)compInput["Source"];
+                return (string?)compInput["Source"];
             }
             return null;
         }
 
-        private static string FindBestMatch(List<string> headers, string comp, string stateType, JObject systemMap)
+        private static string? FindBestMatch(List<string> headers, string comp, string stateType, JObject systemMap)
         {
             string compUpper = comp.ToUpper();
             // Alias for mistyped components
@@ -287,7 +287,7 @@ namespace KSpiceEngine
                 });
 
                 // Determine true physical measurement target from KSpiceSystemMap.json as fallback
-                string physicalTarget = TracePhysicalMeasurement(systemMap, compUpper);
+                string? physicalTarget = TracePhysicalMeasurement(systemMap, compUpper);
                 if (physicalTarget != null)
                 {
                     candidates.Add(physicalTarget);
@@ -315,7 +315,7 @@ namespace KSpiceEngine
                     $"{compUpper}_m:LocalInput"
                 });
 
-                string valveControlSrc = TraceValveControlSignal(systemMap, compUpper);
+                string? valveControlSrc = TraceValveControlSignal(systemMap, compUpper);
                 if (valveControlSrc != null)
                 {
                     candidates.Add(valveControlSrc);

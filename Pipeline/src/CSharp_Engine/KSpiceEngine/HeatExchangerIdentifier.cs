@@ -68,7 +68,7 @@ namespace KSpiceEngine
                 Console.WriteLine($"[Model] {id}: HX subtype={(isWaterSide ? "WaterSide" : "GasSide")} (mean Tin={meanTin:F1} °C, mean Y={meanY:F1} °C)");
 
                 // Apply optional F_gas override: substitute inputCols[1] with the override signal.
-                string gasFlowSourceId = null;
+                string? gasFlowSourceId = null;
                 if (!isWaterSide && gasFlowOverride.HasValue && inputCols.Count >= 2)
                 {
                     var ov = gasFlowOverride.Value;
@@ -110,7 +110,7 @@ namespace KSpiceEngine
         private static JObject IdentifyGasSide(
             string id, double[] Y_true,
             List<(string name, double[] data)> inputCols,
-            int n, double[] pred, double timeBase_s, string gasFlowSourceId = null)
+            int n, double[] pred, double timeBase_s, string? gasFlowSourceId = null)
         {
             bool hasFgas   = inputCols.Count >= 2;
             bool hasFwater = inputCols.Count >= 4;
@@ -148,7 +148,8 @@ namespace KSpiceEngine
                     { sFw,   sTinFw, sFgFw,  sFw2   }
                 };
                 double[] b   = { sY, sTinY, sFgY, sFwY };
-                double[] sol = DynamicPlantRunner.SolveLinearSystem(A, b, 4);
+                double[] sol = DynamicPlantRunner.SolveLinearSystem(A, b, 4)
+                    ?? throw new InvalidOperationException("HX GasSide: singular linear system");
                 bias      = sol[0];
                 alpha     = sol[1];
                 gainGas   = hasFgas   ? sol[2] : 0.0;
@@ -189,7 +190,8 @@ namespace KSpiceEngine
                     { sFgr,  sTinFgr, sFg2r   }
                 };
                 double[] br   = { sYr, sTinYr, sFgYr };
-                double[] solr = DynamicPlantRunner.SolveLinearSystem(Ar, br, 3);
+                double[] solr = DynamicPlantRunner.SolveLinearSystem(Ar, br, 3)
+                    ?? throw new InvalidOperationException("HX GasSide refit: singular linear system");
                 bias    = solr[0];
                 alpha   = solr[1];
                 gainGas = hasFgas ? solr[2] : 0.0;
