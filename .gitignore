@@ -18,3 +18,8 @@ final_run.txt
 .vscode/
 Thumbs.db
 .DS_Store
+
+# Claude Code workflow files (personal, not part of the project)
+.claude/
+CLAUDE.md
+.claudeignore

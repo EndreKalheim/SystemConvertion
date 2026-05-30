@@ -25,6 +25,7 @@ import subprocess
 HERE         = os.path.dirname(os.path.abspath(__file__))
 KSPICE_DIR   = os.path.abspath(os.path.join(HERE, '..', 'kspicefiles'))
 DATA_RAW     = os.path.join(HERE, 'data', 'raw')
+DATA_TEST    = os.path.join(HERE, 'data', 'test')
 DATA_EXT     = os.path.join(HERE, 'data', 'extracted')
 OUT_DIAG     = os.path.join(HERE, 'output', 'diagrams')
 CSHARP_PROJ  = os.path.join(HERE, 'src', 'CSharp_Engine', 'KSpiceEngine')
@@ -32,10 +33,20 @@ SRC_VIS      = os.path.join(HERE, 'src', 'Visualization')
 SRC_PARSER   = os.path.join(HERE, 'src', 'Parser', 'KSpiceParser.py')
 
 MAP_JSON     = os.path.join(DATA_EXT, 'KSpiceSystemMap.json')
-# Held-out test CSV (lives one level above Pipeline/). Used by the testset and
-# closedloop phases — same plant, different operating trajectory, never seen
-# during identification. Override with --testcsv.
-DEFAULT_TEST_CSV = os.path.abspath(os.path.join(HERE, '..', 'KspiceSimTestdata.csv'))
+
+
+def pick_test_csv():
+    """Auto-pick a held-out test CSV from data/test/. None if absent."""
+    candidates = sorted(glob.glob(os.path.join(DATA_TEST, '*.csv')))
+    if len(candidates) == 1:
+        return candidates[0]
+    if len(candidates) > 1:
+        print("\nMultiple CSV files in data/test/:")
+        for i, p in enumerate(candidates, 1):
+            print(f"  {i:2}. {os.path.basename(p)}")
+        choice = input("Select test CSV (number): ").strip()
+        return candidates[int(choice) - 1]
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -302,7 +313,7 @@ def main():
                    help='Path to KSpice simulation CSV (default: auto-pick from data/raw/)')
     p.add_argument('--testcsv',
                    help='Path to held-out test CSV used by testset/closedloop phases '
-                        f'(default: {DEFAULT_TEST_CSV})')
+                        '(default: auto-pick from data/test/)')
     p.add_argument('--phase', choices=PHASE_CHOICES, default='all',
                    help='Which phase to run (default: all). The "all" option runs the '
                         'original five phases only — use --phase testset / closedloop '
@@ -322,7 +333,7 @@ def main():
     csv_path = pick_csv(args.csv, mdl)
     if csv_path:
         print(f"  CSV    : {os.path.basename(csv_path)}")
-    test_csv = args.testcsv or (DEFAULT_TEST_CSV if os.path.exists(DEFAULT_TEST_CSV) else None)
+    test_csv = args.testcsv or pick_test_csv()
 
     ph       = args.phase
     run_all  = (ph == 'all')

@@ -3,7 +3,7 @@
 Grey-box identification pipeline that converts a high-fidelity K-Spice plant
 simulation into a modular network of MISO surrogate models. Topology is
 extracted from K-Spice's own model definitions (`.mdl` / `.prm`) and fused with
-empirical CSV time-series, then the [TimeSeriesAnalysis](TimeSeriesAnalysis-master/)
+empirical CSV time-series, then [Equinor's TimeSeriesAnalysis](https://github.com/equinor/TimeSeriesAnalysis)
 library identifies first-order dynamics, PID parameters, and per-equipment
 physics-guided models. Each block is re-assembled into a closed-loop simulator
 that runs without K-Spice.
@@ -52,7 +52,8 @@ SystemConvertion/
 ├── kspicefiles/           ← place your K-Spice .mdl / .prm here
 ├── Pipeline/
 │   ├── data/
-│   │   ├── raw/           ← place your simulation CSV here (any filename)
+│   │   ├── raw/           ← place your training simulation CSV here (any filename)
+│   │   ├── test/          ← place your held-out test CSV here (any filename)
 │   │   └── extracted/     ← KSpiceSystemMap.json (generated)
 │   ├── output/            ← all generated artefacts
 │   │   ├── diagrams/      ← TSA_Equations.json, topology HTML
@@ -64,8 +65,7 @@ SystemConvertion/
 │   │   ├── Visualization/ ← topology builders (Phase 3 + diagrams)
 │   │   └── CSharp_Engine/ ← identification engine (Phases 2 & 4, tests)
 │   └── run.py             ← single entry point
-├── TimeSeriesAnalysis-master/
-└── KspiceSimTestdata.csv  ← optional held-out CSV (one level up from Pipeline/)
+└── TimeSeriesAnalysis-master/
 ```
 
 ## Inputs
@@ -73,13 +73,14 @@ SystemConvertion/
 1. **K-Spice model files** — copy your `.mdl` and `.prm` files into
    [`kspicefiles/`](kspicefiles/). One folder can hold multiple revisions; the
    pipeline lists them and asks which one to use.
-2. **Simulation CSV** — export a 1 Hz time-series from K-Spice covering the
+2. **Training CSV** — export a 1 Hz time-series from K-Spice covering the
    operating range you want to identify, and drop it into
    [`Pipeline/data/raw/`](Pipeline/data/raw/). Any filename works; the runner
    auto-picks the single CSV in that folder (or prompts if there are several).
-3. **(Optional) Held-out test CSV** — drop alongside `Pipeline/` as
-   `KspiceSimTestdata.csv`, or pass `--testcsv path/to/file.csv`. Used by the
-   open-loop and closed-loop test phases.
+3. **(Optional) Held-out test CSV** — drop it into
+   [`Pipeline/data/test/`](Pipeline/data/test/). Same plant, different operating
+   trajectory, never seen during training. Used by the open-loop (`testset`) and
+   closed-loop test phases. Override with `--testcsv path/to/file.csv`.
 
 ## Usage
 
@@ -148,4 +149,14 @@ After a full run you'll find:
   code works for plants with non-standard tag conventions.
 - The C# engine builds itself on first run via `dotnet run` — no manual build
   step needed.
-- For project-specific architecture notes see [Pipeline/CLAUDE.md](Pipeline/CLAUDE.md).
+
+## Credits
+
+This pipeline is built on top of the
+[**TimeSeriesAnalysis**](https://github.com/equinor/TimeSeriesAnalysis) library
+by **Equinor** (Copyright © Equinor 2022–25). TSA provides the underlying
+numerical engine for OLS regression, first-order dynamic identification, PID
+identification, and the unit-model simulation framework that this pipeline
+extends with K-Spice topology integration and grey-box physical constraints.
+The version bundled in [`TimeSeriesAnalysis-master/`](TimeSeriesAnalysis-master/)
+is used unmodified.
