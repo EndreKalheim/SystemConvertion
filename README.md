@@ -2,10 +2,25 @@
 
 Grey-box identification pipeline that converts a high-fidelity K-Spice plant
 simulation into a modular network of MISO surrogate models. Topology is
-extracted from K-Spice's own model definitions (`.mdl` / `.prm`) and fused with
-empirical CSV time-series, then [Equinor's TimeSeriesAnalysis](https://github.com/equinor/TimeSeriesAnalysis)
-library identifies first-order dynamics, PID parameters, and per-equipment
-physics-guided models. Each block is re-assembled into a closed-loop simulator
+extracted from K-Spice's `.mdl` / `.prm` model files and fused with a 1 Hz
+simulation CSV exported from K-Spice — ideally one containing setpoint
+changes and manual moves that excite the plant, so its dynamics can be
+observed (a flat steady-state CSV yields no information about time constants).
+
+The numerical engine for first-order dynamic identification, PID identification,
+and OLS regression is [Equinor's TimeSeriesAnalysis](https://github.com/equinor/TimeSeriesAnalysis)
+library. On top of that this pipeline adds K-Spice topology integration and
+custom physics-guided models that TSA does not provide on its own:
+
+- **Valves** — square-root pressure-drop law with fitted density factor
+- **Heat exchangers** — split gas-side / water-side identification with an
+  NTU-effectiveness fallback for unphysical OLS signs
+- **Inter-stage junctions** — synthetic mass-balance vessel for headers without
+  a physical accumulation volume
+- **Anti-surge controllers** — dual-mode PI with K-Spice tuning extraction and
+  effective-gain grid search
+
+Each block is re-assembled into a custom topology-aware closed-loop simulator
 that runs without K-Spice.
 
 ## Methodology
@@ -73,10 +88,13 @@ SystemConvertion/
 1. **K-Spice model files** — copy your `.mdl` and `.prm` files into
    [`kspicefiles/`](kspicefiles/). One folder can hold multiple revisions; the
    pipeline lists them and asks which one to use.
-2. **Training CSV** — export a 1 Hz time-series from K-Spice covering the
-   operating range you want to identify, and drop it into
-   [`Pipeline/data/raw/`](Pipeline/data/raw/). Any filename works; the runner
-   auto-picks the single CSV in that folder (or prompts if there are several).
+2. **Training CSV** — export a 1 Hz time-series from K-Spice that **excites**
+   the plant: setpoint steps, manual valve moves, load changes — anything that
+   forces the states to respond. Without excitation there is no information in
+   the data for the identifier to fit time constants and gains to. Drop the
+   file into [`Pipeline/data/raw/`](Pipeline/data/raw/); any filename works,
+   the runner auto-picks the single CSV in that folder (or prompts if there
+   are several).
 3. **(Optional) Held-out test CSV** — drop it into
    [`Pipeline/data/test/`](Pipeline/data/test/). Same plant, different operating
    trajectory, never seen during training. Used by the open-loop (`testset`) and
