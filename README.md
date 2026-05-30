@@ -3,22 +3,40 @@
 Grey-box identification pipeline that converts a high-fidelity K-Spice plant
 simulation into a modular network of MISO surrogate models. Topology is
 extracted from K-Spice's `.mdl` / `.prm` model files and fused with a 1 Hz
-simulation CSV exported from K-Spice — ideally one containing setpoint
-changes and manual moves that excite the plant, so its dynamics can be
-observed (a flat steady-state CSV yields no information about time constants).
+simulation CSV exported from K-Spice. The CSV must contain setpoint changes
+and manual moves that excite the plant so its dynamics can be observed; a
+flat steady-state CSV yields no information about time constants.
 
-The numerical engine for first-order dynamic identification, PID identification,
-and OLS regression is [Equinor's TimeSeriesAnalysis](https://github.com/equinor/TimeSeriesAnalysis)
-library. On top of that this pipeline adds K-Spice topology integration and
-custom physics-guided models that TSA does not provide on its own:
+The numerical engine is [Equinor's TimeSeriesAnalysis](https://github.com/equinor/TimeSeriesAnalysis)
+library, which provides robust first-order dynamic identification, PID
+identification, and OLS regression. TSA is used directly for the components
+where standard linear identification is sufficient:
 
-- **Valves** — square-root pressure-drop law with fitted density factor
-- **Heat exchangers** — split gas-side / water-side identification with an
-  NTU-effectiveness fallback for unphysical OLS signs
-- **Inter-stage junctions** — synthetic mass-balance vessel for headers without
-  a physical accumulation volume
-- **Anti-surge controllers** — dual-mode PI with K-Spice tuning extraction and
-  effective-gain grid search
+- **Separator and tank pressure** dynamics
+- **Liquid level** integration
+- **PID controllers** (Kp, Ti recovery, with a gain-scale search fallback
+  for low-excitation data)
+- **Generic linear process states** that have no specialised physics
+
+On top of TSA the pipeline layers custom physics-guided models for the
+components where pure linear identification fails to capture the underlying
+behaviour. These still fit their parameters via OLS regression, but enforce
+a constrained structure that the linear identifiers cannot:
+
+- **Valves**: square-root pressure-drop law $\dot{m} = k \cdot C_v(u) \cdot \sqrt{P_{in} - P_{out}}$
+  with a fitted density-tuning factor.
+- **Heat exchangers**: split gas-side / water-side identification with an
+  NTU-effectiveness fallback when OLS produces unphysical signs (e.g.
+  cooling water that appears to heat the gas).
+- **Inter-stage junctions**: pipe headers where two compressor trains meet
+  but no physical separator vessel exists. A pipe junction without buffering
+  is mathematically unstable in closed-loop. The pipeline detects this case
+  from topology and treats the junction as a virtual mass-balance vessel,
+  applying the same $dP/dt = k \cdot (\dot{m}_{in} - \dot{m}_{out})$
+  equation a real separator would use so the closed-loop simulation has a
+  stable pressure node.
+- **Anti-surge controllers**: dual-mode PI with parameters read from the
+  K-Spice model file and refined via a 4D grid search.
 
 Each block is re-assembled into a custom topology-aware closed-loop simulator
 that runs without K-Spice.
@@ -165,8 +183,15 @@ After a full run you'll find:
   are resolved via BFS over the parsed wiring graph. Anti-surge valves are
   detected via the ASC-controller wiring (not a name pattern), so the same
   code works for plants with non-standard tag conventions.
-- The C# engine builds itself on first run via `dotnet run` — no manual build
-  step needed.
+- The C# engine builds itself on first run via `dotnet run`. No manual
+  build step is needed.
+- **Reading the Fit Score**: for tightly regulated process variables where
+  active PID control keeps the signal nearly flat, the variance-normalized
+  Fit Score becomes structurally over-sensitive to small steady-state
+  offsets and can return large negative numbers even when the trajectory
+  tracks the truth visually. Always cross-check the per-model validation
+  plots in `output/validation_plots*/` before judging a model from its
+  numeric score alone.
 
 ## Credits
 
