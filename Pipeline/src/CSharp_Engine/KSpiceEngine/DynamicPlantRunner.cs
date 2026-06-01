@@ -62,8 +62,12 @@ namespace KSpiceEngine
                 string comp           = (string)eq.Component;
                 string state          = (string)eq.State;
                 string role           = (string)eq.Role;
-                string formula        = (string)eq.Formula;
                 string controllerType = (string)eq.ControllerType ?? "";
+                // Boundary / input-only states are the ones KSpiceModelFactory emits with no
+                // topology inputs (unrecognised component types and FlowElements). The factory
+                // no longer writes a "Formula" string, so detect them via an empty Inputs list
+                // rather than a formula substring match.
+                int inputCount        = (((JObject)eq)["Inputs"] as JArray)?.Count ?? 0;
                 string kspiceType     = compToType.ContainsKey(comp) ? compToType[comp] : "Unknown";
 
                 string mapKey = $"{comp}_{state}";
@@ -140,7 +144,7 @@ namespace KSpiceEngine
                 }
                 double[] Y_true = dataset[targetCsvHeader!];
 
-                if (formula.Contains("Boundary"))
+                if (inputCount == 0)
                 {
                     Console.WriteLine($"[Model] {id}: Boundary node (input-only), copying true signal.");
                     predictions[id]      = (double[])Y_true.Clone();
@@ -181,7 +185,7 @@ namespace KSpiceEngine
                         result = SeparatorPressureIdentifier.Identify(id, Y_true, inputCols, timeBase_s);
                     }
                 }
-                else if (state == "Pressure" && formula.Contains("dP/dt")
+                else if (state == "Pressure"
                     && (kspiceType.IndexOf("ControlValve", StringComparison.OrdinalIgnoreCase) >= 0
                         || kspiceType.IndexOf("PipeFlow",    StringComparison.OrdinalIgnoreCase) >= 0
                         || kspiceType.IndexOf("BlockValve",  StringComparison.OrdinalIgnoreCase) >= 0))

@@ -49,6 +49,10 @@ namespace KSpiceEngine
             double timeBase_s = DynamicPlantRunner.DetectTimeStep(dataset);
 
             var predictions = new Dictionary<string, double[]>();
+            // Models that were genuinely run (not boundary/fallback/unresolved truth-copies).
+            // Only these get a fit score written — copying truth into a skipped slot and then
+            // scoring it against truth yields a meaningless 100%.
+            var evaluated = new HashSet<string>();
             int ok = 0, skipped = 0, failed = 0;
 
             foreach (var eq in equations)
@@ -116,6 +120,7 @@ namespace KSpiceEngine
                     double fit = ComputeFit(Y_true, yPred);
                     Console.WriteLine($"[Model] {id} [{mt}] test fit = {fit,6:F1}%");
                     predictions[id] = yPred;
+                    evaluated.Add(id);
                     ok++;
                 }
                 catch (Exception ex)
@@ -134,6 +139,7 @@ namespace KSpiceEngine
             var fits = new JObject();
             foreach (var kv in predictions)
             {
+                if (!evaluated.Contains(kv.Key)) continue; // skip truth-copies (boundary/fallback/unresolved)
                 if (!signalMap.ContainsKey(kv.Key)) continue;
                 string col = signalMap[kv.Key];
                 if (!dataset.ContainsKey(col)) continue;
@@ -178,6 +184,24 @@ namespace KSpiceEngine
                     var inputCols = DynamicPlantRunner.FindInputSignals(modelId, inputEdges, signalMap, dataset, physicalNeighbors);
                     arr = PickAscInput(inputCols, key);
                 }
+                else if (key.StartsWith("@HX_Tin:") || key.StartsWith("@HX_Flow:")
+                      || key.StartsWith("@HX_CoolTemp:") || key.StartsWith("@HX_PartnerFlow:"))
+                {
+                    // HeatExchanger inputs: walk the topology for this node and pick the
+                    // column by edge label, exactly as the trainer did. Open-loop → take the
+                    // raw CSV series (no prediction substitution). Mirrors ClosedLoopRunner's
+                    // GetHxRoleValue. Without this branch the model was silently skipped and
+                    // the ground-truth signal copied through, producing a fake 100% fit.
+                    var inputCols = DynamicPlantRunner.FindInputSignals(modelId, inputEdges, signalMap, dataset, physicalNeighbors);
+                    arr = PickHxInput(inputCols, key);
+                }
+                else if (string.Equals(key, "Assumed_100%", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Valve with no controller wired: U(t) is held fully open. Synthesize a
+                    // constant 100% series (mirrors ClosedLoopRunner's sentinel). Without this
+                    // the valve's MassFlow model was skipped and scored a fake 100%.
+                    arr = Enumerable.Repeat(100.0, dataset.Values.First().Length).ToArray();
+                }
                 else if (signalMap.TryGetValue(key, out var col) && dataset.ContainsKey(col))
                 {
                     // Direct lookup against signal map (UnitModel-based + IntegratedFlow).
@@ -205,9 +229,12 @@ namespace KSpiceEngine
 
                 if (arr == null)
                 {
-                    if (slot.Optional)
+                    // @HX_* slots are soft: the HeatExchanger model ignores/guards NaN for the
+                    // inputs it doesn't use per subtype (GasSide ignores T_cool; WaterSide
+                    // ignores the flows), so a missing one must not drop the whole model.
+                    if (slot.Optional || key.StartsWith("@HX_"))
                     {
-                        result.Add(null); // optional — step loop fills NaN
+                        result.Add(null); // step loop fills NaN
                         continue;
                     }
                     Console.WriteLine($"  [MISS] {modelId} could not resolve input '{key}' in test CSV");
@@ -216,6 +243,41 @@ namespace KSpiceEngine
                 result.Add(arr);
             }
             return result;
+        }
+
+        // Resolve a HeatExchanger input role (@HX_Tin/@HX_Flow/@HX_CoolTemp/@HX_PartnerFlow)
+        // to its raw CSV series by matching the topology edge label. Mirrors the column
+        // selection in ClosedLoopRunner.GetHxRoleValue, but returns the truth series (open-loop)
+        // rather than a predicted one. Returns null if the label isn't present — the caller
+        // then feeds NaN, which the model guards (the slot is one this subtype ignores).
+        private static double[]? PickHxInput(List<(string name, double[] data)> inputCols, string roleKey)
+        {
+            string role = roleKey.Substring(1, roleKey.IndexOf(':') - 1);
+            (string name, double[] data) tin = default, flow = default, cool = default, partner = default;
+            foreach (var col in inputCols)
+            {
+                string n = col.name;
+                int pIdx = n.IndexOf('(');
+                if (pIdx <= 0) continue;
+                int closeParen = n.IndexOf(')', pIdx);
+                if (closeParen <= pIdx) continue;
+                string label = n.Substring(pIdx + 1, closeParen - pIdx - 1);
+
+                if (string.Equals(label, "T_in", StringComparison.OrdinalIgnoreCase))      { tin = col;     continue; }
+                if (string.Equals(label, "T_cool", StringComparison.OrdinalIgnoreCase))    { cool = col;    continue; }
+                if (string.Equals(label, "m_partner", StringComparison.OrdinalIgnoreCase)) { partner = col; continue; }
+                // The HX's own mass flow is labelled "local_var"; accept any MassFlow column.
+                if (n.IndexOf("MassFlow", StringComparison.OrdinalIgnoreCase) >= 0 && flow.data == null) { flow = col; continue; }
+            }
+
+            return role switch
+            {
+                "HX_Tin"         => tin.data,
+                "HX_Flow"        => flow.data,
+                "HX_CoolTemp"    => cool.data,
+                "HX_PartnerFlow" => partner.data,
+                _                => null
+            };
         }
 
         private static double[]? PickAscInput(List<(string name, double[] data)> inputCols, string roleKey)

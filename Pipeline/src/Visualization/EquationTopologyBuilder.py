@@ -155,7 +155,7 @@ def build_eq_topology():
         if 'Level' in st:         color = C_LVL
         if role == 'Controller':  color = C_CTRL
 
-        label = f"{comp}\n({st})\n\nEq: {eq['Formula']}"
+        label = f"{comp}\n({st})"
         if 'Param' in eq:
             label += f"\n[{eq['Param']}]"
 

@@ -186,13 +186,12 @@ namespace KSpiceEngine
                 string  ktype    = node["KSpiceType"];
                 var     pMap     = node["Parameters"] as JObject ?? new JObject();
 
-                void AddState(string suffix, string formula, string[] inputs)
+                void AddState(string suffix, string[] inputs)
                 {
                     var eq = new JObject();
                     eq["ID"]        = $"{baseName}_{suffix}";
                     eq["Component"] = baseName;
                     eq["State"]     = suffix;
-                    eq["Formula"]   = formula;
                     eq["Inputs"]    = JArray.FromObject(inputs);
                     eq["Role"]      = suffix == "Control"             ? "Controller"
                                     : (suffix.EndsWith("Level") || suffix == "Pressure") ? "Volume"
@@ -236,19 +235,19 @@ namespace KSpiceEngine
 
                 if (ktype.Contains("Separator") || ktype.Contains("Tank"))
                 {
-                    AddState("Pressure",    "dP/dt = k * (m_in - m_out)",           new[] { "UPSTREAM_FLOW", "DOWNSTREAM_COMPRESSOR_FLOW", "DOWNSTREAM_LIQUID_OUTFLOWS", "ANTISURGE_INFLOW" });
-                    AddState("WaterLevel",  "dL_w/dt = (1/A) * (m_in - m_out)",     new[] { "UPSTREAM_FLOW", "DOWNSTREAM_FLOW" });
-                    AddState("OilLevel",    "dL_o/dt = (1/A) * (m_in - m_out)",     new[] { "UPSTREAM_FLOW", "DOWNSTREAM_FLOW" });
+                    AddState("Pressure",    new[] { "UPSTREAM_FLOW", "DOWNSTREAM_COMPRESSOR_FLOW", "DOWNSTREAM_LIQUID_OUTFLOWS", "ANTISURGE_INFLOW" });
+                    AddState("WaterLevel",  new[] { "UPSTREAM_FLOW", "DOWNSTREAM_FLOW" });
+                    AddState("OilLevel",    new[] { "UPSTREAM_FLOW", "DOWNSTREAM_FLOW" });
                     // Downstream flows are excluded: including them creates large
                     // OLS canceling gains that blow up CL when outlet flows are mispredicted.
                     // Feed temperature + flow are stable boundaries sufficient for T_sep.
-                    AddState("Temperature", "T_out ≈ LP(T_in, Tc)",                   new[] { "UPSTREAM_TEMP", "UPSTREAM_FLOW" });
+                    AddState("Temperature", new[] { "UPSTREAM_TEMP", "UPSTREAM_FLOW" });
                 }
                 else if (ktype.Contains("HeatExchanger"))
                 {
-                    AddState("MassFlow",    "F = sum(m_downstream)",                          new[] { "DOWNSTREAM_FLOW_SUM" });
-                    AddState("Pressure", "P_out ≈ P_in  (small HX dP ignored)", new[] { "UPSTREAM_PRESSURE" });
-                    AddState("Temperature", "T_out = f(T_in, T_cool, F, m_partner)",          new[] { "UPSTREAM_TEMP", $"{baseName}_MassFlow", "COOLING_TEMP", "PARTNER_FLOW" });
+                    AddState("MassFlow",    new[] { "DOWNSTREAM_FLOW_SUM" });
+                    AddState("Pressure",    new[] { "UPSTREAM_PRESSURE" });
+                    AddState("Temperature", new[] { "UPSTREAM_TEMP", $"{baseName}_MassFlow", "COOLING_TEMP", "PARTNER_FLOW" });
                 }
                 else if (ktype.Contains("ControlValve") || ktype.Contains("PipeFlow") || ktype.Contains("BlockValve"))
                 {
@@ -260,8 +259,8 @@ namespace KSpiceEngine
                         // Anti-surge recirculation valve: gas flows from the discharge side
                         // back to the compressor suction. CONTAINER_PRESSURE traverses upstream
                         // through HX/Compressor to find the suction separator pressure for P_out.
-                        AddState("MassFlow",    "F = Cv * sqrt(dP * rho)",      new[] { "UPSTREAM_PRESSURE", "CONTAINER_PRESSURE", "LOCAL_CONTROL" });
-                        AddState("Temperature", "T_out = f(T_in, P_in, P_out)", new[] { "UPSTREAM_TEMP", "UPSTREAM_PRESSURE", "CONTAINER_PRESSURE" });
+                        AddState("MassFlow",    new[] { "UPSTREAM_PRESSURE", "CONTAINER_PRESSURE", "LOCAL_CONTROL" });
+                        AddState("Temperature", new[] { "UPSTREAM_TEMP", "UPSTREAM_PRESSURE", "CONTAINER_PRESSURE" });
                     }
                     else if (isInterstageJunction)
                     {
@@ -270,19 +269,16 @@ namespace KSpiceEngine
                         // separator. UPSTREAM_FLOW + ANTISURGE_INFLOW act as m_in (+);
                         // DOWNSTREAM_COMPRESSOR_FLOW + SIBLING_ANTISURGE_FLOW act as m_out (−).
                         // NegateOutflows + SeparatorPressureIdentifier handle signs and fit.
-                        AddState("Pressure",    "dP/dt = k * (m_in - m_out)",
-                            new[] { "UPSTREAM_FLOW", "ANTISURGE_INFLOW", "DOWNSTREAM_COMPRESSOR_FLOW", "SIBLING_ANTISURGE_FLOW" });
-                        AddState("MassFlow",    "F = Cv * sqrt(dP * rho)",
-                            new[] { "UPSTREAM_PRESSURE", "DOWNSTREAM_PRESSURE", "LOCAL_CONTROL" });
-                        AddState("Temperature", "T_out = f(T_in, P_in, P_out)",
-                            new[] { "UPSTREAM_TEMP", "UPSTREAM_PRESSURE", "DOWNSTREAM_PRESSURE" });
+                        AddState("Pressure",    new[] { "UPSTREAM_FLOW", "ANTISURGE_INFLOW", "DOWNSTREAM_COMPRESSOR_FLOW", "SIBLING_ANTISURGE_FLOW" });
+                        AddState("MassFlow",    new[] { "UPSTREAM_PRESSURE", "DOWNSTREAM_PRESSURE", "LOCAL_CONTROL" });
+                        AddState("Temperature", new[] { "UPSTREAM_TEMP", "UPSTREAM_PRESSURE", "DOWNSTREAM_PRESSURE" });
                     }
                     else
                     {
                         // When no controller is wired (LOCAL_CONTROL finds nothing),
                         // DynamicPlantRunner defaults to Assumed_100% (always open).
-                        AddState("MassFlow",    "F = Cv * sqrt(dP * rho)",      new[] { "UPSTREAM_PRESSURE", "DOWNSTREAM_PRESSURE", "LOCAL_CONTROL" });
-                        AddState("Temperature", "T_out = f(T_in, P_in, P_out)", new[] { "UPSTREAM_TEMP", "UPSTREAM_PRESSURE", "DOWNSTREAM_PRESSURE" });
+                        AddState("MassFlow",    new[] { "UPSTREAM_PRESSURE", "DOWNSTREAM_PRESSURE", "LOCAL_CONTROL" });
+                        AddState("Temperature", new[] { "UPSTREAM_TEMP", "UPSTREAM_PRESSURE", "DOWNSTREAM_PRESSURE" });
                     }
                 }
                 else if (ktype.Contains("Compressor"))
@@ -290,13 +286,13 @@ namespace KSpiceEngine
                     // Compressor flow uses suction pressure + speed; downstream-flow
                     // approaches failed due to operating-point mismatch between training
                     // and test sets and anti-surge anti-correlation during surge events.
-                    AddState("MassFlow",    "F = f(P_suction, N_speed, P_discharge, UV_recirc)", new[] { "SUCTION_PRESSURE", "LOCAL_CONTROL", $"{baseName}_Pressure", "ANTISURGE_RECIRC_FLOW" });
+                    AddState("MassFlow",    new[] { "SUCTION_PRESSURE", "LOCAL_CONTROL", $"{baseName}_Pressure", "ANTISURGE_RECIRC_FLOW" });
                     // Anti-surge recirculation is excluded from Pressure to avoid a short
                     // ASC→UV→Pressure→MassFlow→ASC cycle that amplifies CL errors. The
                     // recirculation effect is already captured indirectly via MassFlow.
-                    AddState("Pressure",    "P_out = P_in + Head(F, N)",   new[] { "SUCTION_PRESSURE", $"{baseName}_MassFlow", "LOCAL_CONTROL" });
-                    AddState("Temperature", "T_out = T_in * (P_out/P_in)^((k-1)/k)", new[] { "UPSTREAM_TEMP", $"{baseName}_Pressure", "UPSTREAM_PRESSURE" });
-                    AddState("Speed",       "N = f(speed controller output)",        new[] { "LOCAL_CONTROL" });
+                    AddState("Pressure",    new[] { "SUCTION_PRESSURE", $"{baseName}_MassFlow", "LOCAL_CONTROL" });
+                    AddState("Temperature", new[] { "UPSTREAM_TEMP", $"{baseName}_Pressure", "UPSTREAM_PRESSURE" });
+                    AddState("Speed",       new[] { "LOCAL_CONTROL" });
                 }
                 else if (ktype.Contains("Pump"))
                 {
@@ -317,22 +313,22 @@ namespace KSpiceEngine
                     // PUMP_SPEED wires to the predicted Speed state (not CSV boundary) once the
                     // Speed equation exists; the topology builder only adds a boundary node when
                     // speed_key is absent from equation_ids.
-                    AddState("MassFlow",    "F = F_ds",                              new[] { "DOWNSTREAM_FLOW" });
-                    AddState("Pressure",    "P_out = P_in + Head(F, N)",             new[] { "SUCTION_PRESSURE", "LOCAL_CONTROL", "PUMP_SPEED" });
-                    AddState("Temperature", "T_out = f(T_in, P_out, P_in)",          new[] { "UPSTREAM_TEMP", $"{baseName}_Pressure", "UPSTREAM_PRESSURE" });
+                    AddState("MassFlow",    new[] { "DOWNSTREAM_FLOW" });
+                    AddState("Pressure",    new[] { "SUCTION_PRESSURE", "LOCAL_CONTROL", "PUMP_SPEED" });
+                    AddState("Temperature", new[] { "UPSTREAM_TEMP", $"{baseName}_Pressure", "UPSTREAM_PRESSURE" });
                     // Motor speed is driven by torque balance (no external speed controller for
                     // fixed-frequency motors).  Model as data-driven function of the operating
                     // point so the closed-loop can predict speed without reading the CSV.
-                    AddState("Speed",       "N = f(P_sep, F_ds) motor torque balance", new[] { "UPSTREAM_PRESSURE", "DOWNSTREAM_FLOW" });
+                    AddState("Speed",       new[] { "UPSTREAM_PRESSURE", "DOWNSTREAM_FLOW" });
                 }
                 else if (ktype.IndexOf("pid", System.StringComparison.OrdinalIgnoreCase) >= 0
                          || ktype.Contains("GenericASC")
                          || ktype.Contains("Controller"))
                 {
                     if (ktype.Contains("GenericASC"))
-                        AddState("Control", "ASC: U(t) = DualModePI(NASP-NF) ~ f(MF, PR, N)", new[] { "MEASURED_FLOW", "MEASURED_PRESSURE", "MEASURED_SPEED" });
+                        AddState("Control", new[] { "MEASURED_FLOW", "MEASURED_PRESSURE", "MEASURED_SPEED" });
                     else
-                        AddState("Control", "PID: U(t) = Kp*e + Ki*∫e dt",   new[] { "MEASURED_STATE" });
+                        AddState("Control", new[] { "MEASURED_STATE" });
                 }
                 else
                 {
@@ -341,13 +337,13 @@ namespace KSpiceEngine
                     // or temperature state, so skip those to avoid dead topology edges.
                     if (ktype.Contains("FlowElement") || ktype.Contains("FlowMeter"))
                     {
-                        AddState("MassFlow", "Boundary Flow", new string[0]);
+                        AddState("MassFlow", new string[0]);
                     }
                     else
                     {
-                        AddState("MassFlow",    "Boundary Flow",     new string[0]);
-                        AddState("Pressure",    "Boundary Pressure", new string[0]);
-                        AddState("Temperature", "Boundary Energy",   new string[0]);
+                        AddState("MassFlow",    new string[0]);
+                        AddState("Pressure",    new string[0]);
+                        AddState("Temperature", new string[0]);
                     }
                 }
             }

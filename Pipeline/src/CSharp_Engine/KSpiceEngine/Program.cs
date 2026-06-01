@@ -189,6 +189,9 @@ namespace KSpiceEngine
             {
                 Console.WriteLine($"\n[ERROR] {ex.Message}");
                 Console.WriteLine(ex.StackTrace);
+                // Exit non-zero so the Python orchestrator (run.py) sees the failure and stops,
+                // instead of reporting success and leaving stale outputs from a previous run.
+                Environment.Exit(1);
             }
         }
     }
